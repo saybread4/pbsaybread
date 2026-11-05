@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="pb-api.js"></script>
-<script src="pb-admin-data.js"></script>
-<base target="_top">
 <meta charset="utf-8">
+<meta name="robots" content="noindex,nofollow">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://bhdmmyyceggqnxwzbvwm.supabase.co" crossorigin>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script defer src="pb-api.js"></script>
+<script defer src="pb-admin-data.js"></script>
+<base target="_top">
 <title>PB SAY BREAD</title>
 <style>
 :root{--br:#3730a3;--br2:#2f7d4f;--am:#22a559;--cr:#f2faf5;--bd:#cfe5d6;--tx:#10261a;--mu:#5f7d6b}
@@ -653,7 +656,7 @@ nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 window.__ok=0;
 window.addEventListener('error',function(e){var m=(e.message||'error')+(e.lineno?' (baris '+e.lineno+')':'');var l=document.getElementById('lerr');if(l){l.style.whiteSpace='pre-wrap';l.textContent='Error skrip: '+m+' [blok sukses terakhir: '+(window.__blk||0)+']'}});
 window.addEventListener('unhandledrejection',function(e){var l=document.getElementById('lerr');if(l&&!window.__ok)l.textContent='Error: '+((e.reason&&e.reason.message)||e.reason)});
-setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(l&&!l.textContent)l.textContent='Skrip halaman tidak berjalan. Tekan Ctrl+Shift+R, atau pastikan Index.html di Apps Script sudah diganti penuh.'}},2500);
+setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(l&&!l.textContent)l.textContent='Halaman belum selesai dimuat. Periksa koneksi internet lalu tekan Ctrl+Shift+R.'}},10000);
 </script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
   <!-- ===== Ornamen Batik Jawa Timur =====
@@ -995,7 +998,7 @@ const deb=(ms,fn)=>{let t;return()=>{clearTimeout(t);t=setTimeout(fn,ms)}};
 <script>
 window.__blk=2;
 /* ---------- Layar "Memuat data" dengan persen ----------
- * Waktu muat sebenarnya tidak bisa diketahui dari google.script.run, jadi persen dinaikkan
+ * Waktu muat sebenarnya tidak diketahui dari sisi browser, jadi persen dinaikkan
  * mendekati target tiap fase (tidak pernah mencapai 100% sebelum data benar-benar tiba). */
 const BOOTP={'Memverifikasi login…':16,'Menghubungi server…':34,'Mengambil data…':72,'Menyusun kelompok toko…':90,'Hampir siap…':96};
 function boot(on,msg){
@@ -1074,7 +1077,7 @@ $('#lf').onsubmit=ev=>{
     TOKEN=r.token;try{sessionStorage.setItem('pb_tok',TOKEN)}catch(e){}
     $('#lp').value='';$('#lp').type='password';$('#lpe').textContent='👁';showApp(r.user);
     // Login hanya memverifikasi akun. Data dimuat setelah layar aplikasi tampil
-    // agar login tidak terlihat macet saat data PB besar / Apps Script cold start.
+    // agar login tidak terlihat macet saat data PB besar.
     $('#lb').textContent='Masuk';$('#lb').disabled=false;
     if(r.open===false&&!(r.user&&r.user.admin)){hideInput(true);applyView('jdw');loadJadwal(false)}
     loadData(false);
@@ -1293,8 +1296,12 @@ window.__blk=10;
 function loadData(keep,quiet){
   $('#upd').textContent='Memuat…';if(!quiet)boot(true,'Menghubungi server…');
   run('getData',[TOKEN],d=>{
-    if(!quiet){bootStep('Menyusun kelompok toko…');boot(false)}
-    init(d,keep,!!quiet);
+    const go=n=>{
+      const ae=document.activeElement,busy=ae&&ae.classList&&ae.classList.contains('pf');
+      if(quiet&&(busy||PEND.size)&&n<15){setTimeout(()=>go(n+1),800);return}   // tunggu sampai ketikan tersimpan
+      if(!quiet){bootStep('Menyusun kelompok toko…');boot(false)}
+      init(d,keep,!!quiet);
+    };go(0);
   },e=>{
     if(!quiet)boot(false);
     $('#upd').textContent='Gagal memuat';
@@ -1307,9 +1314,9 @@ function init(d,keep,lazy){
   const old=keep&&D?saveSel():null;
   D=d;REK=null;MAN_DIRTY=true;INFO=null;JDW=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;
   // simpan data terakhir di browser agar pembukaan halaman berikutnya instan (diperbarui diam-diam setelahnya)
-  setTimeout(()=>{try{const j=JSON.stringify(d);if(j.length<2500000)localStorage.setItem('pb_data',j)}catch(e){}},1200);
+  (window.requestIdleCallback?f=>requestIdleCallback(f,{timeout:6000}):f=>setTimeout(f,2500))(()=>{try{const j=JSON.stringify(d);if(j.length<2500000)localStorage.setItem('pb_data',j)}catch(e){}});
   D.rows.forEach((r,i)=>r[13]=i);
-  KT={};KB={};KZ={};
+  KT={};KB={};KZ={};ZSC={};
   KEYS.forEach(k=>{
     DL[k]=D.d[k].map(x=>k==='tk'?(x[0]+' — '+x[1]):k==='jd'?fmtD(x):x);
     const idx=DL[k].map((_,i)=>i);
@@ -1420,6 +1427,7 @@ function refH(n){const tr=trOf(n);if(tr)tr.innerHTML=hc(n)}
 <script>
 window.__blk=13;
 /* ---------- Render ---------- */
+let OPENTK=0;const OPEN_BUDGET=400;   // baris yang dibuka otomatis; sisanya dibuka saat toko diklik
 const WB=[80,150,170,58,62,66,80,62,76,80,70],WZ=[60,140];
 const WBm=[42,66,66,34,38,38,48,52,58,52,54],WZm=[44,100];
 const isMob=()=>window.matchMedia('(max-width:640px)').matches;
@@ -1432,12 +1440,34 @@ function calcSum(){
 }
 function render(){
   buildTree();calcSum();
-  ALLOPEN=true; // tampilan pertama: semua kelompok toko langsung terbuka
+  OPENTK++;
+  // Membuka ribuan baris sekaligus membuat halaman berat: buka otomatis hanya sampai OPEN_BUDGET baris
+  let used=0,stop=false;
+  for(const n of ROOT.sk){if(!stop&&(used===0||used+n.sk.length<=OPEN_BUDGET)){n.open=true;used+=n.sk.length}else{n.open=false;stop=true}}
+  ALLOPEN=ROOT.sk.every(n=>n.open);
+  const note=ALLOPEN?'':`<div class="note">⚡ ${f0(ROOT.sk.length)} toko (${f0(CUR.length)} baris). Agar tetap ringan, hanya ${f0(used)} baris pertama yang dibuka — klik nama toko untuk membuka, pakai filter untuk mempersempit, atau tekan “Buka semua”.</div>`;
   $('#bDl').disabled=!CUR.length;
   if(!CUR.length){$('#out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">🔍</div><div>Tidak ada data untuk filter ini.</div></div>';return}
-  $('#out').innerHTML=`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ✎</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${ROOT.sk.map(n=>{n.open=ALLOPEN;return (n.open?n.sk.map(itemRow).join(''):'')+hdr(n)}).join('')}</tbody></table></div>`;
+  $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ✎</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
 }
-$('#bOpen').onclick=()=>{ALLOPEN=true;if(ROOT&&CUR.length)ROOT.sk.forEach(expand)};
+$('#bOpen').onclick=()=>{
+  if(!ROOT||!CUR.length)return;
+  const todo=ROOT.sk.filter(n=>!n.open),rows=todo.reduce((a,n)=>a+n.sk.length,0);
+  if(!todo.length)return;
+  if(rows>1500&&!confirm('Membuka '+f0(rows)+' baris sekaligus bisa membuat halaman terasa berat.\nDisarankan mempersempit dengan filter lebih dulu.\n\nTetap buka semua?'))return;
+  openAll();
+};
+/* Buka semua: disusun sekali jalan (lebih cepat daripada menambah per-frame karena tata letak tabel dihitung sekali) */
+function openAll(){
+  const tb=$('#tb'),L=ROOT.sk;if(!tb)return;
+  const tk=++OPENTK;setStat('Membuka '+f0(CUR.length)+' baris…');
+  setTimeout(()=>{   // beri kesempatan layar menampilkan status lebih dulu
+    if(tk!==OPENTK)return;
+    ALLOPEN=true;L.forEach(n=>n.open=true);
+    tb.innerHTML=L.map(n=>n.sk.map(itemRow).join('')+hdr(n)).join('');
+    setStat('');
+  },30);
+}
 $('#bFill').onclick=()=>{
   const t=CUR.filter(r=>!r[11]&&r[9]===0&&r[8]>0&&!(r[15]>0));
   if(!t.length)return toast('Tidak ada baris kosong yang punya rekomendasi');
@@ -1445,7 +1475,7 @@ $('#bFill').onclick=()=>{
   t.forEach(r=>{r[9]=r[8];r[17]=0;PEND.set(r[13],{k:r[13],id:r[11],sr:r[10],kode:D.d.tk[r[1]][0],ds:D.d.ds[r[2]],v:r[8],auto:1})});
   REK=null;render();setStat('Menyimpan…');flush();
 };
-$('#bClose').onclick=()=>{ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(n.open)closeNode(n,trOf(n))})};
+$('#bClose').onclick=()=>{OPENTK++;ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(n.open)closeNode(n,trOf(n))})};
 
 const out=$('#out');
 out.addEventListener('click',e=>{
@@ -1459,7 +1489,8 @@ out.addEventListener('change',e=>{if(e.target.classList.contains('pf'))onEdit(e.
 out.addEventListener('keydown',e=>{
   if(e.key!=='Enter'||!e.target.classList.contains('pf'))return;
   e.preventDefault();e.target.blur();
-  const all=[...document.querySelectorAll('.pf')],nx=all[all.indexOf(e.target)+1];
+  let tr=e.target.closest('tr'),nx=null;
+  while(tr&&(tr=tr.nextElementSibling)){nx=tr.querySelector('.pf');if(nx)break}
   if(nx){nx.focus();nx.select()}
 });
 document.addEventListener('focusin',e=>{if(e.target.classList&&e.target.classList.contains('pf'))e.target.select()});
@@ -1572,7 +1603,8 @@ function initAdd(){
   KETM=false;KUSER=false;TK.val='';$('#a_kets').value='DI';aCheck();
 }
 let KETM=false,KUSER=false;
-const zoneStores=z=>Object.keys(D.stores||{}).filter(k=>nrm((D.stores[k]||[])[3])===nrm(z)).sort();
+let ZSC={};
+const zoneStores=z=>{const k=nrm(z);return ZSC[k]||(ZSC[k]=Object.keys(D.stores||{}).filter(c=>nrm((D.stores[c]||[])[3])===k).sort())};
 const TK={opts:[],val:'',dis:true};
 function tkBuild(){
   const w=$('#a_tkw');
@@ -2524,14 +2556,16 @@ $('#sim_jpg').onclick=async()=>{
 <script>
 window.__blk=27;
 /* ---------- Start ---------- */
-(function(){
+function pbStart(){
   let t=null;try{t=sessionStorage.getItem('pb_tok')}catch(e){}
   if(t){TOKEN=t;showApp();
     try{const c=localStorage.getItem('pb_data');if(c)init(JSON.parse(c),false)}catch(e){}
     loadData(false,true)
   }else showLogin('');
-})();
-window.__ok=1;
+  window.__ok=1;
+}
+// pb-api.js & supabase-js dimuat dengan defer (tidak menahan tampilan); jalankan setelah keduanya siap
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',pbStart);else pbStart();
 </script>
 </body>
 </html>

@@ -28,3 +28,10 @@ Database: project Supabase **PB SAY BREAD**. Kunci yang ada di `pb-api.js` adala
 
 ## Pembuat
 Fahrur Rozy
+
+## Catatan performa & keamanan
+- **Input PB**: hanya ±400 baris pertama yang dibuka otomatis; klik nama toko untuk membuka, atau pakai filter / tombol "Buka semua". Membuka ribuan baris sekaligus membuat browser berat.
+- `savePB` mengirim perubahan per 150 baris (batas waktu query Supabase ±8 detik).
+- Skrip `supabase-js`, `pb-api.js`, `pb-admin-data.js` dimuat dengan `defer` sehingga halaman login tampil tanpa menunggu CDN.
+- `_headers`: CSP masih mode *Report-Only*. Setelah Console (F12) bersih, ganti menjadi `Content-Security-Policy`.
+- Database: indeks ekspresi `toko_per_item_norm_idx`, `pb_norm_web_idx`, `toko_zona_norm_idx`, `bas_norm_idx` mempercepat `simpan_pb`; EXECUTE fungsi RPC untuk `anon` sudah dicabut.

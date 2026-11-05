@@ -2,4 +2,9 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
   Cache-Control: no-cache
+  # Mode uji: pelanggaran hanya tampil di Console browser (F12), belum memblokir apa pun.
+  # Jika Console bersih setelah dipakai login, input PB, unduh Excel & JPG, ganti nama header
+  # di bawah menjadi "Content-Security-Policy" agar benar-benar diberlakukan.
+  Content-Security-Policy-Report-Only: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' https://bhdmmyyceggqnxwzbvwm.supabase.co; object-src 'none'; base-uri 'self'; frame-ancestors 'self'

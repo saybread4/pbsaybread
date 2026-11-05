@@ -1,4 +1,4 @@
-/* PB SAY BREAD - jembatan data ke Supabase (pengganti google.script.run).
+/* PB SAY BREAD - jembatan data ke Supabase.
    Tampilan (index.html) tidak berubah: ia tetap memanggil run('namaFungsi', [...]). */
 (function () {
   // Kunci publik (aman dibuka): akses data dijaga RLS di database.
@@ -241,7 +241,7 @@
     async getData() { return rpc('get_data'); },
     async savePB(token, ed) {
       const p = (ed || []).map(e => ({ id: e.id || '', kode: e.kode, ds: e.ds, v: e.v, auto: !!e.auto }));
-      await rpc('simpan_pb', { p: p });
+      for (let i = 0; i < p.length; i += 150) await rpc('simpan_pb', { p: p.slice(i, i + 150) });   // per batch agar tidak kena batas waktu query
       return true;
     },
     async setWebOpen(token, open) { await setSetting('web_open', !!open); return { open: !!open }; },
