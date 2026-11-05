@@ -64,16 +64,16 @@
     if (hdrFill) for (let c = 1; c <= ncol; c++) ws.getRow(1).getCell(c).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: hdrFill } };
   }
   // Susun workbook rekap: sheet FIX PB (+ PERLU REVISI bila ada baris tidak sesuai jadwal)
-  async function buildRekapBook(d, lenient) {
+  async function buildRekapBook(d, lenient, wbIn) {
     const names = d.names || {}, nameOf = k => String(names[k] || k).toUpperCase();
     const rows = d.rows || [];
     const good = rows.filter(r => !r.why).sort(cmpRow), bad = rows.filter(r => r.why && r.fn > 0).sort(cmpRow);
     if (!good.length && !lenient) throw new Error('Tidak ada PB yang sesuai jadwal minggu depan. Periksa jadwal / zona.');
-    const EJ = await loadExcelJS(), wb = new EJ.Workbook();
+    const EJ = await loadExcelJS(), wb = wbIn || new EJ.Workbook();
     const ws = wb.addWorksheet('FIX PB');
     ws.addRow(['Kode', 'Toko', 'Plu', 'Desc', 'Cabang', 'Jadwal Kirim', 'Zona', 'FIX PB', 'KETR']);
     good.forEach(x => ws.addRow([x.kode, x.toko, x.plu, proper(x.ds), nameOf(x.cab), x.jd ? isoDate(x.jd) : '', x.zn, x.fn, x.ket]));
-    styleSheet(ws, 9, [55, 215, 70, 215, 95, 80, 45, 80, 190]);
+    styleSheet(ws, 9, [55, 190, 62, 190, 85, 71, 41, 71, 167]);   // lebar mengikuti Master contoh
     const n = good.length + 1;
     for (let r = 1; r <= n; r++) {
       ws.getCell(r, 1).numFmt = '@'; ws.getCell(r, 3).numFmt = '@';
@@ -88,7 +88,7 @@
       const rv = wb.addWorksheet('PERLU REVISI', { properties: { tabColor: { argb: 'FFDC2626' } } });
       rv.addRow(['Kode', 'Toko', 'Plu', 'Desc', 'Cabang', 'Zona', 'Jadwal', 'FIX PB', 'KETR', 'ALASAN (mohon direvisi)']);
       bad.forEach(x => rv.addRow([x.kode, x.toko, x.plu, proper(x.ds), nameOf(x.cab), x.zn, slash(x.jd), x.fn, x.ket, x.why]));
-      styleSheet(rv, 10, [55, 215, 70, 215, 95, 45, 80, 70, 190, 330], 'FFFECACA');
+      styleSheet(rv, 10, [55, 190, 62, 190, 85, 41, 71, 62, 167, 290], 'FFFECACA');
       for (let r = 1; r <= bad.length + 1; r++) { rv.getCell(r, 1).numFmt = '@'; rv.getCell(r, 3).numFmt = '@'; if (r > 1) rv.getCell(r, 10).font = { name: 'Calibri', size: 11, bold: true, color: { argb: 'FFB91C1C' } }; }
     }
     return { wb: wb, good: good.length, bad: bad.length };
@@ -103,64 +103,226 @@
   function boldRow(ws, r, ncol, fill) {
     for (let c = 1; c <= ncol; c++) { const cell = ws.getCell(r, c); cell.font = { name: 'Calibri', size: 11, bold: true }; if (fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fill } }; }
   }
-  async function buildMasterBook(d) {
-    const b = await buildRekapBook({ names: d.names, rows: d.rows }, true), wb = b.wb, HF = 'FFE0E7FF', TF = 'FFE4E8FB';
-    const pv = d.pivot || {}, pc = pv.cabs || [];
-    if ((pv.items || []).length) {                                   // PIVOT: item x cabang
-      const ws = wb.addWorksheet('PIVOT PB'), nc = 3 + pc.length;
-      ws.addRow(['Plu', 'Desc'].concat(pc.map(c => String(c.nama).toUpperCase()), ['TOTAL']));
-      pv.items.forEach(i => ws.addRow([i.plu, proper(i.ds)].concat(i.v, [i.t])));
-      ws.addRow(['', 'TOTAL'].concat(pv.tot, [pv.gt]));
-      styleSheet(ws, nc, [70, 215].concat(pc.map(() => 90), [90]), HF);
-      const n = pv.items.length + 2; numCols(ws, 3, nc, n); boldRow(ws, n, nc, TF);
-      for (let r = 1; r <= n; r++) ws.getCell(r, 1).numFmt = '@';
-    }
-    const sp = d.stock || {}, sc = sp.cabs || [];
-    if ((sp.items || []).length) {                                   // STOCK-DC vs PB + jatah per cabang
-      const ws = wb.addWorksheet('STOCK-DC vs PB'), nc = 6 + sc.length * 3, hd = ['Plu', 'Desc', 'STOCK-DC', 'TOTAL PB', 'SELISIH', 'STATUS'];
-      sc.forEach(c => { const u = String(c.nama).toUpperCase(); hd.push(u + ' PB', u + ' JATAH', u + ' KURANGI'); });
-      ws.addRow(hd);
-      sp.items.forEach(i => {
-        const row = [i.plu, proper(i.ds), i.stock, i.pb, i.sel, i.sel < 0 ? 'KURANG' : 'CUKUP'];
-        sc.forEach((c, ci) => { const pb = i.pbc[ci], j = i.jat[ci]; row.push(pb || 0, pb ? j : 0, pb - j > 0 ? pb - j : 0); });
-        ws.addRow(row);
+  // ----- pembantu gaya untuk 6 sheet Master (JADWAL, SIMULASI OUTBOUND, PB PER CABANG, STOCK-DC VS PB, FIX PB, PERLU REVISI) -----
+  const BLN = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  const BLN3 = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  const HARI = ['MINGGU', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU'];
+  const p2 = n => String(n).padStart(2, '0');
+  const isoParts = iso => String(iso).split('-').map(Number);
+  const addDaysIso = (iso, n) => { const t = isoParts(iso), dt = new Date(Date.UTC(t[0], t[1] - 1, t[2] + n)); return dt.toISOString().slice(0, 10); };
+  const dowIso = iso => { const t = isoParts(iso); return new Date(Date.UTC(t[0], t[1] - 1, t[2])).getUTCDay(); };
+  const longId = iso => { const t = isoParts(iso); return p2(t[2]) + ' ' + BLN[t[1] - 1] + ' ' + t[0]; };
+  const shortId = iso => { const t = isoParts(iso); return p2(t[2]) + ' ' + BLN3[t[1] - 1] + ' ' + t[0]; };
+  const dotYY = iso => { const t = isoParts(iso); return p2(t[2]) + '.' + p2(t[1]) + '.' + String(t[0]).slice(2); };
+  const fid = n => Math.round(Number(n) || 0).toLocaleString('id-ID');
+  const nowJkt = () => { const f = new Date().toLocaleString('sv-SE', { timeZone: 'Asia/Jakarta' }); const m = f.match(/(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)/); return m[3] + '/' + m[2] + '/' + m[1] + ' ' + m[4] + ':' + m[5]; };
+  const solid = argb => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: argb } });
+  const bside = (c, st) => ({ style: st || 'thin', color: { argb: c } });
+  const boxB = c => ({ top: bside(c), left: bside(c), bottom: bside(c), right: bside(c) });
+  // tulis satu sel lengkap dengan gaya
+  function put(ws, r, c, v, o) {
+    o = o || {}; const cell = ws.getCell(r, c);
+    if (v !== undefined && v !== null) cell.value = v;
+    cell.font = { name: 'Calibri', size: o.sz || 11, bold: !!o.b, color: { argb: o.fc || 'FF000000' } };
+    if (o.bg) cell.fill = solid(o.bg);
+    cell.alignment = { horizontal: o.h || 'left', vertical: 'middle', wrapText: !!o.wrap };
+    if (o.bd) cell.border = o.bdx || boxB(o.bd);
+    if (o.nf) cell.numFmt = o.nf;
+    return cell;
+  }
+  // gabung sel + beri gaya ke seluruh sel dalam rentang (agar garis & warna rata)
+  function putM(ws, r1, c1, r2, c2, v, o) {
+    for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) put(ws, r, c, (r === r1 && c === c1) ? v : null, o);
+    if (r1 !== r2 || c1 !== c2) ws.mergeCells(r1, c1, r2, c2);
+  }
+  const NF0 = '#,##0', NFDASH = '#,##0;-#,##0;"-"', NFPAR = '#,##0;(#,##0)', NFSEL = '+#,##0;-#,##0;0';
+
+  // ---- sheet 1: JADWAL (minggu ini + minggu depan) ----
+  function sheetJadwal(wb, jw, who, today) {
+    const ws = wb.addWorksheet('JADWAL'); ws.views = [{ showGridLines: false }];
+    ws.getColumn(1).width = 22; for (let c = 2; c <= 8; c++) ws.getColumn(c).width = 14.5;
+    const BD = 'FFB8BFD6';
+    putM(ws, 1, 1, 1, 8, 'JADWAL KIRIM SAY BREAD', { sz: 15, b: true, fc: 'FF312E81' });
+    putM(ws, 2, 1, 2, 8, who + ' \u00b7 dibuat ' + nowJkt(), { fc: 'FF555555' });
+    let r = 4;
+    const curMon = monIso(today), weeks = [{ mon: curMon, lb: 'MINGGU INI (BERJALAN)' }, { mon: addDaysIso(curMon, 7), lb: 'MINGGU DEPAN' }];
+    weeks.forEach(w => {
+      const dd = (jw.days || []).filter(x => monIso(x.d) === w.mon);
+      if (!dd.length) return;
+      const dates = []; for (let i = 0; i < 7; i++) dates.push(addDaysIso(w.mon, i));
+      const by = {}; dd.forEach(x => by[x.d] = x.c || []);
+      let nz = 0, nt = 0, np = 0, nm = 0;
+      dd.forEach(x => { nm = Math.max(nm, (x.c || []).length); (x.c || []).forEach(c => { if (c) { nz++; nt += Number(c.n) || 0; np += Number(c.pb) || 0; } }); });
+      putM(ws, r, 1, r, 8, w.lb + ' \u00b7 ' + longId(w.mon) + ' \u2013 ' + longId(dates[6]) + ' \u00b7 ' + nz + ' zona \u00b7 ' + fid(nt) + ' toko \u00b7 ' + fid(np) + ' PB final', { sz: 12, b: true, fc: 'FFFFFFFF', bg: 'FF3730A3' });
+      ws.getRow(r).height = 18; r++;
+      put(ws, r, 1, 'HARI', { b: true, fc: 'FFFFFFFF', bg: 'FF1E1B4B', h: 'center', bd: BD });
+      dates.forEach((d, i) => put(ws, r, i + 2, HARI[dowIso(d)] + (d === today ? ' (HARI INI)' : ''), { b: true, fc: 'FFFFFFFF', bg: 'FF312E81', h: 'center', bd: BD }));
+      r++;
+      put(ws, r, 1, 'TANGGAL', { b: true, fc: 'FFFFFFFF', bg: 'FF1E1B4B', h: 'center', bd: BD });
+      dates.forEach((d, i) => put(ws, r, i + 2, shortId(d), { fc: 'FFFFFFFF', bg: 'FF4338CA', h: 'center', bd: BD, nf: '@' }));
+      r++;
+      const tt = dates.map(() => 0), tp = dates.map(() => 0);
+      for (let m = 0; m < nm; m++) {
+        put(ws, r, 1, 'ZONA KIRIM MOBIL ' + (m + 1), { b: true, bg: 'FFDFF5E8', bd: BD });
+        put(ws, r + 1, 1, 'TOTAL TOKO', { fc: 'FF666666', bg: 'FFF4FBF7', bd: BD });
+        put(ws, r + 2, 1, 'TOTAL PB FINAL', { fc: 'FF666666', bg: 'FFF4FBF7', bd: BD });
+        dates.forEach((d, i) => {
+          const c = (by[d] || [])[m], col = i + 2;
+          put(ws, r, col, c ? String(c.z) : null, { sz: 12, b: true, bg: 'FFDFF5E8', h: 'center', bd: BD, nf: '@' });
+          put(ws, r + 1, col, c ? Number(c.n) || 0 : null, { b: true, bg: 'FFFFFFFF', h: 'center', bd: BD });
+          put(ws, r + 2, col, c ? Number(c.pb) || 0 : null, { b: true, fc: 'FF1F8F52', bg: 'FFF4FBF7', h: 'center', bd: BD });
+          if (c) { tt[i] += Number(c.n) || 0; tp[i] += Number(c.pb) || 0; }
+        });
+        ws.getRow(r).height = 16.5; r += 3;
+      }
+      put(ws, r, 1, 'TOTAL TOKO / HARI', { b: true, bg: 'FFE3E6F8', bd: BD });
+      put(ws, r + 1, 1, 'TOTAL PB FINAL / HARI', { b: true, bg: 'FFE3E6F8', bd: BD });
+      dates.forEach((d, i) => {
+        const has = (by[d] || []).some(x => x);
+        put(ws, r, i + 2, has ? tt[i] : null, { b: true, bg: 'FFEEF0FB', h: 'center', bd: BD });
+        put(ws, r + 1, i + 2, has ? tp[i] : null, { b: true, fc: 'FF1F8F52', bg: 'FFEEF0FB', h: 'center', bd: BD });
       });
-      const tot = ['', 'TOTAL', 0, 0, 0, '']; sp.items.forEach(i => { tot[2] += i.stock; tot[3] += i.pb; tot[4] += i.sel; });
-      sc.forEach((c, ci) => { let a = 0, j = 0; sp.items.forEach(i => { a += i.pbc[ci]; j += i.jat[ci]; }); tot.push(a, j, a - j); });
-      ws.addRow(tot);
-      styleSheet(ws, nc, [70, 215, 80, 80, 80, 70].concat(sc.flatMap(() => [75, 75, 80])), HF);
-      const n = sp.items.length + 2; numCols(ws, 3, 5, n); numCols(ws, 7, nc, n); boldRow(ws, n, nc, TF);
-      for (let r = 1; r <= n; r++) ws.getCell(r, 1).numFmt = '@';
-      sp.items.forEach((i, k) => { const cell = ws.getCell(k + 2, 6); cell.font = { name: 'Calibri', size: 11, bold: true, color: { argb: i.sel < 0 ? 'FFB91C1C' : 'FF15803D' } }; cell.alignment = { vertical: 'middle', horizontal: 'center' }; });
-    }
-    const ob = d.outbound || {}, od = ob.dates || [];
-    if ((ob.items || []).length) {                                   // OUTBOUND: PB & sisa stok per tanggal kirim
-      const ws = wb.addWorksheet('OUTBOUND'), nc = 3 + od.length * 2 + 1, hd = ['Plu', 'Desc', 'STOCK AKHIR'];
-      od.forEach(x => hd.push('PB ' + dmy(x), 'STOK ' + dmy(x))); hd.push('TOTAL PB');
-      ws.addRow(hd);
-      const pbT = od.map(() => 0), stT = od.map(() => 0);
-      ob.items.forEach(i => {
-        let st = i.stock; const row = [i.plu, proper(i.ds), i.stock];
-        od.forEach((x, k) => { st -= i.pb[k]; pbT[k] += i.pb[k]; stT[k] += st; row.push(i.pb[k], st); });
-        row.push(i.tot); ws.addRow(row);
+      r += 3;
+    });
+    return ws;
+  }
+
+  // ---- sheet 2: SIMULASI OUTBOUND (tabel item x tanggal + PB PER ZONA) ----
+  function sheetSimulasi(wb, ob, title) {
+    const ws = wb.addWorksheet('SIMULASI OUTBOUND'); ws.views = [{ showGridLines: false }];
+    const od = ob.dates || [], nd = od.length, last = 3 + nd * 2 + 1, BD = 'FFC7CBE4';
+    [13.2, 27, 12, 10.1, 8.9, 10.1, 9.1, 11.4, 28.9, 9.1].forEach((w, i) => ws.getColumn(i + 1).width = w);
+    for (let c = 11; c <= last; c++) ws.getColumn(c).width = 9.1;
+    put(ws, 1, 1, 'SIMULASI OUTBOUND', { sz: 17, b: true, fc: 'FF3730A3' });
+    put(ws, 2, 1, 'PERIODE : ' + (title || ob.title || ''), { sz: 12, fc: 'FF475569' });
+    const H = { b: true, fc: 'FFFFFFFF', bg: 'FF3730A3', h: 'center', bd: BD, wrap: true }, HY = { b: true, fc: 'FF3B2F00', bg: 'FFFDE68A', h: 'center', bd: BD, wrap: true };
+    putM(ws, 4, 1, 5, 1, 'PLU', H); putM(ws, 4, 2, 5, 2, 'DESKRIPSI', H);
+    putM(ws, 4, 3, 5, 3, 'STOCK AKHIR\n' + dotYY(ob.stockDate), HY);
+    od.forEach((d, k) => {
+      const c = 4 + k * 2;
+      putM(ws, 4, c, 4, c + 1, isoDate(d), Object.assign({ nf: 'dd.mm.yyyy' }, H));
+      put(ws, 5, c, 'PB', H); put(ws, 5, c + 1, 'STOK', HY);
+    });
+    putM(ws, 4, last, 5, last, 'TOTAL PB', Object.assign({}, H, { bg: 'FF6D28D9' }));
+    ws.getRow(4).height = 16.5; ws.getRow(5).height = 15;
+    const stk = od.map(() => 0), pbT = od.map(() => 0);
+    ob.items.forEach((it, ri) => {
+      const r = 6 + ri, zb = ri % 2 ? 'FFF7F8FD' : 'FFFFFFFF'; let st = it.stock;
+      put(ws, r, 1, String(it.plu || ''), { fc: 'FF64748B', bg: zb, h: 'center', bd: BD, nf: '@' });
+      put(ws, r, 2, it.ds, { bg: zb, bd: BD });
+      put(ws, r, 3, it.stock, { bg: 'FFFFF7CC', h: 'right', bd: BD, nf: NF0 });
+      od.forEach((d, k) => {
+        st -= it.pb[k]; stk[k] += st; pbT[k] += it.pb[k]; const c = 4 + k * 2;
+        put(ws, r, c, it.pb[k] ? it.pb[k] : '-', { bg: zb, h: 'right', bd: BD, nf: NF0 });
+        put(ws, r, c + 1, st, { bg: 'FFFFF7CC', h: 'right', bd: BD, nf: NFPAR, fc: st < 0 ? 'FFC00000' : 'FF000000' });
       });
-      const tot = ['', 'TOTAL', ob.items.reduce((a, i) => a + i.stock, 0)];
-      od.forEach((x, k) => tot.push(pbT[k], stT[k])); tot.push(ob.items.reduce((a, i) => a + i.tot, 0));
-      ws.addRow(tot);
-      styleSheet(ws, nc, [70, 215, 90].concat(od.flatMap(() => [65, 75]), [80]), HF);
-      const n = ob.items.length + 2; numCols(ws, 3, nc, n); boldRow(ws, n, nc, TF);
-      for (let r = 1; r <= n; r++) ws.getCell(r, 1).numFmt = '@';
-    }
-    if ((ob.zones || []).length) {                                   // PB PER ZONA
-      const ws = wb.addWorksheet('PB PER ZONA');
-      ws.addRow(['Cabang', 'Tanggal Kirim', 'Zona', 'Jml Toko per Zona', 'PB (in ctn)', 'Jml Toko yang PB', 'Avg PB/Toko', 'Jarak Group', 'Area Kirim']);
-      ob.zones.forEach(z => ws.addRow([z.nama, z.jd ? isoDate(z.jd) : '', z.zn, z.n, z.pb, z.np, Math.round(z.avg), z.jarak, z.area]));
-      const gn = ob.zones.reduce((a, z) => a + z.n, 0), gp = ob.zones.reduce((a, z) => a + z.pb, 0), gnp = ob.zones.reduce((a, z) => a + z.np, 0);
-      ws.addRow(['TOTAL', '', '', gn, gp, gnp, gnp ? Math.round(gp / gnp) : 0, '', '']);
-      styleSheet(ws, 9, [150, 90, 50, 95, 80, 95, 85, 85, 200], HF);
-      const n = ob.zones.length + 2; numCols(ws, 4, 7, n); boldRow(ws, n, 9, TF);
-      for (let r = 2; r < n; r++) { ws.getCell(r, 2).numFmt = 'dd/mm/yyyy'; ws.getCell(r, 2).alignment = { vertical: 'middle', horizontal: 'center' }; ws.getCell(r, 3).alignment = { vertical: 'middle', horizontal: 'center' }; if (ob.zones[r - 2].pb > 300) ws.getCell(r, 5).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFECACA' } }; }
-    }
+      put(ws, r, last, it.tot, { b: true, bg: 'FFEDE9FE', h: 'right', bd: BD, nf: NF0 });
+    });
+    let r = 6 + ob.items.length; const TOT = { b: true, bg: 'FFE0E7FF', bd: BD, h: 'right', nf: NF0 };
+    putM(ws, r, 1, r, 2, 'TOTAL', Object.assign({}, TOT, { h: 'center', nf: null }));
+    put(ws, r, 3, ob.items.reduce((a, i) => a + i.stock, 0), TOT);
+    od.forEach((d, k) => { const c = 4 + k * 2; put(ws, r, c, pbT[k], TOT); put(ws, r, c + 1, stk[k], Object.assign({}, TOT, { nf: NFPAR, fc: stk[k] < 0 ? 'FFC00000' : 'FF000000' })); });
+    put(ws, r, last, ob.items.reduce((a, i) => a + i.tot, 0), TOT);
+    // PB PER ZONA
+    r += 2; put(ws, r, 1, 'PB PER ZONA', { sz: 13, b: true, fc: 'FF3730A3' }); r++;
+    const zh = ['CABANG', 'TANGGAL KIRIM', 'ZONA', 'JML TOKO\nPER ZONA', 'PB\n(IN CTN)', 'JML TOKO\nYANG PB', 'AVG\nPB/TOKO', 'JARAK\nGROUP', 'AREA KIRIM'];
+    zh.forEach((t, i) => put(ws, r, i + 1, t, Object.assign({}, H, i >= 7 ? { bg: 'FF0F766E' } : {})));
+    ws.getRow(r).height = 24; r++;
+    let prev = '', gn = 0, gp = 0, gnp = 0;
+    (ob.zones || []).forEach((z, ri) => {
+      gn += z.n; gp += z.pb; gnp += z.np;
+      const first = z.jd !== prev; prev = z.jd; const zb = ri % 2 ? 'FFF7F8FD' : 'FFFFFFFF';
+      const bdx = boxB(BD); if (first && ri > 0) bdx.top = bside('FF3730A3', 'medium');
+      const o = (e) => Object.assign({ bg: zb, bd: BD, bdx: bdx }, e);
+      put(ws, r, 1, z.nama, o());
+      put(ws, r, 2, z.jd ? isoDate(z.jd) : '', o({ b: true, nf: 'dddd, dd mmmm yyyy' }));
+      put(ws, r, 3, z.zn, o({ b: true, h: 'center' }));
+      put(ws, r, 4, z.n, o({ h: 'right', nf: NF0 }));
+      put(ws, r, 5, z.pb, z.pb > 300 ? o({ b: true, bg: 'FFFECACA', fc: 'FF991B1B', h: 'right', nf: NF0 }) : o({ b: true, h: 'right', nf: NF0 }));
+      put(ws, r, 6, z.np, o({ h: 'right', nf: NF0 }));
+      put(ws, r, 7, Math.round(z.avg), o({ h: 'right', nf: NF0 }));
+      const bj = Object.assign({}, bdx, { left: bside('FF0F766E', 'medium') });
+      put(ws, r, 8, z.jarak || '', { bg: 'FFCCFBF1', fc: 'FF134E4A', h: 'center', bd: BD, bdx: bj });
+      put(ws, r, 9, z.area || '', { bg: 'FFCCFBF1', fc: 'FF134E4A', bd: BD, bdx: bdx });
+      r++;
+    });
+    putM(ws, r, 1, r, 3, 'TOTAL', Object.assign({}, TOT, { h: 'center', nf: null }));
+    put(ws, r, 4, gn, TOT); put(ws, r, 5, gp, TOT); put(ws, r, 6, gnp, TOT); put(ws, r, 7, gnp ? Math.round(gp / gnp) : 0, TOT);
+    return ws;
+  }
+
+  // ---- sheet 3: PB PER CABANG (item x cabang) ----
+  function sheetPivot(wb, pv, title) {
+    const ws = wb.addWorksheet('PB PER CABANG'); ws.views = [{ showGridLines: false }];
+    const pc = pv.cabs || [], nc = 3 + pc.length, BD = 'FFC7CBE4';
+    ws.getColumn(1).width = 10.8; ws.getColumn(2).width = 28.9; for (let c = 3; c <= nc; c++) ws.getColumn(c).width = 12;
+    put(ws, 1, 1, 'PB PER CABANG', { sz: 17, b: true, fc: 'FF3730A3' });
+    put(ws, 2, 1, 'Minggu depan \u00b7 kirim ' + (title || ''), { sz: 12, fc: 'FF475569' });
+    const H = { b: true, fc: 'FFFFFFFF', bg: 'FF3730A3', h: 'center', bd: BD };
+    ['PLU', 'DESKRIPSI'].concat(pc.map(c => String(c.nama).toUpperCase()), ['TOTAL']).forEach((t, i) => put(ws, 4, i + 1, t, H));
+    pv.items.forEach((it, ri) => {
+      const r = 5 + ri;
+      put(ws, r, 1, String(it.plu || ''), { fc: 'FF64748B', bg: 'FFFFFFFF', h: 'center', bd: BD, nf: '@' });
+      put(ws, r, 2, it.ds, { bg: 'FFFFFFFF', bd: BD });
+      it.v.forEach((v, k) => put(ws, r, 3 + k, v, { bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NF0 }));
+      put(ws, r, nc, it.t, { b: true, bg: 'FFEDE9FE', h: 'right', bd: BD, nf: NF0 });
+    });
+    const r = 5 + pv.items.length, T = { b: true, bg: 'FFE0E7FF', bd: BD, h: 'right', nf: NF0 };
+    putM(ws, r, 1, r, 2, 'TOTAL', Object.assign({}, T, { h: 'center', nf: null }));
+    pv.tot.forEach((v, k) => put(ws, r, 3 + k, v, T)); put(ws, r, nc, pv.gt, T);
+    return ws;
+  }
+
+  // ---- sheet 4: STOCK-DC VS PB (urut SELISIH paling kecil / paling kurang di atas) ----
+  function sheetStock(wb, sp, title, stockDate) {
+    const ws = wb.addWorksheet('STOCK-DC VS PB'); ws.views = [{ showGridLines: false }];
+    const sc = sp.cabs || [], nc = 5 + sc.length * 3, BD = 'FFCDD3E6';
+    ws.getColumn(1).width = 30; [10.8, 10.8, 10.8, 10.1].forEach((w, i) => ws.getColumn(i + 2).width = w);
+    for (let c = 6; c <= nc; c++) ws.getColumn(c).width = 9.5;
+    put(ws, 1, 1, 'STOCK-DC vs PB', { sz: 17, b: true, fc: 'FF3730A3' });
+    put(ws, 2, 1, 'PERIODE : ' + (title || '') + (stockDate ? ' \u00b7 STOCK AKHIR ' + dotYY(stockDate) : ''), { sz: 12, fc: 'FF475569' });
+    const H = { b: true, fc: 'FFFFFFFF', bg: 'FF3730A3', h: 'center', bd: BD };
+    ['DESKRIPSI', 'STOCK-DC', 'TOTAL PB', 'SELISIH', 'STATUS'].forEach((t, i) => putM(ws, 4, i + 1, 5, i + 1, t, H));
+    sc.forEach((c, ci) => {
+      const b = 6 + ci * 3;
+      putM(ws, 4, b, 4, b + 2, String(c.nama).toUpperCase(), Object.assign({}, H, { bg: 'FF4F46E5' }));
+      put(ws, 5, b, 'PB', H); put(ws, 5, b + 1, 'JATAH', H); put(ws, 5, b + 2, 'KURANGI', Object.assign({}, H, { bg: 'FFB91C1C' }));
+    });
+    const items = sp.items.slice().sort((a, b) => (a.sel - b.sel) || (b.pb - a.pb) || String(a.ds).localeCompare(String(b.ds)));
+    items.forEach((i, ri) => {
+      const r = 6 + ri, bad = i.sel < 0;
+      put(ws, r, 1, i.ds, { bg: 'FFFFFFFF', bd: BD });
+      put(ws, r, 2, i.stock, { bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NFDASH });
+      put(ws, r, 3, i.pb, { bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NFDASH });
+      put(ws, r, 4, i.sel, { b: true, fc: bad ? 'FFB91C1C' : 'FF15803D', bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NFSEL });
+      put(ws, r, 5, bad ? 'KURANG' : 'CUKUP', { b: true, fc: bad ? 'FFB91C1C' : 'FF15803D', bg: bad ? 'FFFEE2E2' : 'FFDCFCE7', h: 'center', bd: BD });
+      sc.forEach((c, ci) => {
+        const b = 6 + ci * 3, pb = i.pbc[ci], j = i.jat[ci];
+        put(ws, r, b, pb ? pb : '-', { bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NFDASH });
+        put(ws, r, b + 1, pb ? j : '-', { bg: 'FFFFFFFF', h: 'right', bd: BD, nf: NFDASH });
+        put(ws, r, b + 2, pb > j ? j - pb : null, { b: true, fc: 'FFB91C1C', bg: pb > j ? 'FFFEE2E2' : 'FFFFFFFF', h: 'right', bd: BD, nf: NFDASH });
+      });
+    });
+    const r = 6 + items.length, T = { b: true, bg: 'FFE4E8FB', bd: BD, h: 'right' };
+    const ts = items.reduce((a, i) => a + i.stock, 0), tp = items.reduce((a, i) => a + i.pb, 0);
+    put(ws, r, 1, 'TOTAL', Object.assign({}, T, { h: 'center' }));
+    put(ws, r, 2, ts, Object.assign({ nf: NFDASH }, T)); put(ws, r, 3, tp, Object.assign({ nf: NFDASH }, T)); put(ws, r, 4, ts - tp, Object.assign({ nf: NFSEL }, T)); put(ws, r, 5, null, T);
+    sc.forEach((c, ci) => {
+      const b = 6 + ci * 3; let a = 0, j = 0; items.forEach(i => { a += i.pbc[ci]; j += i.jat[ci]; });
+      put(ws, r, b, a, Object.assign({ nf: NFDASH }, T)); put(ws, r, b + 1, j, Object.assign({ nf: NFDASH }, T)); put(ws, r, b + 2, j - a, Object.assign({ nf: NFDASH }, T));
+    });
+    return ws;
+  }
+
+  async function buildMasterBook(d, jw, who, today) {
+    const EJ = await loadExcelJS(), wb = new EJ.Workbook(), ob = d.outbound || {};
+    if (jw && (jw.days || []).length) sheetJadwal(wb, jw, who, today);
+    if ((ob.items || []).length) sheetSimulasi(wb, ob, d.title);
+    const pv = d.pivot || {};
+    if ((pv.items || []).length) sheetPivot(wb, pv, d.title);
+    const sp = d.stock || {};
+    if ((sp.items || []).length) sheetStock(wb, sp, d.title, ob.stockDate);
+    const b = await buildRekapBook({ names: d.names, rows: d.rows }, true, wb);   // FIX PB + PERLU REVISI
     return { wb: wb, bad: b.bad };
   }
 
@@ -281,7 +443,11 @@
     async getStockPlan(token, force) { return rpc('get_stock_plan', { p_force: !!force }); },
     async getOutbound(token, force, w) { return rpc('get_outbound', { p_force: !!force, p_w: w === 'cur' ? 'cur' : 'next' }); },
     async exportMaster() {
-      const d = await rpc('export_master'), m = await buildMasterBook(d);
+      const d = await rpc('export_master'), today = todayJkt();
+      let jw = null, who = 'Administrator \u00b7 SEMUA CAB';
+      try { const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]); jw = mergeJadwal(r[0], r[1], today); } catch (e) { jw = null; }   // sheet JADWAL dilewati bila gagal dimuat
+      try { const u = await me(); who = u.name + ' \u00b7 ' + (u.admin ? 'SEMUA CAB' : u.cabs.join(', ')); } catch (e) { /* pakai teks bawaan */ }
+      const m = await buildMasterBook(d, jw, who, today);
       return { name: 'Master PB ' + d.title + '.xlsx', b64: await toB64(m.wb), bad: m.bad };
     },
     async getInfo() { return rpc('get_info'); },

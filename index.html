@@ -648,6 +648,14 @@ nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   #pv_seg button{flex:1;padding:7px 4px;font-size:12px}
   #e_q{max-width:none!important;flex:1 1 100%}
 }
+
+/* ===== Perbaikan: header lebih tinggi, tidak bertumpuk dengan logo & pita batik ===== */
+header{padding:14px 16px 22px!important}
+header .brand{min-height:52px;gap:12px}
+header .brand .lg{width:44px!important;height:44px!important}
+header h1{font-size:18px!important;line-height:1.2}
+header .brand small{font-size:11px!important;margin-top:2px}
+@media(max-width:700px){header{padding:10px 10px 20px!important}header .brand .lg{width:38px!important;height:38px!important}header h1{font-size:15px!important}}
 </style>
 </head>
 <body>
@@ -1334,7 +1342,7 @@ function init(d,keep,lazy){
   {const ad=!!(D.user&&D.user.admin);$('#m_items').style.display=ad?'':'none';$('#j_adm').style.display=ad?'':'none';$('#j_seg').style.display=ad?'':'none';if(!ad)jTab('jd')}
   if(!$('#filters').children.length)buildFilters();
   KEYS.forEach(k=>SEL[k]=new Set());
-  if(old)KEYS.forEach(k=>{const m=new Map(D.d[k].map((x,i)=>[k==='tk'?x[0]+SEP+x[1]:x,i]));old[k].forEach(v=>{if(m.has(v))SEL[k].add(m.get(v))})});
+  if(old)KEYS.forEach(k=>{const m=new Map(D.d[k].map((x,i)=>[k==='tk'?x[0]+SEP+x[1]:x,i]));old[k].forEach(v=>{if(m.has(v)&&!(k==='bas'&&SEL[k].size))SEL[k].add(m.get(v))})});
   cascade();updBtns();
   // saat penyegaran diam-diam di halaman lain, tabel tidak perlu digambar ulang sekarang
   if(lazy&&VIEW!=='lap')PRENDER=true;else render();
@@ -1361,14 +1369,14 @@ function buildFilters(){
   $('#filters').innerHTML=KEYS.map(k=>`<div class="field" data-k="${k}"><label>${LABEL[k]}</label>
   <button type="button" class="dd-btn"><span>Semua</span><i>▾</i></button>
   <div class="dd-panel"><input class="dd-search" placeholder="Cari…">
-  <div class="dd-act"><a data-a="all">Pilih semua hasil</a><a data-a="none">Kosongkan</a></div>
+  <div class="dd-act">${k==='bas'?'':'<a data-a="all">Pilih semua hasil</a>'}<a data-a="none">Kosongkan</a></div>
   <div class="dd-list"></div></div></div>`).join('');
   document.querySelectorAll('.field').forEach(f=>{
     const k=f.dataset.k,s=f.querySelector('.dd-search'),l=f.querySelector('.dd-list');
     f.querySelector('.dd-btn').onclick=e=>{e.stopPropagation();const o=f.classList.contains('open');closeAll();if(!o){f.classList.add('open');s.value='';renderList(k);s.focus()}};
     f.querySelector('.dd-panel').onclick=e=>e.stopPropagation();
     s.oninput=()=>renderList(k);
-    l.onchange=e=>{const v=+e.target.dataset.v;e.target.checked?SEL[k].add(v):SEL[k].delete(v);onSel()};
+    l.onchange=e=>{const v=+e.target.dataset.v;if(k==='bas'){SEL[k].clear();if(e.target.checked)SEL[k].add(v);onSel();f.classList.remove('open');return}e.target.checked?SEL[k].add(v):SEL[k].delete(v);onSel()};
     f.querySelector('.dd-act').onclick=e=>{
       const a=e.target.dataset.a;if(!a)return;
       if(a==='none')SEL[k].clear();else visible(k).forEach(v=>SEL[k].add(v));
@@ -1379,7 +1387,7 @@ function buildFilters(){
 function visible(k){const q=document.querySelector(`.field[data-k=${k}] .dd-search`).value.toLowerCase();return OPT[k].filter(v=>!q||DL[k][v].toLowerCase().includes(q))}
 function renderList(k){
   const v=visible(k),MAX=200,l=document.querySelector(`.field[data-k=${k}] .dd-list`);
-  l.innerHTML=v.slice(0,MAX).map(i=>`<label class="opt"><input type="checkbox" data-v="${i}" ${SEL[k].has(i)?'checked':''}><span>${esc(DL[k][i]||'(kosong)')}</span></label>`).join('')
+  l.innerHTML=v.slice(0,MAX).map(i=>`<label class="opt"><input type="${k==='bas'?'radio':'checkbox'}" name="dd_${k}" data-v="${i}" ${SEL[k].has(i)?'checked':''}><span>${esc(DL[k][i]||'(kosong)')}</span></label>`).join('')
    +(v.length>MAX?`<div class="note">+${v.length-MAX} lainnya — ketik untuk mencari</div>`:'')+(v.length?'':'<div class="note">Tidak ada pilihan</div>');
 }
 function updBtns(){KEYS.forEach(k=>{const n=SEL[k].size;document.querySelector(`.field[data-k=${k}] .dd-btn span`).textContent=n===0?'Semua':n===1?(DL[k][[...SEL[k]][0]]||'(kosong)'):n+' dipilih'})}
@@ -1555,8 +1563,17 @@ function zsBuild(p){
 ['a','x'].forEach(zsBuild);
 ZS.a.onpick=()=>{KETM=false;aCheck()};
 document.addEventListener('click',()=>document.querySelectorAll('.zs.open').forEach(x=>x.classList.remove('open')));
+/* zona yang punya toko di CAB terpilih (dan dijadwalkan minggu depan) */
+function zonesForCab(cab){
+  const all=((D.zoneOpts&&D.zoneOpts.length)?D.zoneOpts:[...new Set(D.d.zn.filter(Boolean))].sort()).slice();
+  if(!cab)return all;
+  const have=new Set();
+  Object.keys(D.stores||{}).forEach(k=>{const s=D.stores[k];if(s&&s[1]===cab&&s[3])have.add(nrm(s[3]))});
+  if(!have.size)return all;
+  return all.filter(z=>have.has(nrm(z)));
+}
 function fillZona(sel,cur){
-  const p=sel.charAt(1),list=((D.zoneOpts&&D.zoneOpts.length)?D.zoneOpts:[...new Set(D.d.zn.filter(Boolean))].sort()).slice();
+  const p=sel.charAt(1),list=(p==='a'?zonesForCab(curCab()):((D.zoneOpts&&D.zoneOpts.length)?D.zoneOpts:[...new Set(D.d.zn.filter(Boolean))].sort()).slice());
   if(cur&&list.indexOf(cur)<0)list.unshift(cur);
   ZS[p].opts=list;ZS[p].set(cur||'');
 }
@@ -1564,7 +1581,7 @@ function pickKode(kodeSel,basSel,tokoSel,znSel,cabSel){
   const k=$(kodeSel).value.trim().toUpperCase(),p=znSel.charAt(1),s=(D.stores||{})[k];
   if(s){
     $(tokoSel).value=String(s[0]||'').toUpperCase();
-    if(cabSel&&s[1]&&[...$(cabSel).options].some(o=>o.value===s[1])&&$(cabSel).value!==s[1]){$(cabSel).value=s[1];fillBas(basSel,s[1],'')}
+    if(cabSel&&s[1]&&[...$(cabSel).options].some(o=>o.value===s[1])&&$(cabSel).value!==s[1]){$(cabSel).value=s[1];fillBas(basSel,s[1],'');if(p==='a')fillZona('#a_zn','')}
     if(s[2]){const b=$(basSel);if([...b.options].some(o=>o.value===s[2]))b.value=s[2]}
     if(s[3]){if(p!=='a')ZS[p].set(s[3]);else if(!ZS.a.val){const zo=(D.zoneOpts||[]).find(o=>nrm(o)===nrm(s[3]));if(zo)ZS.a.set(zo)}}
     return;
@@ -1634,7 +1651,7 @@ function aCheck(){
 }
 $('#a_kets').onchange=()=>{KUSER=true;KETM=false;aCheck()};
 $('#a_ket').addEventListener('input',()=>{KETM=true});
-$('#a_cab').onchange=()=>fillBas('#a_bas',curCab(),'');
+$('#a_cab').onchange=()=>{fillBas('#a_bas',curCab(),'');fillZona('#a_zn','');KETM=false;aCheck()};
 $('#a_kode').oninput=()=>{pickKode('#a_kode','#a_bas','#a_toko','#a_zn','#a_cab');KETM=false;aCheck()};
 $('#a_rs').onclick=()=>initAdd();
 $('#m_add').onclick=()=>{initAdd();$('#ovA').classList.add('show')};
@@ -2183,7 +2200,7 @@ function loadStk(force){
   if(STK&&!force){renderStk();return}
   if(STKB)return;STKB=true;
   $('#stk_out').innerHTML='<div class="card empty" style="margin-top:10px"><span class="spin"></span><div>Menghitung Stock-DC vs PB…</div></div>';
-  run('getStockPlan',[TOKEN,!!force],r=>{STKB=false;STK=r;renderStk()},e=>{STKB=false;$('#stk_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat Stock-DC vs PB:<br>'+esc((e&&e.message)||e)+'</div>'});
+  run('getStockPlan',[TOKEN,!!force],r=>{STKB=false;if(r&&r.items)r.items.sort((a,b)=>(a.sel-b.sel)||(b.pb-a.pb)||String(a.ds).localeCompare(String(b.ds)));STK=r;renderStk()},e=>{STKB=false;$('#stk_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat Stock-DC vs PB:<br>'+esc((e&&e.message)||e)+'</div>'});
 }
 function renderStk(){
   const R=STK;if(!R)return;
