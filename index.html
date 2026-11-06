@@ -711,6 +711,17 @@ h3 .ic{width:1.1em;height:1.1em;vertical-align:-.17em;margin-right:.45em}
 
 .bstb td{white-space:normal;word-break:break-word;padding:4px 5px}
 .bstb th{padding:6px 5px}
+
+/* Header: logo di kiri, chip & tombol di sisi kanan logo (2 baris rapi, rata kanan) */
+.hright{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:1;min-width:0}
+@media(min-width:701px){
+  header .wrap{flex-wrap:nowrap;gap:20px;align-items:center;justify-content:space-between}
+  header .brand{flex:none}
+  .hright .chips{justify-content:flex-end;gap:8px;flex-wrap:wrap}
+  header .chip{display:inline-flex;align-items:center;gap:6px;min-height:28px;padding:3px 12px;box-sizing:border-box;white-space:nowrap}
+  header .chip.solid{gap:8px}
+}
+@media(max-width:700px){.hright{display:contents}}
 </style>
 </head>
 <body>
@@ -829,8 +840,10 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 <div id="app" style="display:none">
 <header><svg class="hbg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#batikH)"/></svg><svg class="hband" aria-hidden="true"><rect width="100%" height="9" fill="url(#tbandH)"/></svg><div class="wrap">
   <div class="brand"><svg class="lg"><use href="#logoH"/></svg><div><h1>PB SAY BREAD</h1><small>Jawa Timur</small></div></div>
-  <div class="chips"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="upd">Memuat…</span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Unggah Data</a></span>
-  <span class="chip solid"><a id="rl" style="margin:0">Muat ulang</a> · <a id="lo" style="margin:0">Keluar</a></span></div>
+  <div class="hright"><div class="chips ch1"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="upd">Memuat…</span></div>
+  <div class="chips ch2"><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Unggah Data</a></span>
+  <span class="chip solid"><a id="rl" style="margin:0">Muat ulang</a> · <a id="lo" style="margin:0">Keluar</a></span></div></div>
+</div>
 </div></header>
 <nav><div class="wrap">
   <button class="nb on" id="nbL"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-bar"/></svg></span><span class="nt">Input PB</span></button>
