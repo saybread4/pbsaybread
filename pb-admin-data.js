@@ -41,7 +41,7 @@
     stock:         { n: 'STOCK',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'plu',a:'plu',t:'plu'},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'jenis',a:'jenis'},{k:'stock_qty',a:'stockqty,stock,qty,stok',t:'num',r:1}] },
     sales:         { n: 'SALES',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'sales_qty',a:'salesqty,sales,qty',t:'num',r:1}] },
     stock_dc:      { n: 'STOCK-DC',      tgl: true,  c: [{k:'plu',a:'pludc,plu',t:'plu',r:1,u:1},{k:'description',a:'description,deskripsi',r:1},{k:'stok_akh',a:'stokakh,stok,stock',t:'num',r:1}] },
-    toko_zona:     { n: 'TOKO PER ZONA', c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'cab',a:'cab',t:'upper',r:1},{k:'zona',a:'zona'}] },
+    toko_zona:     { n: 'TOKO PER ZONA', c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'cab',a:'cab',t:'upper',r:1},{k:'zona',a:'zona'},{k:'ket',a:'ket,keterangan',p:1}] },
     bas:           { n: 'BAS',           c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'cab_pnl',a:'cabpnl'},{k:'cabang',a:'cabang'},{k:'bam',a:'bam'},{k:'bas',a:'bas'}] },
     toko_per_item: { n: 'TOKO PER ITEM', c: [{k:'cab',a:'cab',t:'upper',r:1},{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'deskripsi',a:'deskripsi,item',r:1},{k:'frac',a:'frac',t:'num',r:1}] },
     item:          { n: 'ITEM',          c: [{k:'plu',a:'plu',t:'plu',r:1,u:1},{k:'deskripsi',a:'deskripsi',r:1},{k:'jenis',a:'jenis'},{k:'frc',a:'frc,frac',t:'num'}] },
@@ -96,6 +96,7 @@
       if (bad) { out.err.push(bad); return; }
       const uk = cfg.c.filter(c => c.u).map(c => String(o[c.k]).toUpperCase()).join('|');
       if (uk) { if (seen.has(uk)) { out.dup++; return; } seen.add(uk); }
+      for (const c of cfg.c) if (c.p && idx[c.k] < 0) delete o[c.k];
       out.rows.push(o);
     });
     if (!out.rows.length && !out.err.length) out.err.push('Tidak ada baris data yang valid.');
@@ -156,20 +157,23 @@
       if (!R) return;
       const tabel = $o('#dT').value, cfg = T[tabel], tgl = cfg.tgl ? $o('#dTgl').value : null;
       if (cfg.tgl && !tgl) return toast('Pilih tanggal data', true);
-      if (!confirm('Isi ' + cfg.n + ' yang lama akan DIGANTI dengan ' + R.length.toLocaleString('id-ID') + ' baris baru. Lanjut?')) return;
-      const btn = $o('#dOk'); btn.disabled = true;
-      const CH = 4000;
-      try {
-        for (let i = 0; i < R.length; i += CH) {
-          btn.textContent = 'Mengunggah ' + Math.min(i + CH, R.length).toLocaleString('id-ID') + '/' + R.length.toLocaleString('id-ID') + '…';
-          await new Promise((ok, no) => run('gantiData', [TOKEN, tabel, R.slice(i, i + CH), i === 0 ? 'replace' : 'append', tgl], ok, no));
+      const msg = 'Isi ' + cfg.n + ' yang lama akan DIGANTI dengan ' + R.length.toLocaleString('id-ID') + ' baris baru. Lanjut?';
+      const go = async () => {
+        const btn = $o('#dOk'); btn.disabled = true;
+        const CH = 4000;
+        try {
+          for (let i = 0; i < R.length; i += CH) {
+            btn.textContent = 'Mengunggah ' + Math.min(i + CH, R.length).toLocaleString('id-ID') + '/' + R.length.toLocaleString('id-ID') + '…';
+            await new Promise((ok, no) => run('gantiData', [TOKEN, tabel, R.slice(i, i + CH), i === 0 ? 'replace' : 'append', tgl], ok, no));
+          }
+          ov.remove(); toast('' + cfg.n + ': ' + R.length.toLocaleString('id-ID') + ' baris tersimpan');
+          loadData(true);
+        } catch (er) {
+          btn.textContent = 'Unggah'; btn.disabled = false;
+          toast('Gagal di tengah jalan: ' + ((er && er.message) || er) + '. Unggah ulang file yang sama sampai berhasil.', true);
         }
-        ov.remove(); toast('' + cfg.n + ': ' + R.length.toLocaleString('id-ID') + ' baris tersimpan');
-        loadData(true);
-      } catch (er) {
-        btn.textContent = 'Unggah'; btn.disabled = false;
-        toast('Gagal di tengah jalan: ' + ((er && er.message) || er) + '. Unggah ulang file yang sama sampai berhasil.', true);
-      }
+      };
+      if (typeof pbConfirm === 'function') pbConfirm(msg, go, 'Ya, ganti'); else go();
     };
     hint();
   };
