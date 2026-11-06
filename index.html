@@ -722,6 +722,21 @@ h3 .ic{width:1.1em;height:1.1em;vertical-align:-.17em;margin-right:.45em}
   header .chip.solid{gap:8px}
 }
 @media(max-width:700px){.hright{display:contents}}
+
+/* Header: chip & tombol lebih kecil */
+@media(min-width:701px){
+  header .chip{min-height:22px;padding:1px 9px;font-size:10.5px;gap:5px}
+  header .chip .ic{width:12px;height:12px}
+  header .chip.solid{gap:6px}
+  .hright{gap:4px}.hright .chips{gap:6px}
+  #web.chip,#web.chip.off{padding:1px 8px 1px 10px}
+  #web #webT{gap:6px}
+  #web .sw{width:30px;height:16px}
+  #web .sw i{top:2px;left:2px;width:12px;height:12px}
+  #web .sw.on i{transform:translateX(14px)}
+  #web .swt{min-width:50px}
+  header .brand .lg{width:32px!important;height:32px!important}
+}
 </style>
 </head>
 <body>
@@ -1271,7 +1286,7 @@ function loadInfo(force){
 }
 function renderInfo(){
   if(!INFO)return;
-  const q=$('#i_q').value.trim().toLowerCase(),S=INFO.sections;
+  const q=$('#i_q').value.trim().toLowerCase(),S=(()=>{const o=['baru','cek','nozona','noaktif'],r=i=>{const k=o.indexOf(i);return k<0?99:k};return INFO.sections.map((x,i)=>[x,i]).sort((a,b)=>r(a[0].id)-r(b[0].id)||a[1]-b[1]).map(x=>x[0])})();   /* urutan: Toko Baru, CEK TOKO, lalu lainnya */
   const tiles=S.map(s=>`<div${s.id==='baru'?' style="background:#fff3bf;border-color:#f0b400"':s.id==='cek'?' style="background:#ffe3e3;border-color:#d92d2d"':''}><small>${esc(s.title)}</small><b>${s.rows.length}</b></div>`).join('')+`<div><small>Toko aktif</small><b>${INFO.aktif}</b></div>`;
   const card=s=>{
     const rows=q?s.rows.filter(r=>r.join(' ').toLowerCase().indexOf(q)>-1):s.rows;
