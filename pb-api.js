@@ -460,6 +460,7 @@
       return { name: 'Master PB ' + d.title + '.xlsx', b64: await toB64(m.wb), bad: m.bad };
     },
     async getInfo() { return rpc('get_info'); },
+    async daftarBas(token, items) { return rpc('daftar_bas', { p_items: items || [] }); },   // daftarkan BAS untuk toko baru (admin: semua; user: cabang sendiri)
     async getJadwalSheet() { return rpc('get_jadwal_sheet'); },
     async saveJadwalDates(token, edits) { await rpc('save_jadwal_dates', { p_edits: edits || [] }); return true; },
     async snapNow() { try { await rpc('snap_jadwal', { p_force: false }); } catch (e) { /* abaikan */ } return true; }   // tidak diperlukan lagi: data dihitung langsung di database

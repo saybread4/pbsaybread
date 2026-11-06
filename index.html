@@ -830,6 +830,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <!-- ===== Input PB ===== -->
   <div id="vLap">
     <div class="card">
+      <div id="noBas" style="display:none"></div>
       <div id="filters"></div>
       <div class="bar">
         <button class="b s" id="bReset"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg>Reset</button>
@@ -1203,7 +1204,7 @@ window.__blk=7;
 /* ---------- Filter jadwal MINGGU 1 / MINGGU 2 / PRIORITAS (admin) ---------- */
 function updWk(){
   const wk=$('#wk'),adm=!!(D&&D.user&&D.user.admin),w=(D&&D.weeks)||[];
-  wk.style.display=(adm||w.length||D.weekAuto)?'':'none';
+  wk.style.display=adm?'':'none';   /* chip filter jadwal hanya untuk administrator */
   wk.innerHTML=''+ic('cal')+''+(D.weekAuto?'Otomatis · ':'')+esc(w.length?w.join(', '):'Semua jadwal')+(D.weekAuto&&D.tgt?' · kirim '+esc(jMid(D.tgt[0])):'')+(adm?' <a id="wkE">Ubah</a>':'');
   if(adm)$('#wkE').onclick=openWk;
 }
@@ -1246,11 +1247,57 @@ function renderInfo(){
     const rows=q?s.rows.filter(r=>r.join(' ').toLowerCase().indexOf(q)>-1):s.rows;
     const num=s.cols.map(c=>c==='ITEM'||c==='SALES');
     const hot=s.id==='baru',red=s.id==='cek';
-    const body=rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>`<th${num[i]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>`<td${num[i]?' class="r"':''}>${esc(v)}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':''+ic('check')+'Tidak ada temuan.'}</div>`;
+    const body=hot&&rows.length?baruBody(rows):rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>`<th${num[i]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>`<td${num[i]?' class="r"':''}>${esc(v)}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':''+ic('check')+'Tidak ada temuan.'}</div>`;
     return `<div class="card" style="margin-top:8px${hot?';background:#fff8db;border:2px solid #f0b400':red?';background:#fff0f0;border:2px solid #d92d2d':''}"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b${hot?' style="font-size:14px"':red?' style="font-size:14px;color:#c01f1f"':''}>${hot?''+ic('star','star')+'':red?''+ic('dot','dot-off')+'':''}${esc(s.title)}</b><span class="cnt">${rows.length}${q&&rows.length!==s.rows.length?' / '+s.rows.length:''} data</span></div><div class="note" style="padding:2px 0 0">${esc(s.desc)}</div>${body}</div>`;
   };
   $('#i_out').innerHTML=`<div class="sum">${tiles}</div><div class="igrid">${S.map(card).join('')}</div>`;
   $('#i_cnt').textContent='Diperiksa: '+INFO.updated;
+}
+
+/* ---------- Toko Baru: daftarkan BAS langsung dari halaman Info ---------- */
+let BASIN={};
+function basOpts(cab){
+  const m=(D&&D.basByCab)||{};let a=[];
+  if(cab&&m[cab])a=m[cab];else Object.keys(m).forEach(k=>a=a.concat(m[k]));
+  return [...new Set(a)].sort((x,y)=>x.localeCompare(y,'id',{numeric:true}));
+}
+function baruBody(rows){
+  const cabs=[...new Set(rows.map(r=>r[0]))];
+  const dls=cabs.map((c,i)=>`<datalist id="dlb${i}">${basOpts(c).map(b=>`<option value="${esc(b)}">`).join('')}</datalist>`).join('');
+  const filled=rows.filter(r=>(BASIN[r[1]]||'').trim()).length;
+  const tr=rows.map(r=>{const i=cabs.indexOf(r[0]);
+    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td style="min-width:230px"><input class="in bsin" list="dlb${i}" data-k="${esc(r[1])}" value="${esc(BASIN[r[1]]||'')}" placeholder="Pilih / ketik BAS (NIK-NAMA)" autocomplete="off" style="width:100%;padding:5px 8px"></td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 10px">${ic('check')}Simpan</button></td></tr>`}).join('');
+  return `<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5"><b>Info untuk semua pengguna:</b> toko di bawah ini <b>sudah tampil di halaman Input PB</b> dan bisa langsung di-PB-kan, tetapi kolom BAS-nya masih kosong. Pilih BAS dari daftar (atau ketik BAS baru) lalu klik <b>Simpan</b>. Setelah disimpan, toko otomatis masuk ke data BAS dan nama BAS muncul di Input PB, PB Manual, dan rekap.</div>`+
+    `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><button class="b p" id="bsAll" ${filled?'':'disabled'}>${ic('check')}Simpan semua yang terisi (${filled})</button></div>${dls}`+
+    `<div class="tw" style="max-height:50vh"><table style="min-width:640px"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
+}
+function saveBas(ks){
+  const items=ks.map(k=>({kode:k,bas:(BASIN[k]||'').trim()})).filter(x=>x.bas);
+  if(!items.length)return toast('Isi BAS terlebih dahulu',true);
+  run('daftarBas',[TOKEN,items],n=>{
+    items.forEach(x=>delete BASIN[x.kode]);
+    toast(n+' toko berhasil didaftarkan ke data BAS');
+    loadInfo(true);loadData(true,true);
+  });
+}
+$('#i_out').addEventListener('input',e=>{
+  const t=e.target;if(!t.classList||!t.classList.contains('bsin'))return;
+  BASIN[t.dataset.k]=t.value;
+  const b=$('#bsAll');if(b){const n=[...document.querySelectorAll('#i_out .bsin')].filter(x=>x.value.trim()).length;b.disabled=!n;b.lastChild.textContent='Simpan semua yang terisi ('+n+')'}
+});
+$('#i_out').addEventListener('click',e=>{
+  const sv=e.target.closest&&e.target.closest('.bssave');
+  if(sv){saveBas([sv.dataset.k]);return}
+  if(e.target.closest&&e.target.closest('#bsAll'))saveBas([...document.querySelectorAll('#i_out .bsin')].filter(x=>x.value.trim()).map(x=>x.dataset.k));
+});
+/* pemberitahuan di Input PB: toko yang belum punya BAS */
+function updNoBas(){
+  const el=$('#noBas');if(!el||!D)return;
+  const n=Object.keys(D.stores||{}).filter(k=>!D.stores[k][2]).length;
+  if(!n){el.style.display='none';el.innerHTML='';return}
+  el.style.display='';
+  el.innerHTML='<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:12px;line-height:1.5">'+ic('star','star')+'<b>'+n+' toko baru</b> belum punya nama BAS (kolom BAS kosong). Toko tetap bisa di-PB-kan. Untuk melengkapi BAS-nya, buka menu <a id="nbGo" style="cursor:pointer;color:var(--br2);text-decoration:underline;font-weight:700">Info</a> lalu daftarkan di bagian <b>Toko Baru</b>.</div>';
+  const g=$('#nbGo');if(g)g.onclick=()=>showView('info');
 }
 $('#i_q').oninput=renderInfo;
 $('#i_rl').onclick=()=>loadInfo(true);
@@ -1331,7 +1378,7 @@ function renderJadwal(){
   const tiles=`<div class="sum"><div><small>Minggu ini · Total toko</small><b>${f0(a.tk)}</b></div><div><small>Minggu ini · Total PB final</small><b>${f0(a.pb)}</b></div><div><small>Minggu ini · Toko sudah PB</small><b>${f0(a.np)} / ${f0(a.tk)}</b></div><div><small>Minggu depan · Total toko</small><b>${f0(b.tk)}</b></div><div><small>Minggu depan · Zona</small><b>${b.zc}</b></div></div>`;
   const uns=J.unsched&&J.unsched.length?`<div class="card" style="margin-top:8px;background:#fff8db;border-color:#f0b400;padding:6px 10px"><b>${ic('warn')}Zona punya toko tetapi belum terjadwal</b><div class="note" style="padding:3px 0 0">${J.unsched.map(u=>esc(u[0])+' ('+f0(u[1])+' toko'+(u[2]?' · '+f0(u[2])+' PB':'')+')').join(' · ')}</div></div>`:'';
   $('#j_out').innerHTML=tiles+block(a)+block(b)+uns;
-  $('#j_cnt').textContent='Diperbarui: '+J.updated+(J.sel&&J.sel.length?' · filter PB: '+J.sel.join(', '):'');
+  $('#j_cnt').textContent='Diperbarui: '+J.updated;
   $('#j_hit').textContent=filt?hits+' zona cocok':'';
 }
 function openJz(d,k){
@@ -1400,7 +1447,7 @@ function init(d,keep,lazy){
   updUpd();
   showApp(D.user);
   updWk();
-  updWeb();applyAccess();
+  updWeb();applyAccess();updNoBas();
   {const ad=!!(D.user&&D.user.admin);$('#m_items').style.display=ad?'':'none';$('#j_adm').style.display=ad?'':'none';$('#j_seg').style.display=ad?'':'none';if(!ad)jTab('jd')}
   if(!$('#filters').children.length)buildFilters();
   KEYS.forEach(k=>SEL[k]=new Set());
@@ -1409,6 +1456,7 @@ function init(d,keep,lazy){
   // saat penyegaran diam-diam di halaman lain, tabel tidak perlu digambar ulang sekarang
   if(lazy&&VIEW!=='lap')PRENDER=true;else render();
   if(VIEW==='add'){fillBas('#a_bas',curCab(),$('#a_bas').value);fillZona('#a_zn',$('#a_zn').value)}
+  if(VIEW==='info'&&!INFO)loadInfo(false);
   if(VIEW==='cab')loadCab(false);   // memuat ulang seluruh halaman Rekap Cabang (pivot, Stock-DC vs PB, daftar PB tidak sesuai, status) — bukan hanya status BAS
 }
 </script>
