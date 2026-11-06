@@ -669,6 +669,34 @@ h3 .ic{width:1.1em;height:1.1em;vertical-align:-.17em;margin-right:.45em}
 .e .ic{width:34px;height:34px;opacity:.55;margin:0}
 #lpe .ic{width:18px;height:18px;vertical-align:middle}
 .lfeats .ic{width:1em;height:1em;margin-right:.35em}
+
+/* ===== v9: ikon berwarna, tombol aksi PB Manual ringkas, header HP 3 baris ===== */
+.ic.i-bar{color:#6366f1}.ic.i-pen,.ic.i-pencil{color:#8b5cf6}.ic.i-truck{color:#f59e0b}.ic.i-building{color:#0ea5e9}.ic.i-info{color:#06b6d4}
+.ic.i-down{color:#10b981}.ic.i-up{color:#3b82f6}.ic.i-reset{color:#f97316}.ic.i-refresh{color:#14b8a6}.ic.i-eye,.ic.i-eyeoff{color:#64748b}
+.ic.i-spark{color:#ec4899}.ic.i-sheet{color:#16a34a}.ic.i-filetext{color:#2563eb}.ic.i-image{color:#d946ef}.ic.i-package{color:#b45309}
+.ic.i-cal{color:#ef4444}.ic.i-trash{color:#ef4444}.ic.i-plus{color:#22c55e}.ic.i-gear{color:#64748b}.ic.i-search{color:#6366f1}
+.ic.i-lock{color:#f59e0b}.ic.i-user{color:#3b82f6}.ic.i-store{color:#f97316}.ic.i-checkc,.ic.i-check{color:#22c55e}.ic.i-warn{color:#f59e0b}
+.ic.i-x{color:#ef4444}.ic.i-clip{color:#8b5cf6}.ic.i-inbox{color:#94a3b8}.ic.i-star{color:#f59e0b}.ic.i-zap{color:#eab308}
+.ic.i-expand,.ic.i-collapse,.ic.i-chev{color:#6366f1}
+/* di atas latar gelap/berwarna pekat, ikon tetap terbaca */
+.b.p .ic,.chip .ic,.chip.solid .ic{color:inherit!important}
+.chip .ic.i-cal{color:#ffd9a8!important}.chip .ic.i-user{color:#bfe3ff!important}.chip .ic.i-up{color:#b9f5d0!important}
+.nb:not(.on) .ni .ic{opacity:.9}
+/* tombol aksi PB Manual: .e .ic (ikon "kosong" 34px) tidak sengaja ikut mengenai tombol .ib.e */
+.mt td.ac{padding:1px 4px}
+.mt td.ac .ib{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;margin:0 1px;border-radius:7px;line-height:1}
+.mt td.ac .ib .ic,.ib.e .ic,.ib.d .ic{width:14px!important;height:14px!important;margin:0!important;opacity:1!important;vertical-align:middle}
+.mt td{padding-top:3px;padding-bottom:3px}
+/* header HP: baris 1 merek + Muat ulang/Keluar, baris 2-3 chip (boleh turun baris) */
+@media(max-width:700px){
+  header .wrap{position:relative}
+  header .brand{padding-right:158px;min-height:34px}
+  header .chips{flex-wrap:wrap!important;overflow:visible!important;margin:0!important;padding:0!important;gap:5px!important}
+  header .chip{white-space:normal;max-width:100%}
+  header .chip.solid{position:absolute!important;top:2px!important;right:0!important;z-index:5;display:inline-flex!important;align-items:center;gap:4px;white-space:nowrap;padding:5px 10px;font-size:11px}
+  header .chip.solid a{display:inline!important;visibility:visible!important}
+  header{padding-bottom:16px!important}
+}
 </style>
 </head>
 <body>
@@ -1003,7 +1031,24 @@ const COL={bas:0,tk:1,ds:2,zn:3,jd:4};
 let ALLOPEN=true,TOKEN=null,D=null,DL={},RK={},SEL={},OPT={},CUR=[],NODES=[],ROOT,ORD=[],PEND=new Map(),HZ=true,KT={},KB={},KZ={},MAN=[],MDESC=[],EID=null,VIEW='lap',ft,sv;
 let PRENDER=false,MAN_DIRTY=true,REK=null,JDW=null,JDW_BUSY=false,CABD=null,CAB_BUSY=false,BADD=null,PVD=null,PVB=false,PVW='next',SIM=null,SIMB=false,SIMW='next',SIMC={},STK=null,STKB=false,STKF=false;
 const $=s=>document.querySelector(s);
-const ic=(n,c)=>'<svg class="ic'+(c?' '+c:'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';   /* ikon SVG dari sprite */
+const ic=(n,c)=>'<svg class="ic i-'+n+(c?' '+c:'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';   /* ikon SVG dari sprite */
+
+/* Dialog konfirmasi sendiri: confirm() bawaan diblokir di iframe Google Sites (tanpa allow-modals) sehingga selalu dianggap "Batal" */
+function pbConfirm(msg,ok,okText){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
+  const bx=document.createElement('div');
+  bx.style.cssText='background:#fff;color:#1b1f3b;border-radius:14px;padding:18px;max-width:380px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:13.5px;line-height:1.5';
+  const p=document.createElement('div');p.style.cssText='white-space:pre-line;margin-bottom:14px';p.textContent=msg;
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;justify-content:flex-end';
+  const bc=document.createElement('button');bc.className='b s';bc.textContent='Batal';
+  const bo=document.createElement('button');bo.className='b p';bo.textContent=okText||'Lanjut';
+  row.append(bc,bo);bx.append(p,row);ov.append(bx);document.body.appendChild(ov);
+  bc.onclick=()=>ov.remove();
+  ov.onclick=e=>{if(e.target===ov)ov.remove()};
+  bo.onclick=()=>{ov.remove();ok()};
+  bo.focus();
+}
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const f0=n=>Number(n).toLocaleString('id-ID',{maximumFractionDigits:0});
 const fq=n=>n?String(n):'';
@@ -1123,9 +1168,11 @@ function updWeb(){
   $('#webT').innerHTML=D.open?''+ic('dot','dot-on')+'Input PB AKTIF · Nonaktifkan':''+ic('dot','dot-off')+'Input PB NONAKTIF · Aktifkan';
 }
 $('#webT').onclick=()=>{
+  if(!D)return;
   const to=!D.open;
-  if(!confirm(to?'Aktifkan kembali Input PB dan PB Manual untuk semua pengguna?':'Nonaktifkan Input PB dan PB Manual?'+NL+'Pengguna selain administrator tetap bisa login, tetapi Input PB dan PB Manual ditutup dan yang tampil langsung Jadwal Kirim. Jadwal Kirim, Info, dan Rekap BAS tetap bisa dipakai.'))return;
-  run('setWebOpen',[TOKEN,to],r=>{D.open=r.open;updWeb();toast(r.open?'Input PB & PB Manual diaktifkan':'Input PB & PB Manual dinonaktifkan')});
+  pbConfirm(to?'Aktifkan kembali Input PB dan PB Manual untuk semua pengguna?':'Nonaktifkan Input PB dan PB Manual?'+NL+NL+'Pengguna selain administrator tetap bisa login, tetapi Input PB dan PB Manual ditutup dan yang tampil langsung Jadwal Kirim. Jadwal Kirim, Info, dan Rekap BAS tetap bisa dipakai.',()=>{
+    run('setWebOpen',[TOKEN,to],r=>{D.open=r.open;updWeb();toast(r.open?'Input PB & PB Manual diaktifkan':'Input PB & PB Manual dinonaktifkan')});
+  },to?'Aktifkan':'Nonaktifkan');
 };
 </script>
 <script>
@@ -1477,7 +1524,7 @@ $('#bOpen').onclick=()=>{
   if(!ROOT||!CUR.length)return;
   const todo=ROOT.sk.filter(n=>!n.open),rows=todo.reduce((a,n)=>a+n.sk.length,0);
   if(!todo.length)return;
-  if(rows>1500&&!confirm('Membuka '+f0(rows)+' baris sekaligus bisa membuat halaman terasa berat.\nDisarankan mempersempit dengan filter lebih dulu.\n\nTetap buka semua?'))return;
+  if(rows>1500){pbConfirm('Membuka '+f0(rows)+' baris sekaligus bisa membuat halaman terasa berat.\nDisarankan mempersempit dengan filter lebih dulu.\n\nTetap buka semua?',openAll);return}
   openAll();
 };
 /* Buka semua: disusun sekali jalan (lebih cepat daripada menambah per-frame karena tata letak tabel dihitung sekali) */
@@ -1494,9 +1541,10 @@ function openAll(){
 $('#bFill').onclick=()=>{
   const t=CUR.filter(r=>!r[11]&&r[9]===0&&r[8]>0&&!(r[15]>0));
   if(!t.length)return toast('Tidak ada baris kosong yang punya rekomendasi');
-  if(!confirm('Isi PB_FINAL dengan PB_REKOM untuk '+t.length+' baris yang masih kosong (sesuai filter yang tampil)?'))return;
+  pbConfirm('Isi PB_FINAL dengan PB_REKOM untuk '+t.length+' baris yang masih kosong (sesuai filter yang tampil)?',()=>{
   t.forEach(r=>{r[9]=r[8];r[17]=0;PEND.set(r[13],{k:r[13],id:r[11],sr:r[10],kode:D.d.tk[r[1]][0],ds:D.d.ds[r[2]],v:r[8],auto:1})});
   REK=null;render();setStat('Menyimpan…');flush();
+  });
 };
 $('#bClose').onclick=()=>{OPENTK++;ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(n.open)closeNode(n,trOf(n))})};
 
@@ -2409,8 +2457,8 @@ function renderCab(){
   $('#c_cabs').textContent=R.csvCabs.join(' / ');
   const fo=$('#c_force');if(fo)fo.onclick=()=>dlCab(true);
 }
-function dlCab(force){
-  if(force&&!confirm('Belum semua cabang selesai. Tetap unduh data yang ada sekarang?'))return;
+function dlCab(force,okd){
+  if(force&&!okd){pbConfirm('Belum semua cabang selesai. Tetap unduh data yang ada sekarang?',()=>dlCab(true,true));return}
   const b=$('#c_dl');b.disabled=true;const t=b.textContent;b.textContent='Menyiapkan file…';toast('Menyiapkan file Excel, mohon tunggu…');
   const back=()=>{b.textContent=t;b.disabled=!(CABD&&CABD.allDone)};
   run('exportRekapCab',[TOKEN,!!force],r=>{
@@ -2487,10 +2535,10 @@ const dz=$('#c_drop');
 ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('on')}));
 dz.addEventListener('drop',e=>csvFile(e.dataTransfer.files[0]));
 $('#c_clr').onclick=()=>{CSVR=null;$('#c_file').value='';$('#c_prev').innerHTML='';$('#c_ok').disabled=true;$('#c_clr').disabled=true};
-$('#c_ok').onclick=()=>{
+function csvUp(okd){
   if(!CSVR)return;
   const cabs=[...new Set(CSVR.map(r=>r.cab))],had=cabs.filter(c=>(CABD&&CABD.cabs||[]).some(x=>x.cab===c&&x.n>0));
-  if(had.length&&!confirm('Data CSV lama untuk '+had.join(', ')+' akan DIGANTI dengan file ini. Lanjut?'))return;
+  if(had.length&&!okd){pbConfirm('Data CSV lama untuk '+had.join(', ')+' akan DIGANTI dengan file ini. Lanjut?',()=>csvUp(true));return}
   $('#c_ok').disabled=true;$('#c_ok').textContent='Mengunggah…';
   const rows=CSVR.map(r=>({cab:r.cab,kode:r.kode,plu:r.plu,ds:r.ds,fn:r.fn,ket:r.ket}));
   run('uploadCsvPB',[TOKEN,rows],r=>{
@@ -2498,7 +2546,8 @@ $('#c_ok').onclick=()=>{
     toast(''+f0(r.rows)+' baris untuk '+r.cabs.join(', ')+' tersimpan'+(r.unknown&&r.unknown.length?' · item tidak ada di sheet ITEM: '+r.unknown.join(', '):''));
     PVD=null;loadCab(true);
   },e=>{$('#c_ok').textContent='Upload';$('#c_ok').disabled=!CSVR;failH(e)});
-};
+}
+$('#c_ok').onclick=()=>csvUp(false);
 $('#c_tpl').onclick=()=>{
   const t='cab,KODE,PLU,DESKRIPSI,pb_final,KETR'+CR+NL+'GRS,KODE1,20078878,Choco Topping Pie,0,TURUN SESUAI TOKO'+CR+NL+'MLG,KODE2,20078886,Choco Stripe,0,TURUN DI TOKO KODE3 - NAMA TOKO'+CR+NL;
   save(new Blob([BOM+t],{type:'text/csv;charset=utf-8'}),'template_PB_cabang.csv');
@@ -2606,6 +2655,11 @@ function pbStart(){
 }
 // pb-api.js & supabase-js dimuat dengan defer (tidak menahan tampilan); jalankan setelah keduanya siap
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',pbStart);else pbStart();
+</script>
+<script>
+/* beri kelas i-<nama> pada ikon statis agar bisa diwarnai lewat CSS */
+(function(){function t(r){(r||document).querySelectorAll('svg.ic').forEach(function(v){var u=v.querySelector('use');if(!u)return;var h=(u.getAttribute('href')||'').replace('#i-','');if(h&&!v.classList.contains('i-'+h))v.classList.add('i-'+h)})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){t()});else t()})();
 </script>
 </body>
 </html>
