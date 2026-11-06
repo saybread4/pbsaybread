@@ -33,6 +33,16 @@
     return !(data && data.value === false);
   }
 
+  // filter bersama untuk Kelola Data: kode toko (pisah koma) + kata kunci
+  function dataFilter(q, o, forDelete) {
+    let used = false;
+    if (o.kode && o.kode.length && o.kodeCol) { q = q.in(o.kodeCol, o.kode); used = true; }
+    const w = String(o.q || '').replace(/[,()*%\\]/g, ' ').trim();
+    if (w && o.qcols && o.qcols.length) { q = q.or(o.qcols.map(c => c + '.ilike.%' + w + '%').join(',')); used = true; }
+    if (forDelete && !used) q = q.not(o.pk, 'is', null);   // hapus semua: butuh WHERE
+    return q;
+  }
+
   // ---------- Pembuat file Excel di browser (pengganti export lewat Google Sheets) ----------
   const EXCELJS = 'https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js';
   function loadExcelJS() {
@@ -427,6 +437,45 @@
     },
     async gantiData(token, tabel, rows, mode, tgl) {
       return rpc('ganti_data', { p_tabel: tabel, p: rows, p_mode: mode, p_tgl: tgl || null });
+    },
+    // ---- Kelola Data (administrator): tambah/perbarui, lihat, edit, hapus ----
+    async upsertData(token, tabel, rows, tgl) { return rpc('upsert_data', { p_tabel: tabel, p: rows, p_tgl: tgl || null }); },
+    async dataCount(token, o) {
+      let q = sb.from(o.t).select('*', { count: 'exact', head: true });
+      if (o.kode && o.kode.length && o.kodeCol) q = q.in(o.kodeCol, o.kode);
+      const { count, error } = await q; if (error) throw err(error); return count || 0;
+    },
+    async dataList(token, o) {
+      let q = sb.from(o.t).select(Array.from(new Set([o.pk].concat(o.cols))).join(','), { count: 'exact' });
+      q = dataFilter(q, o);
+      (o.order || []).forEach(c => { q = q.order(c, { ascending: true }); });
+      q = q.order(o.pk, { ascending: true }).range(o.from, o.to);
+      const { data, count, error } = await q; if (error) throw err(error);
+      return { rows: data || [], total: count || 0 };
+    },
+    async dataSave(token, o) {
+      const { data, error } = await sb.from(o.t).update(o.row).eq(o.pk, o.id).select(o.pk);
+      if (error) throw new Error(/row-level security/i.test(error.message) ? 'Hanya administrator yang boleh mengubah data.' : error.message);
+      if (!data || !data.length) throw new Error('Baris tidak ditemukan atau tidak boleh diubah.');
+      return true;
+    },
+    async dataInsert(token, o) {
+      const { error } = await sb.from(o.t).insert(o.row);
+      if (error) throw new Error(/duplicate key|unique/i.test(error.message) ? 'Data dengan kunci yang sama sudah ada.' : /row-level security/i.test(error.message) ? 'Hanya administrator yang boleh menambah data.' : error.message);
+      return true;
+    },
+    async dataDelete(token, o) {
+      let n = 0;
+      for (let i = 0; i < o.ids.length; i += 100) {
+        const { data, error } = await sb.from(o.t).delete().in(o.pk, o.ids.slice(i, i + 100)).select(o.pk);
+        if (error) throw err(error); n += (data || []).length;
+      }
+      return n;
+    },
+    async dataDeleteFilter(token, o) {
+      let q = sb.from(o.t).delete({ count: 'exact' });
+      const f = dataFilter(q, o, true);
+      const { count, error } = await f; if (error) throw err(error); return count || 0;
     },
     async uploadCsvPB(token, rows) { return rpc('upload_csv_pb', { p: rows }); },
     async getManual() { return rpc('get_manual'); },

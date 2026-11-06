@@ -856,7 +856,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 <header><svg class="hbg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#batikH)"/></svg><svg class="hband" aria-hidden="true"><rect width="100%" height="9" fill="url(#tbandH)"/></svg><div class="wrap">
   <div class="brand"><svg class="lg"><use href="#logoH"/></svg><div><h1>PB SAY BREAD</h1><small>Jawa Timur</small></div></div>
   <div class="hright"><div class="chips ch1"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="upd">Memuat…</span></div>
-  <div class="chips ch2"><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Unggah Data</a></span>
+  <div class="chips ch2"><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Kelola Data</a></span>
   <span class="chip solid"><a id="rl" style="margin:0">Muat ulang</a> · <a id="lo" style="margin:0">Keluar</a></span></div></div>
 </div>
 </div></header>
@@ -1078,7 +1078,7 @@ const ic=(n,c)=>'<svg class="ic i-'+n+(c?' '+c:'')+'" aria-hidden="true"><use hr
 
 /* Dialog konfirmasi sendiri: confirm() bawaan diblokir di iframe Google Sites (tanpa allow-modals) sehingga selalu dianggap "Batal" */
 function pbConfirm(msg,ok,okText){
-  const ov=document.createElement('div');
+  const ov=document.createElement('div');ov.id='pbCf';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px';
   const bx=document.createElement('div');
   bx.style.cssText='background:#fff;color:#1b1f3b;border-radius:14px;padding:18px;max-width:380px;width:100%;box-shadow:0 10px 30px rgba(0,0,0,.3);font-size:13.5px;line-height:1.5';
