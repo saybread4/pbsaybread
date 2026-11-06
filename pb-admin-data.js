@@ -109,7 +109,7 @@
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
     ov.innerHTML = '<div style="background:#fff;color:var(--tx,#111);border-radius:12px;padding:18px;max-width:560px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.3)">' +
-      '<b style="font-size:15px">⬆ Unggah Data</b>' +
+      '<b style="font-size:15px">'+ic('up')+'Unggah Data</b>' +
       '<div style="font-size:12px;color:var(--mu,#666);margin:4px 0 10px">Isi tabel yang dipilih akan <b>diganti seluruhnya</b> dengan data baru. Baris pertama harus judul kolom seperti di sheet Excel.</div>' +
       '<label>Data yang diunggah</label><select class="in" id="dT">' + Object.keys(T).map(k => '<option value="' + k + '">' + T[k].n + '</option>').join('') + '</select>' +
       '<div class="note" id="dH" style="padding:4px 0 8px"></div>' +
@@ -137,9 +137,9 @@
       else {
         R = a.rows;
         h += '<div class="note"><b>' + e(nama || 'Data tempelan') + '</b>: ' + a.rows.length.toLocaleString('id-ID') + ' baris siap diunggah ke ' + T[tabel].n + '.</div>';
-        if (a.fix) h += '<div class="note">✔ ' + a.fix + ' kode toko yang berubah jadi tanggal sudah dikembalikan (mis. 7-Feb menjadi FEB7).</div>';
-        if (a.dup) h += '<div class="note">ℹ ' + a.dup + ' baris dobel dilewati (baris pertama dipakai).</div>';
-        if (a.skip) h += '<div class="note">ℹ ' + a.skip + ' baris kosong dilewati.</div>';
+        if (a.fix) h += '<div class="note">'+ic('check')+'' + a.fix + ' kode toko yang berubah jadi tanggal sudah dikembalikan (mis. 7-Feb menjadi FEB7).</div>';
+        if (a.dup) h += '<div class="note">'+ic('info')+'' + a.dup + ' baris dobel dilewati (baris pertama dipakai).</div>';
+        if (a.skip) h += '<div class="note">'+ic('info')+'' + a.skip + ' baris kosong dilewati.</div>';
         $o('#dOk').disabled = false;
       }
       $o('#dPrev').innerHTML = h;
@@ -164,7 +164,7 @@
           btn.textContent = 'Mengunggah ' + Math.min(i + CH, R.length).toLocaleString('id-ID') + '/' + R.length.toLocaleString('id-ID') + '…';
           await new Promise((ok, no) => run('gantiData', [TOKEN, tabel, R.slice(i, i + CH), i === 0 ? 'replace' : 'append', tgl], ok, no));
         }
-        ov.remove(); toast('✅ ' + cfg.n + ': ' + R.length.toLocaleString('id-ID') + ' baris tersimpan');
+        ov.remove(); toast('' + cfg.n + ': ' + R.length.toLocaleString('id-ID') + ' baris tersimpan');
         loadData(true);
       } catch (er) {
         btn.textContent = 'Unggah'; btn.disabled = false;

@@ -649,16 +649,30 @@ nav{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   #e_q{max-width:none!important;flex:1 1 100%}
 }
 
-/* ===== Perbaikan: header lebih tinggi, tidak bertumpuk dengan logo & pita batik ===== */
-header{padding:14px 16px 22px!important}
-header .brand{min-height:52px;gap:12px}
-header .brand .lg{width:44px!important;height:44px!important}
-header h1{font-size:18px!important;line-height:1.2}
-header .brand small{font-size:11px!important;margin-top:2px}
-@media(max-width:700px){header{padding:10px 10px 20px!important}header .brand .lg{width:38px!important;height:38px!important}header h1{font-size:15px!important}}
+/* ===== Header ringkas: cukup tinggi agar tidak bertumpuk dengan pita batik ===== */
+header{padding:8px 16px 17px!important}
+header .brand{min-height:0;gap:10px}
+header .brand .lg{width:34px!important;height:34px!important}
+header h1{font-size:15.5px!important;line-height:1.15}
+header .brand small{font-size:10.5px!important;margin-top:1px}
+@media(max-width:700px){header{padding:6px 10px 14px!important}header .brand .lg{width:30px!important;height:30px!important}header h1{font-size:14px!important}}
+/* ===== Ikon SVG ===== */
+.ic{width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-right:.4em;flex:none}
+.ic.o{margin-right:0}.ic.r{margin-right:0;margin-left:.3em;width:1em;height:1em;vertical-align:-.15em}
+.ic.dot-on,.ic.dot-off{fill:currentColor;stroke:none;width:.7em;height:.7em;vertical-align:.02em}
+.ic.dot-on{color:#22c55e}.ic.dot-off{color:#f87171}.ic.star{color:#f59e0b}
+.nb .ni .ic{width:20px;height:20px;margin:0;vertical-align:middle}
+@media(max-width:700px){.nb .ni .ic{width:18px;height:18px}}
+h3 .ic{width:1.1em;height:1.1em;vertical-align:-.17em;margin-right:.45em}
+.mb .ic{width:.95em;height:.95em;margin:0 1px;vertical-align:-.12em}
+.ib .ic,.del .ic{width:15px;height:15px;vertical-align:-.2em}
+.e .ic{width:34px;height:34px;opacity:.55;margin:0}
+#lpe .ic{width:18px;height:18px;vertical-align:middle}
+.lfeats .ic{width:1em;height:1em;margin-right:.35em}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs><symbol id="i-bar" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol><symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.4 3.6a2.1 2.1 0 0 1 3 3L7.4 18.6l-4 1 1-4Z"/></symbol><symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol><symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4M10 10h4M10 14h4M10 18h4"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol><symbol id="i-down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol><symbol id="i-up" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></symbol><symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol><symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol><symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M10.73 5.08A10.74 10.74 0 0 1 21.94 11.65a1 1 0 0 1 0 .7 10.75 10.75 0 0 1-1.44 2.49"/><path d="M14.08 14.16a3 3 0 0 1-4.24-4.24"/><path d="M17.48 17.5a10.75 10.75 0 0 1-15.42-5.15 1 1 0 0 1 0-.7 10.75 10.75 0 0 1 4.45-5.14"/><path d="m2 2 20 20"/></symbol><symbol id="i-spark" viewBox="0 0 24 24"><path d="M9.94 15.5A2 2 0 0 0 8.5 14.06l-6.14-1.58a.5.5 0 0 1 0-.96L8.5 9.94A2 2 0 0 0 9.94 8.5l1.58-6.14a.5.5 0 0 1 .96 0L14.06 8.5a2 2 0 0 0 1.44 1.44l6.14 1.58a.5.5 0 0 1 0 .96L15.5 14.06a2 2 0 0 0-1.44 1.44l-1.58 6.14a.5.5 0 0 1-.96 0z"/><path d="M20 3v4M22 5h-4M4 17v2M5 18H3"/></symbol><symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2M14 13h2M8 17h2M14 17h2"/></symbol><symbol id="i-filetext" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8M16 13H8M16 17H8"/></symbol><symbol id="i-image" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21"/></symbol><symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="m7.5 4.27 9 5.15"/></symbol><symbol id="i-cal" viewBox="0 0 24 24"><path d="M8 2v4M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></symbol><symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><path d="M10 11v6M14 11v6"/></symbol><symbol id="i-pencil" viewBox="0 0 24 24"><path d="M21.17 6.81a1 1 0 0 0-3.99-3.99L3.84 16.17a2 2 0 0 0-.5.83l-1.32 4.35a.5.5 0 0 0 .62.62l4.35-1.32a2 2 0 0 0 .83-.5z"/><path d="m15 5 4 4"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol><symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol><symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol><symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol><symbol id="i-store" viewBox="0 0 24 24"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2 2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12a2 2 0 0 1-2-2V7"/></symbol><symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-warn" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol><symbol id="i-clip" viewBox="0 0 24 24"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4M12 16h4M8 11h.01M8 16h.01"/></symbol><symbol id="i-inbox" viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol><symbol id="i-star" viewBox="0 0 24 24"><path d="M11.52 2.3a.53.53 0 0 1 .95 0l2.31 4.68a2.12 2.12 0 0 0 1.6 1.16l5.16.76a.53.53 0 0 1 .3.9l-3.74 3.64a2.12 2.12 0 0 0-.61 1.88l.88 5.14a.53.53 0 0 1-.77.56l-4.62-2.43a2.12 2.12 0 0 0-1.97 0L6.4 21.01a.53.53 0 0 1-.77-.56l.88-5.14a2.12 2.12 0 0 0-.61-1.88L2.16 9.8a.53.53 0 0 1 .29-.9l5.17-.76a2.12 2.12 0 0 0 1.6-1.16z"/></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol><symbol id="i-dot" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6"/></symbol><symbol id="i-expand" viewBox="0 0 24 24"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></symbol><symbol id="i-collapse" viewBox="0 0 24 24"><path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/></symbol><symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol></defs></svg>
 <script>
 /* diagnosa: tampilkan error skrip langsung di layar login */
 window.__ok=0;
@@ -747,7 +761,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <div class="lbrand"><svg><use href="#logoH"/></svg><b>SAY BREAD</b></div>
   <h2 class="ltitle">Input &amp; rekap PB, secepat adonan mengembang.</h2>
   <p class="ltext">Kelola PB per toko, data manual, dan rekap BAS langsung dari browser — tersambung ke spreadsheet Say Bread, ringan, dan bisa dari HP.</p>
-  <div class="lfeats"><span>✔ Tersambung spreadsheet</span><span>✔ Akses per Cabang</span><span>✔ Mobile-friendly</span></div>
+  <div class="lfeats"><span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Tersambung spreadsheet</span><span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Akses per Cabang</span><span><svg class="ic" aria-hidden="true"><use href="#i-check"/></svg>Mobile-friendly</span></div>
   <div class="lmotif"><svg viewBox="-40 -40 80 80" aria-hidden="true"><use href="#surya"/></svg><span>Ornamen batik Jawa Timur: <b>Surya Majapahit</b> · <b>Sura-Baya</b> · <b>Pring Sedapur</b> · <b>Terate</b></span></div>
 </div>
 <div class="card">
@@ -755,34 +769,34 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <svg class="lgbig"><use href="#logoH"/></svg>
   <h2>PB - JATIM</h2>
   <div id="closed" style="display:none;text-align:center;padding:14px 4px 4px">
-    <div style="font-size:46px">🔒</div>
+    <div style="font-size:46px;color:var(--br2)"><svg class="ic o" aria-hidden="true"><use href="#i-lock"/></svg></div>
     <div style="font-size:18px;font-weight:700;color:var(--br);margin:6px 0">Web PB Sudah Tutup</div>
-    <div style="color:var(--mu);line-height:1.5">Mohon maaf, akses ke web PB saat ini sedang ditutup.<br>Silakan hubungi Pemilik untuk informasi lebih lanjut.<br>Terima kasih 🙏</div>
+    <div style="color:var(--mu);line-height:1.5">Mohon maaf, akses ke web PB saat ini sedang ditutup.<br>Silakan hubungi Pemilik untuk informasi lebih lanjut.<br>Terima kasih.</div>
     <div id="adm" style="margin-top:18px"><a id="admL" style="color:var(--br2);cursor:pointer;text-decoration:underline;font-size:11.5px">Login Administrator</a></div>
   </div>
   <div id="lsub" style="color:var(--mu);margin-bottom:14px">Silakan login</div>
   <form id="lf" action="javascript:void(0)" onsubmit="return false">
     <input class="in" id="lu" placeholder="Username" autocomplete="username" required>
-    <div style="position:relative"><input class="in" id="lp" type="password" placeholder="Password" autocomplete="current-password" required style="padding-right:42px"><button type="button" id="lpe" title="Tampilkan / sembunyikan sandi" aria-label="Tampilkan sandi" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:16px;opacity:.6;padding:5px 9px">👁</button></div>
+    <div style="position:relative"><input class="in" id="lp" type="password" placeholder="Password" autocomplete="current-password" required style="padding-right:42px"><button type="button" id="lpe" title="Tampilkan / sembunyikan sandi" aria-label="Tampilkan sandi" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);border:0;background:none;cursor:pointer;font-size:16px;opacity:.6;padding:5px 9px"><svg class="ic o" aria-hidden="true"><use href="#i-eye"/></svg></button></div>
     <div id="lerr"></div>
     <button class="b p" id="lb" style="width:100%;padding:11px">Masuk</button>
   </form>
-  <div class="lcred">Dikembangkan oleh <b>Fahrur Rozy</b> · v31okt-c</div>
+  <div class="lcred">Dikembangkan oleh <b>Fahrur Rozy</b></div>
 </div></div>
 
 <div id="app" style="display:none">
 <header><svg class="hbg" aria-hidden="true"><rect width="100%" height="100%" fill="url(#batikH)"/></svg><svg class="hband" aria-hidden="true"><rect width="100%" height="9" fill="url(#tbandH)"/></svg><div class="wrap">
   <div class="brand"><svg class="lg"><use href="#logoH"/></svg><div><h1>PB SAY BREAD</h1><small>Jawa Timur</small></div></div>
-  <div class="chips"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="upd">Memuat…</span><span class="chip" id="dataU" style="display:none;cursor:pointer">⬆ <a style="margin:0;cursor:pointer">Unggah Data</a></span>
+  <div class="chips"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="upd">Memuat…</span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Unggah Data</a></span>
   <span class="chip solid"><a id="rl" style="margin:0">Muat ulang</a> · <a id="lo" style="margin:0">Keluar</a></span></div>
 </div></header>
 <nav><div class="wrap">
-  <button class="nb on" id="nbL"><span class="ni">📊</span><span class="nt">Input PB</span></button>
-  <div class="nd"><button class="nb" id="nbM"><span class="ni">✍</span><span class="nt">PB Manual</span></button></div>
-  <button class="nb" id="nbJ"><span class="ni">🚚</span><span class="nt">Jadwal Kirim</span></button>
-  <button class="nb" id="nbC"><span class="ni">🏢</span><span class="nt">Rekap Cabang</span></button>
-  <button class="nb" id="nbI"><span class="ni">ℹ️</span><span class="nt">Info</span></button>
-</div><button class="b p" id="mst_dl" style="display:none">⬇ Download Master</button><svg class="nband" aria-hidden="true"><rect width="100%" height="9" fill="url(#tbandH)"/></svg></nav>
+  <button class="nb on" id="nbL"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-bar"/></svg></span><span class="nt">Input PB</span></button>
+  <div class="nd"><button class="nb" id="nbM"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-pen"/></svg></span><span class="nt">PB Manual</span></button></div>
+  <button class="nb" id="nbJ"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-truck"/></svg></span><span class="nt">Jadwal Kirim</span></button>
+  <button class="nb" id="nbC"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-building"/></svg></span><span class="nt">Rekap Cabang</span></button>
+  <button class="nb" id="nbI"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-info"/></svg></span><span class="nt">Info</span></button>
+</div><button class="b p" id="mst_dl" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download Master</button><svg class="nband" aria-hidden="true"><rect width="100%" height="9" fill="url(#tbandH)"/></svg></nav>
 <main><div class="wrap">
 
   <!-- ===== Input PB ===== -->
@@ -790,15 +804,15 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
     <div class="card">
       <div id="filters"></div>
       <div class="bar">
-        <button class="b s" id="bReset">↺ Reset</button>
-        <button class="b s" id="bZ">👁 Tampilkan ZONA &amp; JADWAL</button>
-        <button class="b s" id="bOpen">⊞ Buka semua</button>
-        <button class="b s" id="bClose">⊟ Tutup semua</button>
-        <button class="b s" id="bFill" title="Isi PB_FINAL yang masih kosong dengan angka PB_REKOM (hanya baris yang sedang tampil)">✨ Isi rekomendasi</button>
+        <button class="b s" id="bReset"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg>Reset</button>
+        <button class="b s" id="bZ"><svg class="ic" aria-hidden="true"><use href="#i-eye"/></svg>Tampilkan ZONA &amp; JADWAL</button>
+        <button class="b s" id="bOpen"><svg class="ic" aria-hidden="true"><use href="#i-expand"/></svg>Buka semua</button>
+        <button class="b s" id="bClose"><svg class="ic" aria-hidden="true"><use href="#i-collapse"/></svg>Tutup semua</button>
+        <button class="b s" id="bFill" title="Isi PB_FINAL yang masih kosong dengan angka PB_REKOM (hanya baris yang sedang tampil)"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Isi rekomendasi</button>
         <span id="stat"></span>
         <span style="flex:1"></span>
-        <div class="dmw"><button class="b p" id="bDl" disabled>⬇ Download ▾</button>
-          <div class="dmn"><a data-f="xls">📗 Excel (.xls)</a><a data-f="csv">📄 CSV (.csv)</a><a data-f="jpg">🖼 JPG</a></div></div>
+        <div class="dmw"><button class="b p" id="bDl" disabled><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download<svg class="ic r" aria-hidden="true"><use href="#i-chev"/></svg></button>
+          <div class="dmn"><a data-f="xls"><svg class="ic" aria-hidden="true"><use href="#i-sheet"/></svg>Excel (.xls)</a><a data-f="csv"><svg class="ic" aria-hidden="true"><use href="#i-filetext"/></svg>CSV (.csv)</a><a data-f="jpg"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>JPG</a></div></div>
       </div>
     </div>
     <div id="sum" class="sum" style="display:none"></div>
@@ -807,22 +821,22 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 
   <!-- ===== Jadwal Kirim ===== -->
   <div id="vJdw" style="display:none">
-    <div class="seg" id="j_seg" style="display:none;margin-bottom:10px"><button class="on" data-t="jd">🚚 Jadwal</button><button data-t="sim">📦 Simulasi Outbound</button></div>
+    <div class="seg" id="j_seg" style="display:none;margin-bottom:10px"><button class="on" data-t="jd"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg>Jadwal</button><button data-t="sim"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg>Simulasi Outbound</button></div>
     <div id="j_main">
     <div class="card">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <h3 style="margin:0;color:var(--br)">🚚 Jadwal Kirim</h3>
+        <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg>Jadwal Kirim</h3>
         <span id="j_cnt" class="cnt"></span>
         <span style="flex:1"></span>
-        <div class="jdl"><button class="b p" id="j_dl" title="Unduh jadwal minggu ini + minggu depan">⬇ Download ▾</button>
-          <div class="jdm"><a id="j_xls">📗 Excel (.xls)</a><a id="j_jpg">🖼 JPG</a></div></div>
-        <button class="b s" id="j_adm" style="display:none">📅 Atur Jadwal</button>
-        <button class="b s" id="j_rl">↻ Muat ulang</button>
+        <div class="jdl"><button class="b p" id="j_dl" title="Unduh jadwal minggu ini + minggu depan"><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download<svg class="ic r" aria-hidden="true"><use href="#i-chev"/></svg></button>
+          <div class="jdm"><a id="j_xls"><svg class="ic" aria-hidden="true"><use href="#i-sheet"/></svg>Excel (.xls)</a><a id="j_jpg"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>JPG</a></div></div>
+        <button class="b s" id="j_adm" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg>Atur Jadwal</button>
+        <button class="b s" id="j_rl"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat ulang</button>
       </div>
       <div class="bar">
         <select class="in" id="j_bas" style="max-width:210px"><option value="">Semua BAS</option></select>
         <input class="in" id="j_q" placeholder="Cari KODE / TOKO…" style="max-width:250px" autocomplete="off">
-        <button class="b s" id="j_reset">↺ Reset</button>
+        <button class="b s" id="j_reset"><svg class="ic" aria-hidden="true"><use href="#i-reset"/></svg>Reset</button>
         <span id="j_hit" class="cnt"></span>
       </div>
     </div>
@@ -830,8 +844,8 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
     </div>
     <div id="j_sim" style="display:none">
       <div class="card"><div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-        <div><h3 style="margin:0;color:var(--br)">📦 Simulasi Outbound</h3><div id="sim_sub" class="note" style="padding:0"></div></div>
-        <span style="flex:1"></span><div class="seg" id="sim_seg"><button class="on" data-w="next">Minggu Depan</button><button data-w="cur">Minggu Berjalan</button></div> <span id="sim_btn" style="position:relative;display:inline-block"><button class="b s" id="sim_dl">⬇ Download ▾</button><div id="sim_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="sim_xls" style="display:block;width:100%;text-align:left;margin:0">📊 Excel (.xls)</button><button class="b s" id="sim_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">🖼 Gambar (.jpg)</button></div></span><button class="b s" id="sim_rl">↻ Muat ulang</button></div>
+        <div><h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-package"/></svg>Simulasi Outbound</h3><div id="sim_sub" class="note" style="padding:0"></div></div>
+        <span style="flex:1"></span><div class="seg" id="sim_seg"><button class="on" data-w="next">Minggu Depan</button><button data-w="cur">Minggu Berjalan</button></div> <span id="sim_btn" style="position:relative;display:inline-block"><button class="b s" id="sim_dl"><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download<svg class="ic r" aria-hidden="true"><use href="#i-chev"/></svg></button><div id="sim_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="sim_xls" style="display:block;width:100%;text-align:left;margin:0"><svg class="ic" aria-hidden="true"><use href="#i-bar"/></svg>Excel (.xls)</button><button class="b s" id="sim_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0"><svg class="ic" aria-hidden="true"><use href="#i-image"/></svg>Gambar (.jpg)</button></div></span><button class="b s" id="sim_rl"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat ulang</button></div>
         <div id="sim_warn"></div></div>
       <div id="sim_out"></div>
     </div>
@@ -840,12 +854,12 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <!-- ===== Info ===== -->
   <div id="vInfo" style="display:none">
     <div class="card">
-      <h3 style="margin:0;color:var(--br)">ℹ️ Info kelengkapan data</h3>
+      <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-info"/></svg>Info kelengkapan data</h3>
       <div class="bar">
         <input class="in" id="i_q" placeholder="Cari kode / toko / zona…" style="max-width:260px">
         <span id="i_cnt" class="cnt"></span>
         <span style="flex:1"></span>
-        <button class="b s" id="i_rl">↻ Periksa ulang</button>
+        <button class="b s" id="i_rl"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Periksa ulang</button>
       </div>
     </div>
     <div id="i_out"></div>
@@ -855,32 +869,32 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <div id="vCab" style="display:none">
     <div class="card">
       <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center">
-        <div><h3 style="margin:0;color:var(--br)">📊 PB per Cabang</h3><div id="pv_sub" class="note" style="padding:0"></div></div>
+        <div><h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-bar"/></svg>PB per Cabang</h3><div id="pv_sub" class="note" style="padding:0"></div></div>
         <span style="flex:1"></span>
         <div class="seg" id="pv_seg"><button class="on" data-w="next">Minggu Depan</button><button data-w="cur">Minggu Berjalan</button></div>
-        <button class="b s" id="c_rl">↻ Muat ulang</button>
+        <button class="b s" id="c_rl"><svg class="ic" aria-hidden="true"><use href="#i-refresh"/></svg>Muat ulang</button>
       </div>
     </div>
     <div id="pv_out"></div>
     <div id="stk_out"></div>
     <div id="c_bad2"></div>
-    <div class="sect" style="margin-top:18px">📋 Status PB per BAS</div>
+    <div class="sect" style="margin-top:18px"><svg class="ic" aria-hidden="true"><use href="#i-clip"/></svg>Status PB per BAS</div>
     <div class="card"><div class="bar" style="justify-content:center">
       <input class="in" id="r_q" placeholder="Cari BAS…" style="max-width:220px">
       <select class="in" id="r_k" style="max-width:170px"><option value="">Semua keterangan</option><option value="BELUM">BELUM INPUT</option><option value="SUDAH">SUDAH INPUT</option></select>
       <span id="r_cnt" class="cnt"></span>
-      <button class="b s" id="r_jpg" disabled>⬇ Unduh JPG</button>
+      <button class="b s" id="r_jpg" disabled><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Unduh JPG</button>
     </div></div>
     <div id="r_out"></div>
     <div id="c_adm" style="display:none">
       <div class="sect">Status & Download <small>khusus administrator</small></div>
       <div class="card">
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b style="color:var(--br)">Rekap per Cabang</b><span id="c_cnt" class="cnt"></span><span style="flex:1"></span><button class="b p" id="c_dl" disabled>⬇ Download Excel</button></div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center"><b style="color:var(--br)">Rekap per Cabang</b><span id="c_cnt" class="cnt"></span><span style="flex:1"></span><button class="b p" id="c_dl" disabled><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download Excel</button></div>
         <div id="c_hint" class="note" style="padding:6px 2px 0"></div>
       </div>
       <div id="c_out"></div>
       <div class="card" id="c_up" style="margin-top:10px">
-        <b style="color:var(--br)">⬆ Upload PB lewat CSV</b>
+        <b style="color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg>Upload PB lewat CSV</b>
         <div class="note" style="padding:2px 0 8px">Untuk cabang <span id="c_cabs"></span>. Kolom: <b>cab, KODE, PLU, DESKRIPSI, pb_final, KETR</b>. Upload ulang <b>menggantikan</b> data lama cabang tersebut (tidak ditambah, jadi tidak dobel). <a id="c_tpl" style="color:var(--br2);cursor:pointer;text-decoration:underline">Unduh template CSV</a></div>
         <div class="drop" id="c_drop"><input type="file" id="c_file" accept=".csv,text/csv,.txt"><div class="note" style="padding:6px 0 0">atau seret file CSV ke sini</div></div>
         <div id="c_prev" style="margin-top:8px"></div>
@@ -892,8 +906,8 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <!-- ===== PB Manual: Edit PB ===== -->
   <div id="vEdit" style="display:none">
     <div class="card">
-      <h3 style="margin:0;color:var(--br)">✍ PB Manual</h3>
-      <div class="bar"><input class="in" id="e_q" placeholder="Cari kode / toko / BAS / zona / deskripsi…" style="max-width:340px"><span id="e_cnt" class="cnt"></span><span style="flex:1"></span><button class="b s" id="m_items" style="display:none">⚙ Kelola Item</button><button class="b p" id="m_add">＋ Tambah PB</button></div>
+      <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-pen"/></svg>PB Manual</h3>
+      <div class="bar"><input class="in" id="e_q" placeholder="Cari kode / toko / BAS / zona / deskripsi…" style="max-width:340px"><span id="e_cnt" class="cnt"></span><span style="flex:1"></span><button class="b s" id="m_items" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kelola Item</button><button class="b p" id="m_add"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Tambah PB</button></div>
     </div>
     <div id="e_out"></div>
   </div>
@@ -902,7 +916,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 
 <!-- Modal tambah PB manual -->
 <div class="ov" id="ovA"><div class="card frm">
-  <h3 style="margin:0;color:var(--br)">＋ Tambah PB Manual</h3>
+  <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Tambah PB Manual</h3>
   <div id="a_cabw"><label>CAB</label><select class="in" id="a_cab"></select></div>
   <div class="g4" style="grid-template-columns:1fr 1fr">
     <div><label>KODE</label><input class="in" id="a_kode" list="kodes" autocomplete="off" style="text-transform:uppercase"><datalist id="kodes"></datalist></div>
@@ -922,7 +936,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 
 <!-- Modal konfirmasi hapus -->
 <div class="ov" id="ovD"><div class="card" style="max-width:380px">
-  <h3 style="margin:0;color:#b00020">🗑 Hapus data manual?</h3>
+  <h3 style="margin:0;color:#b00020"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Hapus data manual?</h3>
   <div id="d_msg" style="margin:10px 0;line-height:1.5"></div>
   <div class="bar" style="justify-content:flex-end"><button class="b s" id="d_no">Batal</button><button class="b p" id="d_ok" style="background:#b00020">Hapus</button></div>
 </div></div>
@@ -948,25 +962,25 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 <div class="ov" id="ovJ"><div class="card" id="jmc" style="width:min(94vw,420px);padding:12px 14px">
   <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
     <div><h3 id="jm_t" style="margin:0;color:var(--br)"></h3><div id="jm_s" class="note" style="padding:2px 0 0"></div></div>
-    <button class="b s" id="jm_x">✕</button>
+    <button class="b s" id="jm_x"><svg class="ic o" aria-hidden="true"><use href="#i-x"/></svg></button>
   </div>
   <div id="jm_b"></div>
 </div></div>
 <!-- Modal kelola item PB manual (admin) -->
 <div class="ov" id="ovI"><div class="card" style="max-width:560px">
-  <h3 style="margin:0;color:var(--br)">⚙ Kelola Item PB Manual</h3>
+  <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-gear"/></svg>Kelola Item PB Manual</h3>
   <div class="note" style="padding:2px 0 6px">Daftar item di form PB Manual. Pilihan berasal dari sheet <b>ITEM</b>. Menghapus item di sini hanya menyembunyikannya dari form (data lama & sheet ITEM tidak berubah).</div>
   <div class="ir" style="font-size:11px;font-weight:800;color:var(--br)"><span>DESKRIPSI</span><span class="r">PLU</span><span class="r">FRC</span><span></span></div>
   <div id="it_list" style="max-height:34vh;overflow:auto"></div>
   <label>Tambah dari sheet ITEM</label>
-  <div style="display:flex;gap:6px"><select class="in" id="it_pick" style="flex:1"></select><button class="b s" id="it_add">＋ Tambah</button></div>
+  <div style="display:flex;gap:6px"><select class="in" id="it_pick" style="flex:1"></select><button class="b s" id="it_add"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg>Tambah</button></div>
   <label>Item baru (ikut ditambahkan ke sheet ITEM)</label>
-  <div style="display:grid;grid-template-columns:1.6fr 1fr .6fr auto;gap:6px"><input class="in" id="it_ds" placeholder="DESKRIPSI"><input class="in" id="it_plu" placeholder="PLU"><input class="in" id="it_frc" type="number" step="any" min="0" placeholder="FRC"><button class="b s" id="it_new">＋</button></div>
+  <div style="display:grid;grid-template-columns:1.6fr 1fr .6fr auto;gap:6px"><input class="in" id="it_ds" placeholder="DESKRIPSI"><input class="in" id="it_plu" placeholder="PLU"><input class="in" id="it_frc" type="number" step="any" min="0" placeholder="FRC"><button class="b s" id="it_new"><svg class="ic o" aria-hidden="true"><use href="#i-plus"/></svg></button></div>
   <div class="bar" style="justify-content:flex-end"><button class="b s" id="it_x">Batal</button><button class="b p" id="it_ok">Simpan</button></div>
 </div></div>
 <!-- Modal atur tanggal jadwal (admin) -->
 <div class="ov" id="ovS"><div class="card" style="max-width:680px">
-  <h3 style="margin:0;color:var(--br)">📅 Atur Jadwal Kirim</h3>
+  <h3 style="margin:0;color:var(--br)"><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg>Atur Jadwal Kirim</h3>
   <div class="note" style="padding:2px 0 6px">Isi <b>tanggal acuan</b> tiap zona. Tanggal kirim berikutnya berganti otomatis: <b>MINGGU 1 / MINGGU 2</b> tiap 14 hari, <b>PRIORITAS</b> tiap 7 hari. Ubah tanggal acuan bila jadwal bergeser. <span id="s_rng"></span></div>
   <input class="in" id="s_q" placeholder="Cari zona / minggu…">
   <div id="s_list" style="max-height:52vh;overflow:auto;margin-top:6px"></div>
@@ -986,9 +1000,10 @@ const NL=String.fromCharCode(10),CR=String.fromCharCode(13),TB=String.fromCharCo
 const KEYS=['bas','tk','ds','zn','jd'];
 const LABEL={bas:'BAS',tk:'KODE / TOKO',ds:'DESKRIPSI',zn:'ZONA',jd:'JADWAL_KIRIM'};
 const COL={bas:0,tk:1,ds:2,zn:3,jd:4};
-let ALLOPEN=true,TOKEN=null,D=null,DL={},RK={},SEL={},OPT={},CUR=[],NODES=[],ROOT,ORD=[],PEND=new Map(),HZ=window.matchMedia('(max-width:640px)').matches,KT={},KB={},KZ={},MAN=[],MDESC=[],EID=null,VIEW='lap',ft,sv;
+let ALLOPEN=true,TOKEN=null,D=null,DL={},RK={},SEL={},OPT={},CUR=[],NODES=[],ROOT,ORD=[],PEND=new Map(),HZ=true,KT={},KB={},KZ={},MAN=[],MDESC=[],EID=null,VIEW='lap',ft,sv;
 let PRENDER=false,MAN_DIRTY=true,REK=null,JDW=null,JDW_BUSY=false,CABD=null,CAB_BUSY=false,BADD=null,PVD=null,PVB=false,PVW='next',SIM=null,SIMB=false,SIMW='next',SIMC={},STK=null,STKB=false,STKF=false;
 const $=s=>document.querySelector(s);
+const ic=(n,c)=>'<svg class="ic'+(c?' '+c:'')+'" aria-hidden="true"><use href="#i-'+n+'"/></svg>';   /* ikon SVG dari sprite */
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const f0=n=>Number(n).toLocaleString('id-ID',{maximumFractionDigits:0});
 const fq=n=>n?String(n):'';
@@ -1075,15 +1090,15 @@ window.__blk=4;
 /* ---------- Login ---------- */
 function setClosed(c){$('#closed').style.display=c?'block':'none';$('#lf').style.display=c?'none':'block';$('#lsub').style.display=c?'none':'block';$('#adm').style.display=c?'block':'none'}
 $('#admL').onclick=()=>{$('#lf').style.display='block';$('#lsub').style.display='block';$('#adm').style.display='none'};
-$('#lpe').onclick=()=>{const p=$('#lp'),s=p.type==='password';p.type=s?'text':'password';$('#lpe').textContent=s?'🙈':'👁';p.focus()};
+$('#lpe').onclick=()=>{const p=$('#lp'),s=p.type==='password';p.type=s?'text':'password';$('#lpe').innerHTML=s?''+ic('eyeoff','o')+'':''+ic('eye','o')+'';p.focus()};
 function showLogin(msg,closed){TOKEN=null;D=null;JDW=null;INFO=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;MAN=[];ALLOPEN=true;boot(false);try{sessionStorage.removeItem('pb_tok');localStorage.removeItem('pb_data')}catch(e){}applyView('lap');document.querySelectorAll('#app').forEach(e=>e.style.display='none');document.querySelectorAll('#login').forEach((e,i)=>e.style.display=i?'none':'flex');$('#lerr').textContent=msg||'';$('#lb').disabled=false;setClosed(!!closed);hideInput(false)}
-function showApp(u){document.querySelectorAll('#login').forEach(e=>e.style.display='none');document.querySelectorAll('#app').forEach((e,i)=>e.style.display=i?'none':'block');{const uu=u||(D&&D.user);if(uu)$('#mst_dl').style.display=uu.admin?'':'none'}if(u)$('#usr').textContent='👤 '+u.name+' · '+(u.admin?'SEMUA CAB':u.cabs.join(', '))}
+function showApp(u){document.querySelectorAll('#login').forEach(e=>e.style.display='none');document.querySelectorAll('#app').forEach((e,i)=>e.style.display=i?'none':'block');{const uu=u||(D&&D.user);if(uu)$('#mst_dl').style.display=uu.admin?'':'none'}if(u)$('#usr').innerHTML=''+ic('user')+''+esc(u.name+' · '+(u.admin?'SEMUA CAB':u.cabs.join(', ')))}
 $('#lf').onsubmit=ev=>{
   ev.preventDefault();
   $('#lb').disabled=true;$('#lb').textContent='Memproses…';$('#lerr').textContent='';
   run('login',[$('#lu').value,$('#lp').value],r=>{
     TOKEN=r.token;try{sessionStorage.setItem('pb_tok',TOKEN)}catch(e){}
-    $('#lp').value='';$('#lp').type='password';$('#lpe').textContent='👁';showApp(r.user);
+    $('#lp').value='';$('#lp').type='password';$('#lpe').innerHTML=''+ic('eye','o')+'';showApp(r.user);
     // Login hanya memverifikasi akun. Data dimuat setelah layar aplikasi tampil
     // agar login tidak terlihat macet saat data PB besar.
     $('#lb').textContent='Masuk';$('#lb').disabled=false;
@@ -1105,7 +1120,7 @@ window.__blk=5;
 function updWeb(){
   const w=$('#web');w.style.display=D&&D.user.admin?'':'none';if(!D)return;
   w.classList.toggle('off',!D.open);
-  $('#webT').textContent=D.open?'🟢 Input PB AKTIF · Nonaktifkan':'🔴 Input PB NONAKTIF · Aktifkan';
+  $('#webT').innerHTML=D.open?''+ic('dot','dot-on')+'Input PB AKTIF · Nonaktifkan':''+ic('dot','dot-off')+'Input PB NONAKTIF · Aktifkan';
 }
 $('#webT').onclick=()=>{
   const to=!D.open;
@@ -1118,7 +1133,7 @@ window.__blk=6;
 /* ---------- Data Update (tanggal update stock, bisa diganti admin) ---------- */
 function updUpd(){
   const adm=!!(D&&D.user&&D.user.admin);
-  $('#upd').innerHTML='📅 Data Update : <b>'+esc(fmtD(D.upd))+'</b>'+(adm?' <a id="updE" style="cursor:pointer;margin-left:6px;text-decoration:underline">Ubah</a>':'');
+  $('#upd').innerHTML=''+ic('cal')+'Data Update : <b>'+esc(fmtD(D.upd))+'</b>'+(adm?' <a id="updE" style="cursor:pointer;margin-left:6px;text-decoration:underline">Ubah</a>':'');
   if(adm)$('#updE').onclick=openUpd;
   {const c=$('#dataU');if(c){c.style.display=adm?'':'none';c.onclick=()=>openData()}}
 }
@@ -1142,7 +1157,7 @@ window.__blk=7;
 function updWk(){
   const wk=$('#wk'),adm=!!(D&&D.user&&D.user.admin),w=(D&&D.weeks)||[];
   wk.style.display=(adm||w.length||D.weekAuto)?'':'none';
-  wk.innerHTML='📆 '+(D.weekAuto?'Otomatis · ':'')+esc(w.length?w.join(', '):'Semua jadwal')+(D.weekAuto&&D.tgt?' · kirim '+esc(jMid(D.tgt[0])):'')+(adm?' <a id="wkE">Ubah</a>':'');
+  wk.innerHTML=''+ic('cal')+''+(D.weekAuto?'Otomatis · ':'')+esc(w.length?w.join(', '):'Semua jadwal')+(D.weekAuto&&D.tgt?' · kirim '+esc(jMid(D.tgt[0])):'')+(adm?' <a id="wkE">Ubah</a>':'');
   if(adm)$('#wkE').onclick=openWk;
 }
 function openWk(){
@@ -1184,8 +1199,8 @@ function renderInfo(){
     const rows=q?s.rows.filter(r=>r.join(' ').toLowerCase().indexOf(q)>-1):s.rows;
     const num=s.cols.map(c=>c==='ITEM'||c==='SALES');
     const hot=s.id==='baru',red=s.id==='cek';
-    const body=rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>`<th${num[i]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>`<td${num[i]?' class="r"':''}>${esc(v)}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':'✔ Tidak ada temuan.'}</div>`;
-    return `<div class="card" style="margin-top:8px${hot?';background:#fff8db;border:2px solid #f0b400':red?';background:#fff0f0;border:2px solid #d92d2d':''}"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b${hot?' style="font-size:14px"':red?' style="font-size:14px;color:#c01f1f"':''}>${hot?'⭐ ':red?'🔴 ':''}${esc(s.title)}</b><span class="cnt">${rows.length}${q&&rows.length!==s.rows.length?' / '+s.rows.length:''} data</span></div><div class="note" style="padding:2px 0 0">${esc(s.desc)}</div>${body}</div>`;
+    const body=rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>`<th${num[i]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>`<td${num[i]?' class="r"':''}>${esc(v)}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':''+ic('check')+'Tidak ada temuan.'}</div>`;
+    return `<div class="card" style="margin-top:8px${hot?';background:#fff8db;border:2px solid #f0b400':red?';background:#fff0f0;border:2px solid #d92d2d':''}"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b${hot?' style="font-size:14px"':red?' style="font-size:14px;color:#c01f1f"':''}>${hot?''+ic('star','star')+'':red?''+ic('dot','dot-off')+'':''}${esc(s.title)}</b><span class="cnt">${rows.length}${q&&rows.length!==s.rows.length?' / '+s.rows.length:''} data</span></div><div class="note" style="padding:2px 0 0">${esc(s.desc)}</div>${body}</div>`;
   };
   $('#i_out').innerHTML=`<div class="sum">${tiles}</div><div class="igrid">${S.map(card).join('')}</div>`;
   $('#i_cnt').textContent='Diperiksa: '+INFO.updated;
@@ -1263,11 +1278,11 @@ function renderJadwal(){
     const showPB=w.isNow||w.pb>0;
     return `<div class="jwk${w.isNow?'':' nx'}"><div class="jbn"><span class="jpill">${w.isNow?'● MINGGU INI · BERJALAN':'MINGGU DEPAN'}</span><b>${jLong(w.mon)} – ${jLong(jAdd(w.mon,6))}</b>`
       +`<div class="jst"><span>${w.zc} zona</span><span>${f0(w.tk)} toko</span>${showPB?`<span>${f0(w.pb)} PB final</span><span>${f0(w.np)} toko sudah PB</span>`:''}</div></div>`
-      +(w.car?`<div class="jw">${grid(w)}</div>`:`<div class="empty" style="padding:18px"><div>🗓 Belum ada jadwal untuk minggu ini di sheet JADWAL maupun JADWAL-ARSIP.</div></div>`)+'</div>';
+      +(w.car?`<div class="jw">${grid(w)}</div>`:`<div class="empty" style="padding:18px"><div>${ic('cal')}Belum ada jadwal untuk minggu ini di sheet JADWAL maupun JADWAL-ARSIP.</div></div>`)+'</div>';
   };
   const a=W[0],b=W[1];
   const tiles=`<div class="sum"><div><small>Minggu ini · Total toko</small><b>${f0(a.tk)}</b></div><div><small>Minggu ini · Total PB final</small><b>${f0(a.pb)}</b></div><div><small>Minggu ini · Toko sudah PB</small><b>${f0(a.np)} / ${f0(a.tk)}</b></div><div><small>Minggu depan · Total toko</small><b>${f0(b.tk)}</b></div><div><small>Minggu depan · Zona</small><b>${b.zc}</b></div></div>`;
-  const uns=J.unsched&&J.unsched.length?`<div class="card" style="margin-top:8px;background:#fff8db;border-color:#f0b400;padding:6px 10px"><b>⚠ Zona punya toko tetapi belum terjadwal</b><div class="note" style="padding:3px 0 0">${J.unsched.map(u=>esc(u[0])+' ('+f0(u[1])+' toko'+(u[2]?' · '+f0(u[2])+' PB':'')+')').join(' · ')}</div></div>`:'';
+  const uns=J.unsched&&J.unsched.length?`<div class="card" style="margin-top:8px;background:#fff8db;border-color:#f0b400;padding:6px 10px"><b>${ic('warn')}Zona punya toko tetapi belum terjadwal</b><div class="note" style="padding:3px 0 0">${J.unsched.map(u=>esc(u[0])+' ('+f0(u[1])+' toko'+(u[2]?' · '+f0(u[2])+' PB':'')+')').join(' · ')}</div></div>`:'';
   $('#j_out').innerHTML=tiles+block(a)+block(b)+uns;
   $('#j_cnt').textContent='Diperbarui: '+J.updated+(J.sel&&J.sel.length?' · filter PB: '+J.sel.join(', '):'');
   $('#j_hit').textContent=filt?hits+' zona cocok':'';
@@ -1367,7 +1382,7 @@ function cascade(){
 function onSel(){cascade();updBtns();clearTimeout(ft);ft=setTimeout(render,150)}
 function buildFilters(){
   $('#filters').innerHTML=KEYS.map(k=>`<div class="field" data-k="${k}"><label>${LABEL[k]}</label>
-  <button type="button" class="dd-btn"><span>Semua</span><i>▾</i></button>
+  <button type="button" class="dd-btn"><span>Semua</span><i>${ic('chev','r')}</i></button>
   <div class="dd-panel"><input class="dd-search" placeholder="Cari…">
   <div class="dd-act">${k==='bas'?'':'<a data-a="all">Pilih semua hasil</a>'}<a data-a="none">Kosongkan</a></div>
   <div class="dd-list"></div></div></div>`).join('');
@@ -1384,7 +1399,7 @@ function buildFilters(){
     };
   });
 }
-function visible(k){const q=document.querySelector(`.field[data-k=${k}] .dd-search`).value.toLowerCase();return OPT[k].filter(v=>!q||DL[k][v].toLowerCase().includes(q))}
+function visible(k){const q=document.querySelector(`.field[data-k=${k}] .dd-search`).value.toLowerCase();return OPT[k].filter(v=>(k!=='bas'||DL[k][v])&&(!q||DL[k][v].toLowerCase().includes(q)))}   /* BAS kosong tidak ditampilkan di pilihan */
 function renderList(k){
   const v=visible(k),MAX=200,l=document.querySelector(`.field[data-k=${k}] .dd-list`);
   l.innerHTML=v.slice(0,MAX).map(i=>`<label class="opt"><input type="${k==='bas'?'radio':'checkbox'}" name="dd_${k}" data-v="${i}" ${SEL[k].has(i)?'checked':''}><span>${esc(DL[k][i]||'(kosong)')}</span></label>`).join('')
@@ -1394,8 +1409,8 @@ function updBtns(){KEYS.forEach(k=>{const n=SEL[k].size;document.querySelector(`
 function closeAll(){document.querySelectorAll('.field.open').forEach(f=>f.classList.remove('open'));$('.nd').classList.remove('open');$('.dmw').classList.remove('open')}
 document.addEventListener('click',closeAll);
 $('#bReset').onclick=()=>{KEYS.forEach(k=>SEL[k].clear());onSel()};
-$('#bZ').textContent=HZ?'👁 Tampilkan ZONA & JADWAL':'🙈 Sembunyikan ZONA & JADWAL';
-$('#bZ').onclick=()=>{HZ=!HZ;const t=$('#tbl');if(t){t.classList.toggle('hz',HZ);t.style.minWidth=tblW()+'px'}$('#bZ').textContent=HZ?'👁 Tampilkan ZONA & JADWAL':'🙈 Sembunyikan ZONA & JADWAL'};
+$('#bZ').innerHTML=HZ?''+ic('eye')+'Tampilkan ZONA & JADWAL':''+ic('eyeoff')+'Sembunyikan ZONA & JADWAL';
+$('#bZ').onclick=()=>{HZ=!HZ;const t=$('#tbl');if(t){t.classList.toggle('hz',HZ);t.style.minWidth=tblW()+'px'}$('#bZ').innerHTML=HZ?''+ic('eye')+'Tampilkan ZONA & JADWAL':''+ic('eyeoff')+'Sembunyikan ZONA & JADWAL'};
 </script>
 <script>
 window.__blk=12;
@@ -1419,7 +1434,7 @@ function hc(n){const q=n.q;return `<td colspan="3" title="${n.label}">${n.label}
 function hdr(n){return `<tr class="gh l1${n.open?' op':''}" data-d="1" data-n="${n.id}">${hc(n)}</tr>`}
 function itemRow(r){
   const t=D.d.tk[r[1]],pc=r[9]*r[5],q=r[6];
-  const man=r[11]?` <span class="mb" title="Manual: ${esc(r[12])}">✚</span><a class="del" data-id="${esc(r[11])}" title="Hapus data manual">🗑</a>`:(r[15]>0?` <span class="mb" title="Sudah termasuk PB manual ${r[15]}${r[16]?' — '+esc(r[16]):''}">✚${r[15]}</span>`:'');
+  const man=r[11]?` <span class="mb" title="Manual: ${esc(r[12])}">${ic('plus','o')}</span><a class="del" data-id="${esc(r[11])}" title="Hapus data manual">${ic('trash','o')}</a>`:(r[15]>0?` <span class="mb" title="Sudah termasuk PB manual ${r[15]}${r[16]?' — '+esc(r[16]):''}">${ic('plus','o')}${r[15]}</span>`:'');
   return `<tr class="it" data-d="2" data-i="${r[13]}"><td>${esc(t[0])}</td><td title="${esc(t[1])}">${esc(t[1])}${man}</td><td title="${esc(D.d.ds[r[2]])}">${esc(D.d.ds[r[2]])}</td><td class="r">${f1(q)}</td><td class="r">${f0(r[7])}</td><td class="r">${f0(q?r[7]/q:0)}</td><td class="r cf"><input class="pf${!r[11]&&r[8]>0?' rk':''}${!r[11]&&r[9]&&r[9]!==r[8]?' ed':''}" type="number" min="0" step="1" placeholder="${!r[11]&&r[8]>0?r[8]:'-'}" title="${!r[11]?'Rekomendasi: '+r[8]:''}" value="${fq(r[9])}" data-i="${r[13]}"></td><td class="r pc">${f0(pc)}</td><td class="r sp">${f0(r[7]+pc)}</td><td class="r sx kr">${(()=>{const k=kr(r);return k===null?'-':f0(k)})()}</td><td class="r da">${f0(q?(r[7]+pc)/q:0)}</td><td class="cz zn">${esc(D.d.zn[r[3]])}</td><td class="cz">${esc(DL.jd[r[4]])}</td></tr>`;
 }
 function trOf(n){return document.querySelector('tr.gh[data-n="'+n.id+'"]')}
@@ -1444,19 +1459,19 @@ function calcSum(){
   let fn=0,rk=0;const t=new Set();
   for(const r of CUR){fn+=r[9];rk+=r[8];t.add(r[1])}
   const s=$('#sum');s.style.display=CUR.length?'grid':'none';
-  s.innerHTML=`<div><small>🏪 Jumlah Toko</small><b>${f0(t.size)}</b></div><div><small title="(QPD × 30 − STOCK) ÷ FRC, dibulatkan ke atas">📦 Total PB_REKOM</small><b>${f0(rk)}</b></div><div><small>✅ Total PB_FINAL</small><b>${f0(fn)}</b></div>`;
+  s.innerHTML=`<div><small>${ic('store')}Jumlah Toko</small><b>${f0(t.size)}</b></div><div><small title="(QPD × 30 − STOCK) ÷ FRC, dibulatkan ke atas">${ic('package')}Total PB_REKOM</small><b>${f0(rk)}</b></div><div><small>${ic('checkc')}Total PB_FINAL</small><b>${f0(fn)}</b></div>`;
 }
 function render(){
   buildTree();calcSum();
   OPENTK++;
   // Membuka ribuan baris sekaligus membuat halaman berat: buka otomatis hanya sampai OPEN_BUDGET baris
-  let used=0,stop=false;
-  for(const n of ROOT.sk){if(!stop&&(used===0||used+n.sk.length<=OPEN_BUDGET)){n.open=true;used+=n.sk.length}else{n.open=false;stop=true}}
+  let used=0,stop=false;const anyF=KEYS.some(k=>SEL[k]&&SEL[k].size);
+  for(const n of ROOT.sk){if(anyF&&!stop&&(used===0||used+n.sk.length<=OPEN_BUDGET)){n.open=true;used+=n.sk.length}else{n.open=false;stop=true}}
   ALLOPEN=ROOT.sk.every(n=>n.open);
-  const note=ALLOPEN?'':`<div class="note">⚡ ${f0(ROOT.sk.length)} toko (${f0(CUR.length)} baris). Agar tetap ringan, hanya ${f0(used)} baris pertama yang dibuka — klik nama toko untuk membuka, pakai filter untuk mempersempit, atau tekan “Buka semua”.</div>`;
+  const note=ALLOPEN?'':(!anyF?`<div class="note">${ic('zap')}${f0(ROOT.sk.length)} toko (${f0(CUR.length)} baris) ditampilkan dalam keadaan tertutup agar ringan — klik nama toko untuk membuka, pakai filter untuk mempersempit, atau tekan “Buka semua”.</div>`:`<div class="note">${ic('zap')}${f0(ROOT.sk.length)} toko (${f0(CUR.length)} baris). Agar tetap ringan, hanya ${f0(used)} baris pertama yang dibuka — klik nama toko untuk membuka, pakai filter untuk mempersempit, atau tekan “Buka semua”.</div>`);
   $('#bDl').disabled=!CUR.length;
-  if(!CUR.length){$('#out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">🔍</div><div>Tidak ada data untuk filter ini.</div></div>';return}
-  $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ✎</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
+  if(!CUR.length){$('#out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">'+ic('search','o')+'</div><div>Tidak ada data untuk filter ini.</div></div>';return}
+  $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ${ic('pencil','o')}</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
 }
 $('#bOpen').onclick=()=>{
   if(!ROOT||!CUR.length)return;
@@ -1488,7 +1503,7 @@ $('#bClose').onclick=()=>{OPENTK++;ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(
 const out=$('#out');
 out.addEventListener('click',e=>{
   const d=e.target.closest('.del');
-  if(d){const id=d.dataset.id,tr=d.closest('tr'),t=tr?tr.children[1].textContent.replace('✚','').replace('🗑','').trim():'',ds=tr?tr.children[2].textContent.trim():'';confirmDel('<b>'+esc(t)+'</b><br>'+esc(ds),()=>run('delManual',[TOKEN,id],()=>{MAN_DIRTY=true;toast('✅ Data dihapus');loadData(true,true)}));return}
+  if(d){const id=d.dataset.id,tr=d.closest('tr'),t=tr?tr.children[1].textContent.replace('✚','').replace('🗑','').trim():'',ds=tr?tr.children[2].textContent.trim():'';confirmDel('<b>'+esc(t)+'</b><br>'+esc(ds),()=>run('delManual',[TOKEN,id],()=>{MAN_DIRTY=true;toast('Data dihapus');loadData(true,true)}));return}
   if(e.target.tagName==='INPUT')return;
   const tr=e.target.closest('tr.gh');if(!tr)return;
   const n=NODES[+tr.dataset.n];n.open?closeNode(n,tr):openNode(n,tr);
@@ -1527,7 +1542,7 @@ function onEdit(inp){
 function flush(){
   if(!PEND.size)return;
   const ed=[...PEND.values()];PEND.clear();
-  run('savePB',[TOKEN,ed],()=>setStat(PEND.size?'Menyimpan…':'✔ Tersimpan','ok'),e=>{
+  run('savePB',[TOKEN,ed],()=>setStat(PEND.size?'Menyimpan…':'Tersimpan','ok'),e=>{
     ed.forEach(x=>{if(!PEND.has(x.k))PEND.set(x.k,x)});
     failH(e);
   });
@@ -1548,7 +1563,7 @@ const tokoOf=k=>((KT[k]||'').replace(/\s*\(.*\)\s*$/,'')||KT[k]||'').toUpperCase
 const ZS={};
 function zsBuild(p){
   const w=$('#'+p+'_znw');
-  w.innerHTML='<button type="button" class="in zsb"><span class="zt"></span><span>▾</span></button><div class="zsp"><input class="in zss" placeholder="Cari zona…" autocomplete="off"><div class="zsl"></div></div>';
+  w.innerHTML='<button type="button" class="in zsb"><span class="zt"></span><span>'+ic('chev','r')+'</span></button><div class="zsp"><input class="in zss" placeholder="Cari zona…" autocomplete="off"><div class="zsl"></div></div>';
   const st=ZS[p]={opts:[],val:''},btn=w.querySelector('.zsb'),inp=w.querySelector('.zss'),lst=w.querySelector('.zsl'),zt=w.querySelector('.zt');
   const paint=()=>{
     const q=inp.value.trim().toUpperCase(),o=st.opts.filter(z=>!q||z.toUpperCase().includes(q));
@@ -1625,7 +1640,7 @@ const zoneStores=z=>{const k=nrm(z);return ZSC[k]||(ZSC[k]=Object.keys(D.stores|
 const TK={opts:[],val:'',dis:true};
 function tkBuild(){
   const w=$('#a_tkw');
-  w.innerHTML='<button type="button" class="in zsb"><span class="zt"></span><span>▾</span></button><div class="zsp"><input class="in zss" placeholder="Cari kode / toko…" autocomplete="off"><div class="zsl"></div></div>';
+  w.innerHTML='<button type="button" class="in zsb"><span class="zt"></span><span>'+ic('chev','r')+'</span></button><div class="zsp"><input class="in zss" placeholder="Cari kode / toko…" autocomplete="off"><div class="zsl"></div></div>';
   const btn=w.querySelector('.zsb'),inp=w.querySelector('.zss'),lst=w.querySelector('.zsl'),zt=w.querySelector('.zt');
   const paint=()=>{const q=inp.value.trim().toUpperCase(),o=TK.opts.filter(x=>!q||(x.k+' '+x.t).toUpperCase().includes(q));
     lst.innerHTML=o.map(x=>`<div data-v="${esc(x.k)}"${x.k===TK.val?' class="on"':''}><b>${esc(x.k)}</b> — ${esc(x.t)}</div>`).join('')||'<div style="color:var(--mu)">Tidak ada toko</div>'};
@@ -1638,9 +1653,9 @@ tkBuild();
 function aCheck(){
   const z=ZS.a.val,k=$('#a_kode').value.trim().toUpperCase(),s=(D.stores||{})[k],own=s?(s[3]||''):'',opts=D.zoneOpts||[];
   let h='';
-  if(!z)h=own&&!opts.some(o=>nrm(o)===nrm(own))?'⚠ Zona toko ini ('+own+') tidak kirim minggu depan. Pilih zona yang sesuai jadwal.':'Pilih ZONA sesuai jadwal kirim minggu depan.';
-  else if(s&&own&&nrm(own)!==nrm(z))h='ℹ Zona asli toko ini '+own+' — diinput ke zona '+z+'.';
-  const hi=$('#a_hint');hi.textContent=h;hi.style.color=h.charAt(0)==='⚠'?'#b45309':'';
+  if(!z)h=own&&!opts.some(o=>nrm(o)===nrm(own))?'Zona toko ini ('+own+') tidak kirim minggu depan. Pilih zona yang sesuai jadwal.':'Pilih ZONA sesuai jadwal kirim minggu depan.';
+  else if(s&&own&&nrm(own)!==nrm(z))h='Zona asli toko ini '+own+' — diinput ke zona '+z+'.';
+  const hi=$('#a_hint');hi.textContent=h;hi.style.color=/^Zona toko ini \(/.test(h)?'#b45309':'';
   const same=!!(s&&own&&z&&nrm(own)===nrm(z)),ks=$('#a_kets');
   ks.querySelector('[value=SESUAI]').disabled=!same;
   if(!KUSER)ks.value=same?'SESUAI':'DI';else if(!same&&ks.value==='SESUAI')ks.value='DI';
@@ -1670,7 +1685,7 @@ $('#a_ok').onclick=()=>{
   if($('#a_kets').value==='DI'&&!TK.val)return toast('Keterangan TURUN DI TOKO: toko tujuan wajib dipilih',true);
   if(!o.ket.trim())return toast('KETERANGAN wajib diisi',true);
   $('#a_ok').disabled=true;
-  run('addManual',[TOKEN,o],()=>{$('#a_ok').disabled=false;$('#ovA').classList.remove('show');MAN_DIRTY=true;toast('✅ Data berhasil tersimpan');loadData(true,true);if(VIEW==='edit')loadManual()},e=>{$('#a_ok').disabled=false;failH(e)});
+  run('addManual',[TOKEN,o],()=>{$('#a_ok').disabled=false;$('#ovA').classList.remove('show');MAN_DIRTY=true;toast('Data berhasil tersimpan');loadData(true,true);if(VIEW==='edit')loadManual()},e=>{$('#a_ok').disabled=false;failH(e)});
 };
 </script>
 <script>
@@ -1698,13 +1713,21 @@ function groupManual(){
   GRP=[...m.values()];
   GRP.forEach(g=>{g.tot=g.rows.reduce((a,r)=>a+r.fn,0);g.sum=g.rows.slice().sort((a,b)=>{const x=MDESC.indexOf(a.ds),y=MDESC.indexOf(b.ds);return(x<0?99:x)-(y<0?99:y)}).map(r=>r.ds+' '+f0(r.fn)).join(' · ')});
 }
+/* tanggal kirim sebuah ZONA (dari jadwal minggu depan); kosong bila zona tidak terjadwal */
+function manJd(z){
+  if(!z||!D||!D.zjd)return'-';
+  let v=D.zjd[z];
+  if(!v){const k=nrm(z);for(const x in D.zjd){if(nrm(x)===k){v=D.zjd[x];break}}}
+  return v?fmtD(v):'-';
+}
 function renderManual(){
   const q=$('#e_q').value.trim().toLowerCase();
   const list=MAN.filter(r=>!q||[r.kode,r.toko,r.bas,r.zona,r.ds,r.ket].join(' ').toLowerCase().includes(q));
   $('#e_cnt').textContent=list.length+' data';
-  if(!list.length){$('#e_out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">📭</div><div>'+(MAN.length?'Tidak ada data yang cocok.':'Belum ada data PB manual. Klik tombol ＋ Tambah PB untuk menambah.')+'</div></div>';return}
-  const MAXR=500,rows=list.slice(0,MAXR).map(r=>`<tr><td>${esc(r.tgl)}</td><td>${esc(r.kode)}</td><td>${esc(r.toko)}</td><td>${esc(r.ds)}</td><td class="r">${f0(r.fn)}</td><td class="c">${esc(r.zona)}</td><td>${esc(r.ket)}</td><td class="ac"><button class="ib e" data-a="edit" data-id="${esc(r.id)}" title="Edit">✎</button><button class="ib d" data-a="del" data-id="${esc(r.id)}" title="Hapus">🗑</button></td></tr>`).join('');
-  $('#e_out').innerHTML=`<div class="tw"><table class="mt" style="min-width:820px"><thead><tr><th>TGL</th><th>KODE</th><th>TOKO</th><th>DESKRIPSI</th><th>PB_FINAL</th><th>ZONA</th><th>KETERANGAN</th><th class="ac">AKSI</th></tr></thead><tbody>${rows}</tbody></table></div>`
+  if(!list.length){$('#e_out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">'+ic('inbox','o')+'</div><div>'+(MAN.length?'Tidak ada data yang cocok.':'Belum ada data PB manual. Klik tombol '+ic('plus')+'Tambah PB untuk menambah.')+'</div></div>';return}
+  const ADM=!!(D&&D.user&&D.user.admin);
+  const MAXR=500,rows=list.slice(0,MAXR).map(r=>`<tr><td>${esc(r.kode)}</td><td>${esc(r.toko)}</td>${ADM?`<td>${esc(r.bas)}</td>`:''}<td>${esc(r.ds)}</td><td class="r">${f0(r.fn)}</td><td class="c">${esc(r.zona)}</td><td>${esc(manJd(r.zona))}</td><td>${esc(r.ket)}</td><td class="ac"><button class="ib e" data-a="edit" data-id="${esc(r.id)}" title="Edit">${ic('pencil','o')}</button><button class="ib d" data-a="del" data-id="${esc(r.id)}" title="Hapus">${ic('trash','o')}</button></td></tr>`).join('');
+  $('#e_out').innerHTML=`<div class="tw"><table class="mt" style="min-width:${ADM?960:860}px"><thead><tr><th>KODE</th><th>TOKO</th>${ADM?'<th>BAS</th>':''}<th>DESKRIPSI</th><th>PB_FINAL</th><th>ZONA</th><th>JADWAL KIRIM</th><th>KETERANGAN</th><th class="ac">AKSI</th></tr></thead><tbody>${rows}</tbody></table></div>`
    +(list.length>MAXR?`<div class="note">Menampilkan ${MAXR} data terbaru dari ${list.length} — gunakan pencarian untuk mempersempit.</div>`:'');
 }
 $('#e_q').oninput=deb(150,renderManual);
@@ -1712,7 +1735,7 @@ $('#e_out').addEventListener('click',e=>{
   const b=e.target.closest('[data-a]');if(!b)return;
   const r=MAN.find(x=>x.id===b.dataset.id);if(!r)return;
   if(b.dataset.a==='edit')openEdit(r.g);
-  else confirmDel('<b>'+esc(r.kode)+'</b> — '+esc(r.toko)+'<br>'+esc(r.ds)+' · PB_FINAL <b>'+f0(r.fn)+'</b>',()=>run('delManual',[TOKEN,r.id],()=>{MAN_DIRTY=true;toast('✅ Data dihapus');loadManual();loadData(true,true)}));
+  else confirmDel('<b>'+esc(r.kode)+'</b> — '+esc(r.toko)+'<br>'+esc(r.ds)+' · PB_FINAL <b>'+f0(r.fn)+'</b>',()=>run('delManual',[TOKEN,r.id],()=>{MAN_DIRTY=true;toast('Data dihapus');loadManual();loadData(true,true)}));
 });
 let DELFN=null;
 function confirmDel(msg,fn){DELFN=fn;$('#d_msg').innerHTML=msg;$('#ovD').classList.add('show')}
@@ -1745,7 +1768,7 @@ $('#x_ok').onclick=()=>{
   if(!items.length)return toast('Isi minimal satu jumlah PB FINAL',true);
   if(items.some(i=>isNaN(i.fn)||i.fn<0))return toast('PB FINAL harus angka ≥ 0',true);
   $('#x_ok').disabled=true;
-  run('updateManualGroup',[TOKEN,o],()=>{$('#x_ok').disabled=false;$('#ov').classList.remove('show');MAN_DIRTY=true;toast('✅ Perubahan tersimpan');loadManual();loadData(true,true)},e=>{$('#x_ok').disabled=false;failH(e)});
+  run('updateManualGroup',[TOKEN,o],()=>{$('#x_ok').disabled=false;$('#ov').classList.remove('show');MAN_DIRTY=true;toast('Perubahan tersimpan');loadManual();loadData(true,true)},e=>{$('#x_ok').disabled=false;failH(e)});
 };
 </script>
 <script>
@@ -1770,7 +1793,7 @@ function renderRekap(){
   const {all,list,trk,tfn}=rekapData();
   $('#r_cnt').textContent=list.length+' BAS · SUDAH INPUT '+all.filter(x=>x.ok).length+' · BELUM INPUT '+all.filter(x=>!x.ok).length;
   $('#r_jpg').disabled=!list.length;
-  if(!list.length){$('#r_out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">🔍</div><div>Tidak ada BAS yang cocok.</div></div>';return}
+  if(!list.length){$('#r_out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">'+ic('search','o')+'</div><div>Tidak ada BAS yang cocok.</div></div>';return}
   const by={};list.forEach(x=>(by[x.cab||'-']=by[x.cab||'-']||[]).push(x));
   const nm=D.cabNames||{};
   const cards=Object.keys(by).sort().map(c=>{
@@ -1815,7 +1838,7 @@ function rekapCanvas(){
   const g=c.getContext('2d');g.scale(sc,sc);g.textBaseline='middle';
   g.fillStyle='#fff';g.fillRect(0,0,Wmin,H);
   const rr=(x,y,w,h,r)=>{g.beginPath();g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h)};
-  g.fillStyle='#3730a3';g.font='bold 16px '+F;g.textAlign='left';g.fillText('📋 Rekap PB per BAS',px,17);
+  g.fillStyle='#3730a3';g.font='bold 16px '+F;g.textAlign='left';g.fillText('Rekap PB per BAS',px,17);
   g.fillStyle='#64748b';g.font='10px '+F;g.fillText('PB SAY BREAD · '+new Date().toLocaleString('id-ID',{dateStyle:'medium',timeStyle:'short'})+' · '+list.length+' BAS',px,35);
   const ox=px+(Wmin-W)/2;
   const badge=(txt,ok,x,y,w)=>{
@@ -2142,7 +2165,7 @@ let IT={all:[],sel:[],news:[]};
 function openItems(){run('getItemAdmin',[TOKEN],r=>{IT={all:r.all||[],sel:(r.sel||[]).slice(),news:[]};renderItems();$('#ovI').classList.add('show')})}
 function renderItems(){
   const info={};IT.all.concat(IT.news).forEach(x=>info[nrm(x.ds)]=x);
-  $('#it_list').innerHTML=IT.sel.map((ds,i)=>{const x=info[nrm(ds)];return `<div class="ir"><span>${esc(ds)}${x?'':' <span class="wn">(tidak ada di sheet ITEM)</span>'}</span><span class="r">${x?esc(x.plu):''}</span><span class="r">${x&&x.frc?f0(x.frc):''}</span><a class="del" data-i="${i}" title="Hapus dari daftar">🗑</a></div>`}).join('')||'<div class="note">Daftar kosong</div>';
+  $('#it_list').innerHTML=IT.sel.map((ds,i)=>{const x=info[nrm(ds)];return `<div class="ir"><span>${esc(ds)}${x?'':' <span class="wn">(tidak ada di sheet ITEM)</span>'}</span><span class="r">${x?esc(x.plu):''}</span><span class="r">${x&&x.frc?f0(x.frc):''}</span><a class="del" data-i="${i}" title="Hapus dari daftar">${ic('trash','o')}</a></div>`}).join('')||'<div class="note">Daftar kosong</div>';
   const have=new Set(IT.sel.map(nrm));
   $('#it_pick').innerHTML='<option value="">— pilih item dari sheet ITEM —</option>'+IT.all.filter(x=>!have.has(nrm(x.ds))).map(x=>`<option value="${esc(x.ds)}">${esc(x.ds)}${x.plu?' · '+esc(x.plu):''}</option>`).join('');
 }
@@ -2162,7 +2185,7 @@ $('#ovI').addEventListener('mousedown',e=>{if(e.target===$('#ovI'))$('#ovI').cla
 $('#it_ok').onclick=()=>{
   if(!IT.sel.length)return toast('Daftar item tidak boleh kosong',true);
   $('#it_ok').disabled=true;
-  run('setManItems',[TOKEN,IT.sel,IT.news],()=>{$('#it_ok').disabled=false;$('#ovI').classList.remove('show');MAN_DIRTY=true;toast('✅ Daftar item disimpan');loadData(true,true);if(VIEW==='edit')loadManual()},e=>{$('#it_ok').disabled=false;failH(e)});
+  run('setManItems',[TOKEN,IT.sel,IT.news],()=>{$('#it_ok').disabled=false;$('#ovI').classList.remove('show');MAN_DIRTY=true;toast('Daftar item disimpan');loadData(true,true);if(VIEW==='edit')loadManual()},e=>{$('#it_ok').disabled=false;failH(e)});
 };
 </script>
 <script>
@@ -2189,7 +2212,7 @@ $('#s_ok').onclick=()=>{
   const ed=SC.rows.filter(r=>SCE[r.row]&&SCE[r.row]!==r.d).map(r=>({row:r.row,z:r.z,mg:r.mg,d:SCE[r.row]}));
   if(!ed.length){$('#ovS').classList.remove('show');return}
   $('#s_ok').disabled=true;
-  run('saveJadwalDates',[TOKEN,ed],()=>{$('#s_ok').disabled=false;$('#ovS').classList.remove('show');toast('✅ Tanggal jadwal disimpan');JDW=null;loadData(true,true);if(VIEW==='jdw')loadJadwal(true)},e=>{$('#s_ok').disabled=false;failH(e)});
+  run('saveJadwalDates',[TOKEN,ed],()=>{$('#s_ok').disabled=false;$('#ovS').classList.remove('show');toast('Tanggal jadwal disimpan');JDW=null;loadData(true,true);if(VIEW==='jdw')loadJadwal(true)},e=>{$('#s_ok').disabled=false;failH(e)});
 };
 </script>
 <script>
@@ -2208,11 +2231,11 @@ function renderStk(){
   const all=R.items,kur=all.filter(i=>i.sel<0),tk=kur.reduce((t,i)=>t+(-i.sel),0),rows=STKF?kur:all;
   const th='padding:5px 8px;background:#3730a3;color:#fff;font-size:11px;white-space:nowrap';
   const td='padding:4px 8px;border-bottom:1px solid #edf0f8;white-space:nowrap;font-size:12.5px';
-  let h=`<div class="card" style="margin-top:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;color:var(--br)">📦 Stock-DC vs PB</h3><span class="note" style="padding:0">Minggu depan · ${esc(R.title)} · stock akhir ${esc(fd(R.stockDate))} · diperbarui ${esc(R.updated)}</span><span style="flex:1"></span><label style="font-size:12px"><input type="checkbox" id="stk_f" ${STKF?'checked':''}> Hanya yang kurang</label><span style="position:relative;display:inline-block"><button class="b s" id="stk_dl">⬇ Download ▾</button><div id="stk_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="stk_xls" style="display:block;width:100%;text-align:left;margin:0">📊 Excel (.xls)</button><button class="b s" id="stk_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">🖼 Gambar (.jpg)</button></div></span><button class="b s" id="stk_rl">↻ Muat ulang</button></div>`;
-  if(!R.hasStock)h+='<div class="note wn" style="padding-top:6px">⚠ Sheet <b>STOCK-DC</b> belum berisi stock akhir — stok dianggap 0.</div>';
-  if(R.skip&&R.skip.length)h+='<div class="note wn" style="padding-top:6px">⚠ PB berikut <b>tidak ikut dihitung</b> karena tidak sesuai jadwal minggu depan (lihat daftar "PB tidak sesuai jadwal" di bawah): '+R.skip.map(k=>esc(k.nama)+' '+f0(k.pb)+' PB ('+f0(k.n)+' baris)').join(' · ')+'</div>';
+  let h=`<div class="card" style="margin-top:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;color:var(--br)">${ic('package')}Stock-DC vs PB</h3><span class="note" style="padding:0">Minggu depan · ${esc(R.title)} · stock akhir ${esc(fd(R.stockDate))} · diperbarui ${esc(R.updated)}</span><span style="flex:1"></span><label style="font-size:12px"><input type="checkbox" id="stk_f" ${STKF?'checked':''}> Hanya yang kurang</label><span style="position:relative;display:inline-block"><button class="b s" id="stk_dl">${ic('down')}Download${ic('chev','r')}</button><div id="stk_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="stk_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="stk_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span><button class="b s" id="stk_rl">${ic('refresh')}Muat ulang</button></div>`;
+  if(!R.hasStock)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+'Sheet <b>STOCK-DC</b> belum berisi stock akhir — stok dianggap 0.</div>';
+  if(R.skip&&R.skip.length)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+'PB berikut <b>tidak ikut dihitung</b> karena tidak sesuai jadwal minggu depan (lihat daftar "PB tidak sesuai jadwal" di bawah): '+R.skip.map(k=>esc(k.nama)+' '+f0(k.pb)+' PB ('+f0(k.n)+' baris)').join(' · ')+'</div>';
   h+=`<div class="kpis" style="margin:10px 0"><div class="kpi"><small>Item dipantau</small><b>${f0(all.length)}</b><span>punya PB minggu depan</span></div><div class="kpi"><small>Item stok kurang</small><b style="color:${kur.length?'#b91c1c':'#15803d'}">${f0(kur.length)}</b><span>${kur.length?'perlu pengurangan PB':'semua cukup'}</span></div><div class="kpi"><small>Total kekurangan</small><b style="color:${tk?'#b91c1c':'#15803d'}">${f0(tk)}</b><span>pcs/ctn sesuai satuan PB</span></div></div>`;
-  if(!rows.length){h+='<div class="note" style="padding:8px">Semua item stok Stock-DC cukup untuk PB minggu depan. 👍</div></div>';$('#stk_out').innerHTML=h;bindStk();return}
+  if(!rows.length){h+='<div class="note" style="padding:8px">Semua item stok Stock-DC cukup untuk PB minggu depan.</div></div>';$('#stk_out').innerHTML=h;bindStk();return}
   h+='<div class="note" style="padding:0 0 6px">Bila stok kurang, stok dibagi <b>proporsional</b> sesuai PB tiap cabang. <b>JATAH</b> = rekomendasi stok untuk cabang, <span style="color:#b91c1c;font-weight:bold">KURANGI</span> = PB yang perlu dikurangi dari PB final cabang.</div>';
   h+='<div style="overflow:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="'+th+';text-align:left">DESKRIPSI</th><th style="'+th+';text-align:right">STOCK-DC</th><th style="'+th+';text-align:right">TOTAL PB</th><th style="'+th+';text-align:right">SELISIH</th><th style="'+th+'">STATUS</th>'+R.cabs.map(c=>`<th style="${th};text-align:right">${esc(c.nama.toUpperCase())}<br><span style="font-weight:normal;font-size:10px">PB → JATAH</span></th>`).join('')+'</tr></thead><tbody>';
   rows.forEach((i,n)=>{
@@ -2312,7 +2335,7 @@ function renderPivot(){
   document.querySelectorAll('#pv_seg button').forEach(b=>b.classList.toggle('on',b.dataset.w===PVW));
   $('#pv_sub').textContent=(PVW==='next'?'Minggu depan · kirim ':'Minggu berjalan · kirim ')+(PVW==='next'?R.nextLbl:R.curLbl)+' · diperbarui '+R.updated;
   if(!P||!P.items.length){
-    $('#pv_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">📭</div><div>'+(PVW==='cur'?'Belum ada arsip untuk minggu berjalan.<br><span style="font-size:12px;color:var(--mu)">Arsip tersimpan otomatis setiap minggu; minggu berjalan akan terisi setelah minggu depan berganti.</span>':'Belum ada data PB yang sesuai jadwal minggu depan.')+'</div></div>';
+    $('#pv_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">'+ic('inbox','o')+'</div><div>'+(PVW==='cur'?'Belum ada arsip untuk minggu berjalan.<br><span style="font-size:12px;color:var(--mu)">Arsip tersimpan otomatis setiap minggu; minggu berjalan akan terisi setelah minggu depan berganti.</span>':'Belum ada data PB yang sesuai jadwal minggu depan.')+'</div></div>';
     return;
   }
   const mx=Math.max(...P.items.map(i=>i.t)),mn=Math.min(...P.items.map(i=>i.t));
@@ -2328,7 +2351,7 @@ function loadBad(){run('getBadPB',[TOKEN],r=>{BADD=r;renderBad()},()=>{})}
 function renderBad(){
   const R=BADD,adm=!!(D&&D.user&&D.user.admin);
   if(!R||!R.total){$('#c_bad2').innerHTML='';return}
-  $('#c_bad2').innerHTML=`<div class="card warn" style="margin-top:14px"><div style="display:flex;align-items:center;gap:10px"><div class="wt" style="flex:1">⚠ ${f0(R.total)} baris PB tidak sesuai jadwal minggu depan — mohon direvisi</div><span style="position:relative;display:inline-block"><button class="b s" id="bad_dl">⬇ Download ▾</button><div id="bad_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="bad_xls" style="display:block;width:100%;text-align:left;margin:0">📊 Excel (.xls)</button><button class="b s" id="bad_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">🖼 Gambar (.jpg)</button></div></span></div><div class="note" style="text-align:center;padding:2px 0 8px">${adm?'Baris ini tidak masuk sheet FIX PB pada Excel, tetapi dipisah ke sheet PERLU REVISI. ':''}Perbaiki zona / PB-nya (menu PB Manual → Edit${adm?', atau upload ulang CSV':''}), lalu muat ulang.</div><div><div class="twx" style="max-height:320px;display:block;width:100%"><table class="pvt" style="width:100%"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ITEM</th><th>PB</th><th>ZONA</th><th>ALASAN</th></tr></thead><tbody>${R.rows.map(x=>`<tr><td style="text-align:center">${esc(x.cab)}</td><td style="text-align:center">${esc(x.kode)}</td><td>${esc(x.toko)}</td><td>${esc(x.ds)}</td><td class="n">${f0(x.fn)}</td><td style="text-align:center">${esc(x.zn||'-')}</td><td style="color:#b91c1c">${esc(x.why)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
+  $('#c_bad2').innerHTML=`<div class="card warn" style="margin-top:14px"><div style="display:flex;align-items:center;gap:10px"><div class="wt" style="flex:1">${ic('warn')}${f0(R.total)} baris PB tidak sesuai jadwal minggu depan — mohon direvisi</div><span style="position:relative;display:inline-block"><button class="b s" id="bad_dl">${ic('down')}Download${ic('chev','r')}</button><div id="bad_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="bad_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="bad_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span></div><div class="note" style="text-align:center;padding:2px 0 8px">${adm?'Baris ini tidak masuk sheet FIX PB pada Excel, tetapi dipisah ke sheet PERLU REVISI. ':''}Perbaiki zona / PB-nya (menu PB Manual → Edit${adm?', atau upload ulang CSV':''}), lalu muat ulang.</div><div><div class="twx" style="max-height:320px;display:block;width:100%"><table class="pvt" style="width:100%"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ITEM</th><th>PB</th><th>ZONA</th><th>ALASAN</th></tr></thead><tbody>${R.rows.map(x=>`<tr><td style="text-align:center">${esc(x.cab)}</td><td style="text-align:center">${esc(x.kode)}</td><td>${esc(x.toko)}</td><td>${esc(x.ds)}</td><td class="n">${f0(x.fn)}</td><td style="text-align:center">${esc(x.zn||'-')}</td><td style="color:#b91c1c">${esc(x.why)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
   bindBad();
 }
 function badPage(R){
@@ -2375,10 +2398,10 @@ function renderCab(){
   const done=R.cabs.filter(x=>x.done).length;
   $('#c_cnt').textContent=done+' / '+R.cabs.length+' cabang selesai';
   $('#c_dl').disabled=!R.allDone;
-  $('#c_hint').innerHTML=(R.allDone?'✅ Semua cabang sudah selesai. File: <b>Alokasi Dough Per Toko '+esc(R.title)+'.xlsx</b>':'Tombol download aktif setelah <b>semua cabang selesai</b> diinput. <a id="c_force" style="color:var(--br2);cursor:pointer;text-decoration:underline">Unduh sementara (belum lengkap)</a>')+'<br>Excel hanya memuat zona &amp; jadwal <b>minggu depan</b>; PB yang tidak sesuai dipisah ke sheet <b>PERLU REVISI</b>.';
-  if(!R.cabs.length){$('#c_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">📭</div><div>Belum ada cabang.</div></div>'}
+  $('#c_hint').innerHTML=(R.allDone?''+ic('checkc')+'Semua cabang sudah selesai. File: <b>Alokasi Dough Per Toko '+esc(R.title)+'.xlsx</b>':'Tombol download aktif setelah <b>semua cabang selesai</b> diinput. <a id="c_force" style="color:var(--br2);cursor:pointer;text-decoration:underline">Unduh sementara (belum lengkap)</a>')+'<br>Excel hanya memuat zona &amp; jadwal <b>minggu depan</b>; PB yang tidak sesuai dipisah ke sheet <b>PERLU REVISI</b>.';
+  if(!R.cabs.length){$('#c_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">'+ic('inbox','o')+'</div><div>Belum ada cabang.</div></div>'}
   else{
-    const rows=R.cabs.map(x=>`<tr><td><b>${esc(x.cab)}</b></td><td>${esc(x.nama)}</td><td>${x.type==='CSV'?'CSV':'Input web'}</td><td class="n">${f0(x.toko)}</td><td class="n">${x.type==='SYS'?f0(x.basDone)+' / '+f0(x.basTotal):'-'}</td><td class="n">${f0(x.pb)}</td><td class="n">${f0(x.pcs)}</td><td><span class="bdg ${x.done?'ok':'cek'}">${x.done?'SELESAI':'BELUM'}</span>${x.info?' <span class="note">'+esc(x.info)+'</span>':''}${x.type==='CSV'&&x.n?' <a class="del" data-c="'+esc(x.cab)+'" title="Hapus data CSV cabang ini">🗑</a>':''}</td></tr>`).join('');
+    const rows=R.cabs.map(x=>`<tr><td><b>${esc(x.cab)}</b></td><td>${esc(x.nama)}</td><td>${x.type==='CSV'?'CSV':'Input web'}</td><td class="n">${f0(x.toko)}</td><td class="n">${x.type==='SYS'?f0(x.basDone)+' / '+f0(x.basTotal):'-'}</td><td class="n">${f0(x.pb)}</td><td class="n">${f0(x.pcs)}</td><td><span class="bdg ${x.done?'ok':'cek'}">${x.done?'SELESAI':'BELUM'}</span>${x.info?' <span class="note">'+esc(x.info)+'</span>':''}${x.type==='CSV'&&x.n?' <a class="del" data-c="'+esc(x.cab)+'" title="Hapus data CSV cabang ini">'+ic('trash','o')+'</a>':''}</td></tr>`).join('');
     const tp=R.cabs.reduce((a,x)=>a+x.pb,0),tc=R.cabs.reduce((a,x)=>a+x.pcs,0);
     $('#c_out').innerHTML=`<div class="twx" style="margin-top:10px"><table class="pvt"><thead><tr><th>CAB</th><th>NAMA</th><th>SUMBER</th><th>TOKO</th><th>BAS SUDAH INPUT</th><th>PB_FINAL</th><th>PB_PCS</th><th>STATUS</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><td colspan="5">TOTAL</td><td class="n">${f0(tp)}</td><td class="n">${f0(tc)}</td><td></td></tr></tfoot></table></div>
     <div class="note" style="padding:6px 2px 0">Cabang input web <b>SELESAI</b> bila semua BAS sudah mengisi / merevisi PB Final (lihat Rekap BAS). Cabang CSV <b>SELESAI</b> bila file CSV sudah diunggah.</div>`;
@@ -2394,8 +2417,8 @@ function dlCab(force){
     back();
     const bin=atob(r.b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
     save(new Blob([u],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),r.name);
-    if(r.bad>0)toast('⚠ '+f0(r.bad)+' baris PB tidak sesuai minggu depan dipisah di sheet PERLU REVISI — mohon direvisi',true);
-    else toast('✅ '+f0(r.rows)+' baris diunduh'+(r.partial&&r.partial.length?' (belum lengkap: '+r.partial.join(', ')+')':''));
+    if(r.bad>0)toast(''+f0(r.bad)+' baris PB tidak sesuai minggu depan dipisah di sheet PERLU REVISI — mohon direvisi',true);
+    else toast(''+f0(r.rows)+' baris diunduh'+(r.partial&&r.partial.length?' (belum lengkap: '+r.partial.join(', ')+')':''));
   },e=>{back();failH(e)});
 }
 $('#c_dl').onclick=()=>dlCab(false);
@@ -2406,13 +2429,13 @@ $('#mst_dl').onclick=()=>{
     back();
     const bin=atob(r.b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
     save(new Blob([u],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),r.name);
-    toast(r.bad>0?'⚠ File master diunduh — '+f0(r.bad)+' baris PB tidak sesuai jadwal ada di sheet PERLU REVISI':'✅ File master diunduh',r.bad>0);
+    toast(r.bad>0?'File master diunduh — '+f0(r.bad)+' baris PB tidak sesuai jadwal ada di sheet PERLU REVISI':'File master diunduh',r.bad>0);
   },e=>{back();failH(e)});
 };
 $('#c_out').addEventListener('click',e=>{
   const a=e.target.closest('.del[data-c]');if(!a)return;
   const c=a.dataset.c;
-  confirmDel('Hapus semua data CSV cabang <b>'+esc(c)+'</b>?',()=>run('delCsvPB',[TOKEN,c],()=>{toast('✅ Data CSV '+c+' dihapus');PVD=null;loadCab(true)}));
+  confirmDel('Hapus semua data CSV cabang <b>'+esc(c)+'</b>?',()=>run('delCsvPB',[TOKEN,c],()=>{toast('Data CSV '+c+' dihapus');PVD=null;loadCab(true)}));
 });
 /* --- CSV --- */
 let CSVR=null;
@@ -2451,7 +2474,7 @@ function csvPrev(txt,name){
   if(!err.length&&!list.length)err.push('Tidak ada data.');
   CSVR=err.length?null:list;
   const by={};list.forEach(r=>{const a=by[r.cab]=by[r.cab]||{n:0,t:0,tk:new Set()};a.n++;a.t+=Number(String(r.fn).replace(',','.'))||0;a.tk.add(r.kode)});
-  $('#c_prev').innerHTML=`<div class="note"><b>${esc(name)}</b> — ${f0(list.length)} baris</div>`+(Object.keys(by).length?`<div class="tw" style="max-height:none"><table style="min-width:0"><thead><tr><th>CAB</th><th class="r">TOKO</th><th class="r">BARIS</th><th class="r">TOTAL PB_FINAL</th></tr></thead><tbody>${Object.keys(by).map(c=>`<tr><td>${esc(c)}</td><td class="r">${by[c].tk.size}</td><td class="r">${by[c].n}</td><td class="r">${f0(by[c].t)}</td></tr>`).join('')}</tbody></table></div>`:'')+(err.length?`<div class="note wn" style="padding-top:6px">⚠ ${err.map(esc).join('<br>⚠ ')}</div>`:'<div class="note" style="padding-top:6px">✔ Siap diunggah. Data lama cabang di atas akan diganti.</div>');
+  $('#c_prev').innerHTML=`<div class="note"><b>${esc(name)}</b> — ${f0(list.length)} baris</div>`+(Object.keys(by).length?`<div class="tw" style="max-height:none"><table style="min-width:0"><thead><tr><th>CAB</th><th class="r">TOKO</th><th class="r">BARIS</th><th class="r">TOTAL PB_FINAL</th></tr></thead><tbody>${Object.keys(by).map(c=>`<tr><td>${esc(c)}</td><td class="r">${by[c].tk.size}</td><td class="r">${by[c].n}</td><td class="r">${f0(by[c].t)}</td></tr>`).join('')}</tbody></table></div>`:'')+(err.length?`<div class="note wn" style="padding-top:6px">${ic('warn')}${err.map(esc).join('<br>'+ic('warn')+'')}</div>`:'<div class="note" style="padding-top:6px">'+ic('check')+'Siap diunggah. Data lama cabang di atas akan diganti.</div>');
   $('#c_ok').disabled=!CSVR;$('#c_clr').disabled=false;
 }
 function csvFile(f){
@@ -2472,7 +2495,7 @@ $('#c_ok').onclick=()=>{
   const rows=CSVR.map(r=>({cab:r.cab,kode:r.kode,plu:r.plu,ds:r.ds,fn:r.fn,ket:r.ket}));
   run('uploadCsvPB',[TOKEN,rows],r=>{
     $('#c_ok').textContent='Upload';$('#c_clr').click();
-    toast('✅ '+f0(r.rows)+' baris untuk '+r.cabs.join(', ')+' tersimpan'+(r.unknown&&r.unknown.length?' · item tidak ada di sheet ITEM: '+r.unknown.join(', '):''));
+    toast(''+f0(r.rows)+' baris untuk '+r.cabs.join(', ')+' tersimpan'+(r.unknown&&r.unknown.length?' · item tidak ada di sheet ITEM: '+r.unknown.join(', '):''));
     PVD=null;loadCab(true);
   },e=>{$('#c_ok').textContent='Upload';$('#c_ok').disabled=!CSVR;failH(e)});
 };
@@ -2539,11 +2562,11 @@ function renderSim(){
   const R=SIM;if(!R)return;
   document.querySelectorAll('#sim_seg button').forEach(b=>b.classList.toggle('on',b.dataset.w===SIMW));
   if(R.missing){$('#sim_sub').textContent=(SIMW==='cur'?'Minggu berjalan · ':'')+R.title;$('#sim_warn').innerHTML='';$('#sim_btn').style.display='none';
-    $('#sim_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">📭</div><div>Belum ada arsip simulasi untuk minggu berjalan.<br><span style="font-size:12px;color:var(--mu)">Arsip disimpan otomatis saat minggu tersebut masih berstatus minggu depan (data PB &amp; STOCK-DC saat itu). Mulai minggu depan, simulasi minggu ini akan tersedia di sini.</span></div></div>';return}
+    $('#sim_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">'+ic('inbox','o')+'</div><div>Belum ada arsip simulasi untuk minggu berjalan.<br><span style="font-size:12px;color:var(--mu)">Arsip disimpan otomatis saat minggu tersebut masih berstatus minggu depan (data PB &amp; STOCK-DC saat itu). Mulai minggu depan, simulasi minggu ini akan tersedia di sini.</span></div></div>';return}
   $('#sim_sub').textContent=(SIMW==='cur'?'Minggu berjalan (arsip) · ':'Minggu depan · ')+'PERIODE : '+R.title+' · diperbarui '+R.updated;
-  $('#sim_warn').innerHTML=(R.bad?'<div class="note wn" style="padding-top:4px">⚠ '+f0(R.bad)+' baris PB tidak sesuai jadwal minggu depan tidak dihitung di sini (lihat Rekap Cabang).</div>':'');
+  $('#sim_warn').innerHTML=(R.bad?'<div class="note wn" style="padding-top:4px">'+ic('warn')+''+f0(R.bad)+' baris PB tidak sesuai jadwal minggu depan tidak dihitung di sini (lihat Rekap Cabang).</div>':'');
   $('#sim_btn').style.display=R.dates.length?'':'none';
-  if(!R.dates.length){$('#sim_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">📭</div><div>Belum ada jadwal / PB untuk '+(SIMW==='cur'?'minggu berjalan':'minggu depan')+'.</div></div>';return}
+  if(!R.dates.length){$('#sim_out').innerHTML='<div class="card empty" style="margin-top:10px"><div class="e">'+ic('inbox','o')+'</div><div>Belum ada jadwal / PB untuk '+(SIMW==='cur'?'minggu berjalan':'minggu depan')+'.</div></div>';return}
   const b=simBuild(R,{web:1});
   $('#sim_out').innerHTML='<div class="twx simw" style="max-height:none;display:block;width:100%;padding:0 10px 10px;text-align:left;overflow:auto">'+b.t1+b.t2+'</div>';
 }
