@@ -697,6 +697,20 @@ h3 .ic{width:1.1em;height:1.1em;vertical-align:-.17em;margin-right:.45em}
   header .chip.solid a{display:inline!important;visibility:visible!important}
   header{padding-bottom:16px!important}
 }
+
+/* Toggle on/off Input PB (admin) */
+#web.chip,#web.chip.off{background:rgba(255,255,255,.20);color:#fff;border-color:rgba(255,255,255,.36);padding:2px 10px 2px 12px}
+#web #webT{display:inline-flex;align-items:center;gap:8px;margin:0;text-decoration:none;cursor:pointer;color:inherit;user-select:none;outline:none}
+#web .sw{position:relative;width:38px;height:20px;border-radius:99px;background:#ef4444;box-shadow:inset 0 1px 3px rgba(0,0,0,.3);transition:background .25s;flex:none}
+#web .sw.on{background:#22c55e}
+#web .sw i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:transform .25s}
+#web .sw.on i{transform:translateX(18px)}
+#web #webT:focus-visible .sw{outline:2px solid #fff;outline-offset:2px}
+#web .swt{font-weight:700;min-width:56px}
+#web.off .swt{color:#ffd1d9}
+
+.bstb td{white-space:normal;word-break:break-word;padding:4px 5px}
+.bstb th{padding:6px 5px}
 </style>
 </head>
 <body>
@@ -1166,8 +1180,11 @@ window.__blk=5;
 function updWeb(){
   const w=$('#web');w.style.display=D&&D.user.admin?'':'none';if(!D)return;
   w.classList.toggle('off',!D.open);
-  $('#webT').innerHTML=D.open?''+ic('dot','dot-on')+'Input PB AKTIF · Nonaktifkan':''+ic('dot','dot-off')+'Input PB NONAKTIF · Aktifkan';
+  const wt=$('#webT');wt.setAttribute('role','switch');wt.setAttribute('aria-checked',D.open?'true':'false');wt.tabIndex=0;
+  wt.title=D.open?'Klik untuk menonaktifkan Input PB & PB Manual':'Klik untuk mengaktifkan Input PB & PB Manual';
+  wt.innerHTML='<span class="swl">Input PB</span><span class="sw'+(D.open?' on':'')+'"><i></i></span><span class="swt">'+(D.open?'AKTIF':'NONAKTIF')+'</span>';
 }
+$('#webT').onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();$('#webT').click()}};
 $('#webT').onclick=()=>{
   if(!D)return;
   const to=!D.open;
@@ -1268,12 +1285,12 @@ function baruBody(rows){
   const tr=rows.map(r=>{
     const opts=basOpts(r[0]),cur=BASIN[r[1]]||'';
     const sel=opts.length
-      ?`<select class="in bsin" data-k="${esc(r[1])}" style="width:100%;padding:5px 8px"><option value="">Pilih BAS cabang ${esc(r[0])}</option>${opts.map(b=>`<option value="${esc(b)}"${b===cur?' selected':''}>${esc(b)}</option>`).join('')}</select>`
+      ?`<select class="in bsin" data-k="${esc(r[1])}" style="width:100%;min-width:0;padding:4px 6px;font-size:12px"><option value="">Pilih BAS</option>${opts.map(b=>`<option value="${esc(b)}"${b===cur?' selected':''}>${esc(b)}</option>`).join('')}</select>`
       :`<select class="in bsin" data-k="${esc(r[1])}" disabled style="width:100%;padding:5px 8px"><option value="">Belum ada BAS</option></select>`;
-    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td style="min-width:230px">${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 10px;white-space:nowrap;display:inline-flex;flex-direction:row;align-items:center;gap:4px">${ic('check')}Simpan</button></td></tr>`}).join('');
+    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td>${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 8px;white-space:nowrap;display:inline-flex;flex-direction:row;align-items:center;gap:3px;font-size:12px">${ic('check')}Simpan</button></td></tr>`}).join('');
   return `<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5"><b>Info untuk semua pengguna:</b> toko di bawah ini <b>sudah tampil di halaman Input PB</b> dan bisa langsung di-PB-kan, tetapi kolom BAS-nya masih kosong. Pilih nama BAS dari daftar (hanya BAS di cabang toko tersebut) lalu klik <b>Simpan</b>. Setelah disimpan, toko otomatis masuk ke data BAS dan nama BAS muncul di Input PB, PB Manual, dan rekap.</div>`+
     `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><button class="b p" id="bsAll" ${filled?'':'disabled'}>${ic('check')}Simpan semua yang terisi (${filled})</button></div>`+
-    `<div class="tw" style="max-height:50vh"><table style="min-width:640px"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
+    `<div class="tw" style="max-height:50vh;overflow-x:hidden"><table class="bstb" style="min-width:0;width:100%;table-layout:fixed"><colgroup><col style="width:9%"><col style="width:11%"><col style="width:27%"><col style="width:9%"><col style="width:8%"><col style="width:20%"><col style="width:16%"></colgroup><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 function saveBas(ks){
   const items=ks.map(k=>({kode:k,bas:(BASIN[k]||'').trim()})).filter(x=>x.bas);
@@ -2452,11 +2469,14 @@ function renderPivot(){
   $('#pv_out').innerHTML=kp+`<div class="pgrid" style="justify-content:center"><div class="pl">${tbl}</div><div class="pr"><div class="card"><b style="color:var(--br)">Total PB per Cabang</b>${chartCab(P)}</div><div class="card"><b style="color:var(--br)">10 Item Terbesar per Cabang</b>${chartItems(P)}</div></div></div>`;
 }
 /* PB tidak sesuai jadwal minggu depan (semua pengguna, sesuai filter cabang pengguna) */
-function loadBad(){run('getBadPB',[TOKEN],r=>{BADD=r;renderBad()},()=>{})}
+function loadBad(){run('getBadPB',[TOKEN],r=>{
+  /* urut: CAB, KODE, ZONA (lalu ITEM agar stabil) */
+  if(r&&r.rows)r.rows.sort((a,b)=>{const c=(x,y)=>String(x==null?'':x).localeCompare(String(y==null?'':y),'id',{numeric:true,sensitivity:'base'});return c(a.cab,b.cab)||c(a.kode,b.kode)||c(a.zn,b.zn)||c(a.ds,b.ds)});
+  BADD=r;renderBad()},()=>{})}
 function renderBad(){
   const R=BADD,adm=!!(D&&D.user&&D.user.admin);
   if(!R||!R.total){$('#c_bad2').innerHTML='';return}
-  $('#c_bad2').innerHTML=`<div class="card warn" style="margin-top:14px"><div style="display:flex;align-items:center;gap:10px"><div class="wt" style="flex:1">${ic('warn')}${f0(R.total)} baris PB tidak sesuai jadwal minggu depan — mohon direvisi</div><span style="position:relative;display:inline-block"><button class="b s" id="bad_dl">${ic('down')}Download${ic('chev','r')}</button><div id="bad_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="bad_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="bad_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span></div><div class="note" style="text-align:center;padding:2px 0 8px">${adm?'Baris ini tidak masuk sheet FIX PB pada Excel, tetapi dipisah ke sheet PERLU REVISI. ':''}Perbaiki zona / PB-nya (menu PB Manual → Edit${adm?', atau upload ulang CSV':''}), lalu muat ulang.</div><div><div class="twx" style="max-height:320px;display:block;width:100%"><table class="pvt" style="width:100%"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ITEM</th><th>PB</th><th>ZONA</th><th>ALASAN</th></tr></thead><tbody>${R.rows.map(x=>`<tr><td style="text-align:center">${esc(x.cab)}</td><td style="text-align:center">${esc(x.kode)}</td><td>${esc(x.toko)}</td><td>${esc(x.ds)}</td><td class="n">${f0(x.fn)}</td><td style="text-align:center">${esc(x.zn||'-')}</td><td style="color:#b91c1c">${esc(x.why)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
+  $('#c_bad2').innerHTML=`<div class="card warn" style="margin-top:14px"><div style="display:flex;align-items:center;gap:10px"><div class="wt" style="flex:1">${ic('warn')}${f0(R.total)} baris PB tidak sesuai jadwal minggu depan — mohon direvisi</div><span style="position:relative;display:inline-block"><button class="b s" id="bad_dl">${ic('down')}Download${ic('chev','r')}</button><div id="bad_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="bad_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="bad_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span></div><div class="note" style="text-align:center;padding:2px 0 8px">Baris ini tidak masuk Jadwal PB, Perbaiki zona / PB-nya (menu PB Manual → Edit), lalu muat ulang.</div><div><div class="twx" style="max-height:320px;display:block;width:100%"><table class="pvt" style="width:100%"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ITEM</th><th>PB</th><th>ZONA</th><th>ALASAN</th></tr></thead><tbody>${R.rows.map(x=>`<tr><td style="text-align:center">${esc(x.cab)}</td><td style="text-align:center">${esc(x.kode)}</td><td>${esc(x.toko)}</td><td>${esc(x.ds)}</td><td class="n">${f0(x.fn)}</td><td style="text-align:center">${esc(x.zn||'-')}</td><td style="color:#b91c1c">${esc(x.why)}</td></tr>`).join('')}</tbody></table></div></div></div>`;
   bindBad();
 }
 function badPage(R){
