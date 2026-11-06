@@ -1263,13 +1263,14 @@ function basOpts(cab){
   return [...new Set(a)].sort((x,y)=>x.localeCompare(y,'id',{numeric:true}));
 }
 function baruBody(rows){
+  rows.forEach(r=>{if(BASIN[r[1]]&&basOpts(r[0]).indexOf(BASIN[r[1]])<0)delete BASIN[r[1]]});   // buang isian lama yang tidak ada di daftar cabang
   const filled=rows.filter(r=>(BASIN[r[1]]||'').trim()).length;
   const tr=rows.map(r=>{
     const opts=basOpts(r[0]),cur=BASIN[r[1]]||'';
     const sel=opts.length
       ?`<select class="in bsin" data-k="${esc(r[1])}" style="width:100%;padding:5px 8px"><option value="">Pilih BAS cabang ${esc(r[0])}</option>${opts.map(b=>`<option value="${esc(b)}"${b===cur?' selected':''}>${esc(b)}</option>`).join('')}</select>`
-      :`<select class="in bsin" data-k="${esc(r[1])}" disabled style="width:100%;padding:5px 8px"><option value="">Belum ada BAS di cabang ${esc(r[0])}</option></select>`;
-    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td style="min-width:230px">${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 10px">${ic('check')}Simpan</button></td></tr>`}).join('');
+      :`<select class="in bsin" data-k="${esc(r[1])}" disabled style="width:100%;padding:5px 8px"><option value="">Belum ada BAS</option></select>`;
+    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td style="min-width:230px">${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 10px;white-space:nowrap;display:inline-flex;flex-direction:row;align-items:center;gap:4px">${ic('check')}Simpan</button></td></tr>`}).join('');
   return `<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5"><b>Info untuk semua pengguna:</b> toko di bawah ini <b>sudah tampil di halaman Input PB</b> dan bisa langsung di-PB-kan, tetapi kolom BAS-nya masih kosong. Pilih nama BAS dari daftar (hanya BAS di cabang toko tersebut) lalu klik <b>Simpan</b>. Setelah disimpan, toko otomatis masuk ke data BAS dan nama BAS muncul di Input PB, PB Manual, dan rekap.</div>`+
     `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><button class="b p" id="bsAll" ${filled?'':'disabled'}>${ic('check')}Simpan semua yang terisi (${filled})</button></div>`+
     `<div class="tw" style="max-height:50vh"><table style="min-width:640px"><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
@@ -1472,7 +1473,7 @@ function init(d,keep,lazy){
 window.__blk=11;
 /* ---------- Filter ---------- */
 function cascade(){
-  let cur=D.rows;
+  let cur=D.rows.filter(r=>D.d.jd[r[4]]||r[9]>0||r[11]);   // toko tanpa jadwal kirim tidak ditampilkan
   for(const k of KEYS){
     const c=COL[k],seen=new Set();
     for(const r of cur)seen.add(r[c]);
