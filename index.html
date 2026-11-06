@@ -1305,7 +1305,7 @@ function updNoBas(){
   const n=Object.keys(D.stores||{}).filter(k=>!D.stores[k][2]).length;
   if(!n){el.style.display='none';el.innerHTML='';return}
   el.style.display='';
-  el.innerHTML='<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:12px;line-height:1.5">'+ic('star','star')+'<b>'+n+' toko baru</b> belum punya nama BAS (kolom BAS kosong). Toko tetap bisa di-PB-kan. Untuk melengkapi BAS-nya, buka menu <a id="nbGo" style="cursor:pointer;color:var(--br2);text-decoration:underline;font-weight:700">Info</a> lalu daftarkan di bagian <b>Toko Baru</b>.</div>';
+  el.innerHTML='<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:4px 10px;margin:6px 0;font-size:10.5px;line-height:1.4">'+ic('star','star')+'<b>'+n+' toko baru</b> belum punya nama BAS (kolom BAS kosong). Toko tetap bisa di-PB-kan. Untuk melengkapi BAS-nya, buka menu <a id="nbGo" style="cursor:pointer;color:var(--br2);text-decoration:underline;font-weight:700">Info</a> lalu daftarkan di bagian <b>Toko Baru</b>.</div>';
   const g=$('#nbGo');if(g)g.onclick=()=>showView('info');
 }
 $('#i_q').oninput=renderInfo;
