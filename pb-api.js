@@ -7,7 +7,12 @@
   const MAIL = '@pb.saybread.local';
   const SESI = 'SESSION berakhir, silakan login kembali.';
   // sesi login hilang saat tab ditutup, seperti web lama
-  const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: window.sessionStorage, persistSession: true, autoRefreshToken: true } });
+  // Saat disematkan di Google Sites (iframe ber-sandbox) browser bisa menolak sessionStorage dan Web Locks:
+  // pakai penyimpanan sesi di memori sebagai cadangan, dan lewati kunci (lock) bawaan supabase-js.
+  const memStore = (() => { const m = {}; return { getItem: k => (k in m ? m[k] : null), setItem: (k, v) => { m[k] = String(v); }, removeItem: k => { delete m[k]; } }; })();
+  const sesStore = (() => { try { const t = window.sessionStorage; t.setItem('__pbt', '1'); t.removeItem('__pbt'); return t; } catch (e) { return memStore; } })();
+  const noLock = async (name, timeout, fn) => await fn();
+  const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { storage: sesStore, persistSession: true, autoRefreshToken: true, lock: noLock } });
 
   const err = e => new Error((e && e.message) || 'Terjadi kesalahan');
   async function rpc(fn, args) { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw err(error); return data; }
