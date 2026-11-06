@@ -160,16 +160,29 @@
       const msg = 'Isi ' + cfg.n + ' yang lama akan DIGANTI dengan ' + R.length.toLocaleString('id-ID') + ' baris baru. Lanjut?';
       const go = async () => {
         const btn = $o('#dOk'); btn.disabled = true;
-        const CH = 4000;
+        const CH = 500, tot = R.length, fmt = n => n.toLocaleString('id-ID');
+        const pv = $o('#dPrev');
+        const bar = pct => {
+          pv.innerHTML = '<div style="font-size:13px;margin-bottom:6px"><b>Mengunggah ' + e(cfg.n) + '…</b> <span id="dPct">' + pct + '%</span></div>' +
+            '<div style="height:12px;background:#e5e7eb;border-radius:99px;overflow:hidden"><div id="dBar" style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#4338ca,#7c3aed);border-radius:99px;transition:width .3s"></div></div>' +
+            '<div class="note" style="padding:4px 0 0">Jangan tutup jendela ini sampai selesai.</div>';
+        };
+        const lock = x => { ['#dT', '#dP', '#dF', '#dC'].forEach(q => { const el = $o(q); if (el) el.disabled = x; }); };
+        lock(true); btn.textContent = 'Mengunggah…'; bar(0);
         try {
-          for (let i = 0; i < R.length; i += CH) {
-            btn.textContent = 'Mengunggah ' + Math.min(i + CH, R.length).toLocaleString('id-ID') + '/' + R.length.toLocaleString('id-ID') + '…';
+          for (let i = 0; i < tot; i += CH) {
             await new Promise((ok, no) => run('gantiData', [TOKEN, tabel, R.slice(i, i + CH), i === 0 ? 'replace' : 'append', tgl], ok, no));
+            const pct = Math.round(Math.min(i + CH, tot) / tot * 100);
+            bar(pct); btn.textContent = 'Mengunggah ' + pct + '%';
           }
-          ov.remove(); toast('' + cfg.n + ': ' + R.length.toLocaleString('id-ID') + ' baris tersimpan');
+          pv.innerHTML = '<div style="background:#ecfdf5;border:1px solid #10b981;color:#065f46;border-radius:10px;padding:10px 12px;font-size:13.5px">' +
+            '<b>✔ Berhasil!</b> ' + e(cfg.n) + ': ' + fmt(tot) + ' baris tersimpan (100%).</div>';
+          btn.textContent = 'Selesai'; lock(false); $o('#dC').textContent = 'Tutup';
+          toast(cfg.n + ': ' + fmt(tot) + ' baris tersimpan');
           loadData(true);
         } catch (er) {
-          btn.textContent = 'Unggah'; btn.disabled = false;
+          lock(false); btn.textContent = 'Unggah'; btn.disabled = false;
+          pv.innerHTML = '<div style="color:#b00020;font-size:12.5px"><b>Gagal:</b> ' + e((er && er.message) || er) + '<br>Unggah ulang file yang sama sampai berhasil.</div>';
           toast('Gagal di tengah jalan: ' + ((er && er.message) || er) + '. Unggah ulang file yang sama sampai berhasil.', true);
         }
       };
