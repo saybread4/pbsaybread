@@ -1278,6 +1278,7 @@ function openWk(){
 window.__blk=8;
 /* ---------- Halaman Info ---------- */
 let INFO=null,INFO_BUSY=false;
+const INFO_ADM=()=>!!(D&&D.user&&D.user.admin);
 function loadInfo(force){
   if(INFO&&!force){renderInfo();return}
   if(INFO_BUSY)return;INFO_BUSY=true;
@@ -1290,9 +1291,9 @@ function renderInfo(){
   const tiles=S.map(s=>`<div${s.id==='baru'?' style="background:#fff3bf;border-color:#f0b400"':s.id==='cek'?' style="background:#ffe3e3;border-color:#d92d2d"':''}><small>${esc(s.title)}</small><b>${s.rows.length}</b></div>`).join('')+`<div><small>Toko aktif</small><b>${INFO.aktif}</b></div>`;
   const card=s=>{
     const rows=q?s.rows.filter(r=>r.join(' ').toLowerCase().indexOf(q)>-1):s.rows;
-    const num=s.cols.map(c=>c==='ITEM'||c==='SALES');
+    const num=s.cols.map(c=>c==='ITEM'||c==='SALES'),sh=i=>INFO_ADM()||s.cols[i]!=='CAB';   /* kolom CAB hanya untuk administrator */
     const hot=s.id==='baru',red=s.id==='cek';
-    const body=hot&&rows.length?baruBody(rows):rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>`<th${num[i]?' class="r"':''}>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>`<td${num[i]?' class="r"':''}>${esc(v)}</td>`).join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':''+ic('check')+'Tidak ada temuan.'}</div>`;
+    const body=hot&&rows.length?baruBody(rows):rows.length?`<div class="tw" style="max-height:40vh"><table style="min-width:0"><thead><tr>${s.cols.map((c,i)=>sh(i)?`<th${num[i]?' class="r"':''}>${esc(c)}</th>`:'').join('')}</tr></thead><tbody>${rows.map(r=>'<tr>'+r.map((v,i)=>sh(i)?`<td${num[i]?' class="r"':''}>${esc(v)}</td>`:'').join('')+'</tr>').join('')}</tbody></table></div>`:`<div class="note">${q?'Tidak ada yang cocok.':''+ic('check')+'Tidak ada temuan.'}</div>`;
     return `<div class="card" style="margin-top:8px${hot?';background:#fff8db;border:2px solid #f0b400':red?';background:#fff0f0;border:2px solid #d92d2d':''}"><div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap"><b${hot?' style="font-size:14px"':red?' style="font-size:14px;color:#c01f1f"':''}>${hot?''+ic('star','star')+'':red?''+ic('dot','dot-off')+'':''}${esc(s.title)}</b><span class="cnt">${rows.length}${q&&rows.length!==s.rows.length?' / '+s.rows.length:''} data</span></div><div class="note" style="padding:2px 0 0">${esc(s.desc)}</div>${body}</div>`;
   };
   $('#i_out').innerHTML=`<div class="sum">${tiles}</div><div class="igrid">${S.map(card).join('')}</div>`;
@@ -1315,16 +1316,16 @@ function baruBody(rows){
     const sel=opts.length
       ?`<select class="in bsin" data-k="${esc(r[1])}" style="width:100%;min-width:0;padding:4px 6px;font-size:12px"><option value="">Pilih BAS</option>${opts.map(b=>`<option value="${esc(b)}"${b===cur?' selected':''}>${esc(b)}</option>`).join('')}</select>`
       :`<select class="in bsin" data-k="${esc(r[1])}" disabled style="width:100%;padding:5px 8px"><option value="">Belum ada BAS</option></select>`;
-    return `<tr><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td>${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 8px;white-space:nowrap;display:inline-flex;flex-direction:row;align-items:center;gap:3px;font-size:12px">${ic('check')}Simpan</button></td></tr>`}).join('');
+    return `<tr>${INFO_ADM()?`<td>${esc(r[0])}</td>`:''}<td>${esc(r[1])}</td><td>${esc(r[2])}</td><td>${esc(r[3])}</td><td class="r">${esc(r[4])}</td><td>${sel}</td><td><button class="b p bssave" data-k="${esc(r[1])}" style="padding:4px 8px;white-space:nowrap;display:inline-flex;flex-direction:row;align-items:center;gap:3px;font-size:12px">${ic('check')}Simpan</button></td></tr>`}).join('');
   return `<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:8px 10px;margin:8px 0;font-size:12px;line-height:1.5"><b>Info untuk semua pengguna:</b> toko di bawah ini <b>sudah tampil di halaman Input PB</b> dan bisa langsung di-PB-kan, tetapi kolom BAS-nya masih kosong. Pilih nama BAS dari daftar (hanya BAS di cabang toko tersebut) lalu klik <b>Simpan</b>. Setelah disimpan, toko otomatis masuk ke data BAS dan nama BAS muncul di Input PB, PB Manual, dan rekap.</div>`+
     `<div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap"><button class="b p" id="bsAll" ${filled?'':'disabled'}>${ic('check')}Simpan semua yang terisi (${filled})</button></div>`+
-    `<div class="tw" style="max-height:50vh;overflow-x:hidden"><table class="bstb" style="min-width:0;width:100%;table-layout:fixed"><colgroup><col style="width:9%"><col style="width:11%"><col style="width:27%"><col style="width:9%"><col style="width:8%"><col style="width:20%"><col style="width:16%"></colgroup><thead><tr><th>CAB</th><th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
+    `<div class="tw" style="max-height:50vh;overflow-x:hidden"><table class="bstb" style="min-width:0;width:100%;table-layout:fixed">${INFO_ADM()?'<colgroup><col style="width:9%"><col style="width:11%"><col style="width:27%"><col style="width:9%"><col style="width:8%"><col style="width:20%"><col style="width:16%"></colgroup>':'<colgroup><col style="width:12%"><col style="width:32%"><col style="width:10%"><col style="width:9%"><col style="width:21%"><col style="width:16%"></colgroup>'}<thead><tr>${INFO_ADM()?'<th>CAB</th>':''}<th>KODE</th><th>TOKO</th><th>ZONA</th><th class="r">ITEM</th><th>BAS</th><th></th></tr></thead><tbody>${tr}</tbody></table></div>`;
 }
 function saveBas(ks){
   const items=ks.map(k=>({kode:k,bas:(BASIN[k]||'').trim()})).filter(x=>x.bas);
   if(!items.length)return toast('Pilih BAS terlebih dahulu',true);
   const nm={};   // nama toko diambil dari baris tabel yang tampil
-  document.querySelectorAll('#i_out .bssave').forEach(b=>{const tr=b.closest('tr');if(tr)nm[b.dataset.k]=tr.children[2].textContent});
+  document.querySelectorAll('#i_out .bssave').forEach(b=>{const tr=b.closest('tr');if(tr)nm[b.dataset.k]=tr.children[INFO_ADM()?2:1].textContent});
   const MAXL=8,list=items.slice(0,MAXL).map(x=>'• '+x.kode+' '+(nm[x.kode]||'')+'  →  '+x.bas).join('\n')+(items.length>MAXL?'\n… dan '+(items.length-MAXL)+' toko lainnya':'');
   pbConfirm('Periksa kembali sebelum menyimpan.\n\n'+list+'\n\nPastikan nama BAS di atas sudah benar untuk '+(items.length>1?'masing-masing toko':'toko ini')+'. Setelah disimpan, BAS akan langsung tampil di Input PB, PB Manual, dan rekap.\n\nSimpan sekarang?',()=>{
     run('daftarBas',[TOKEN,items],n=>{
