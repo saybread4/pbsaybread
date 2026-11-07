@@ -164,6 +164,8 @@
 .kd-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px}
 .kd-bar .sp{flex:1}
 .kd .b.kdg{background:linear-gradient(135deg,#635bff,#7c3aed);color:#fff;border:0;box-shadow:0 3px 10px rgba(99,91,255,.3)}
+.kd .b{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.kd .b svg,.kd .kd-h svg{width:14px;height:14px;flex:none}
 .kd .b.s{background:#f3f1ff;border:1px solid #d9d4ff;color:#3730a3;box-shadow:none}
 .kd .b.s:hover{background:#e9e5ff}
 .kd .b.s:disabled{opacity:.5;cursor:not-allowed}
@@ -373,7 +375,6 @@
           dirty = true; toast('Gagal di tengah jalan: ' + ((er && er.message) || er), true);
         }
       };
-      btn.innerHTML = ic('up') + 'Mulai upload';
       if (typeof pbConfirm === 'function') pbConfirm(msg, go, md === 'replace' ? 'Ya, ganti' : 'Ya, upload'); else go();
     };
 
