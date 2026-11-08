@@ -41,7 +41,7 @@
   // k: nama kolom di database, a: nama judul yang dikenali, t: jenis, r: wajib, u: harus unik (baris pertama dipakai)
   const T = {
     stock:         { n: 'STOCK',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'plu',a:'plu',t:'plu'},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'jenis',a:'jenis'},{k:'stock_qty',a:'stockqty,stock,qty,stok',t:'num',r:1}] },
-    sales:         { n: 'SALES',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'sales_qty',a:'salesqty,sales,qty',t:'num',r:1}] },
+    sales:         { n: 'SALES',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'sales_qty',a:'salesqty,sales,qty',t:'num',r:1},{k:'qpd',a:'qpd',t:'num'}] },
     stock_dc:      { n: 'STOCK-DC',      tgl: true,  c: [{k:'plu',a:'pludc,plu',t:'plu',r:1,u:1},{k:'description',a:'description,deskripsi',r:1},{k:'stok_akh',a:'stokakh,stok,stock',t:'num',r:1}] },
     toko_zona:     { n: 'TOKO PER ZONA', c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'cab',a:'cab',t:'upper',r:1},{k:'zona',a:'zona'},{k:'ket',a:'ket,keterangan',p:1}] },
     bas:           { n: 'BAS',           c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'bas',a:'bas'}] },
@@ -115,7 +115,7 @@
   // c: kolom (t: jenis, r: wajib, nul: boleh kosong/null, ro: tidak bisa diubah)
   const V = {
     stock:         { pk: 'id', kc: 'kode', q: ['kode','toko','plu','deskripsi'], o: ['kode','deskripsi'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'plu',h:'PLU'},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'jenis',h:'JENIS'},{k:'stock_qty',h:'STOCK QTY',t:'num'}] },
-    sales:         { pk: 'id', kc: 'kode', q: ['kode','deskripsi'], o: ['kode','deskripsi'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'sales_qty',h:'SALES QTY',t:'num'}] },
+    sales:         { pk: 'id', kc: 'kode', q: ['kode','deskripsi'], o: ['kode','deskripsi'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'sales_qty',h:'SALES QTY',t:'num'},{k:'qpd',h:'QPD',t:'num',nul:1}] },
     stock_dc:      { pk: 'plu', pkText: 1, kc: null, q: ['plu','description'], o: ['plu'], c: [{k:'plu',h:'PLU',t:'plu',r:1},{k:'description',h:'DESCRIPTION'},{k:'stok_akh',h:'STOK AKHIR',t:'num'}] },
     toko_zona:     { pk: 'kode', pkText: 1, kc: 'kode', q: ['kode','toko','cab','zona','ket'], o: ['cab','kode'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'cab',h:'CAB',t:'upper',r:1},{k:'zona',h:'ZONA'},{k:'ket',h:'KET'}] },
     bas:           { pk: 'kode', pkText: 1, kc: 'kode', q: ['kode','toko','bas'], o: ['kode'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'bas',h:'BAS'}] },
