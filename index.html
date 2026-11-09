@@ -1637,14 +1637,16 @@ function render(){
   // Membuka ribuan baris sekaligus membuat halaman berat: buka otomatis hanya sampai OPEN_BUDGET baris
   let used=0,stop=false;const anyF=KEYS.some(k=>SEL[k]&&SEL[k].size)||dsiOn(),basSel=!!(SEL.bas&&SEL.bas.size);   // BAS dipilih: semua toko dibuka otomatis
   for(const n of ROOT.sk){if(anyF&&(basSel||(!stop&&(used===0||used+n.sk.length<=OPEN_BUDGET)))){n.open=true;used+=n.sk.length}else{n.open=false;stop=true}}
+  const FLAT=dsiOn();   /* filter DSI_AKHIR aktif: hanya baris item, tanpa baris subtotal per toko */
+  if(FLAT)ROOT.sk.forEach(n=>n.open=true);
   ALLOPEN=ROOT.sk.every(n=>n.open);
   const note='';   // keterangan baris merah dihilangkan
   $('#bDl').disabled=!CUR.length;
   if(!CUR.length){$('#out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">'+ic('search','o')+'</div><div>Tidak ada data untuk filter ini.</div></div>';return}
-  $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ${ic('pencil','o')}</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
+  $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ${ic('pencil','o')}</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${FLAT?ROOT.sk.map(n=>n.sk.map(itemRow).join('')).join(''):ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
 }
 $('#bOpen').onclick=()=>{
-  if(!ROOT||!CUR.length)return;
+  if(!ROOT||!CUR.length||dsiOn())return;   // mode DSI_AKHIR: semua item sudah tampil
   const todo=ROOT.sk.filter(n=>!n.open),rows=todo.reduce((a,n)=>a+n.sk.length,0);
   if(!todo.length)return;
   if(rows>1500){pbConfirm('Membuka '+f0(rows)+' baris sekaligus bisa membuat halaman terasa berat.\nDisarankan mempersempit dengan filter lebih dulu.\n\nTetap buka semua?',openAll);return}
@@ -1669,7 +1671,7 @@ $('#bFill').onclick=()=>{
   REK=null;render();setStat('Menyimpan…');flush();
   });
 };
-$('#bClose').onclick=()=>{OPENTK++;ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(n.open)closeNode(n,trOf(n))})};
+$('#bClose').onclick=()=>{if(dsiOn())return;OPENTK++;ALLOPEN=false;if(ROOT)ROOT.sk.forEach(n=>{if(n.open)closeNode(n,trOf(n))})};
 
 const out=$('#out');
 out.addEventListener('click',e=>{
