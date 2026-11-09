@@ -487,6 +487,7 @@
     async getRekapCab() { return rpc('get_rekap_cab'); },
     async getBadPB() { return rpc('get_bad_pb'); },
     async delCsvPB(token, cab) { await rpc('del_csv_pb', { p_cab: String(cab || '') }); return true; },
+    async kosongkanPB(token) { return rpc('kosongkan_pb'); },
     async exportRekapCab(token, force) {
       const d = await rpc('export_rekap', { p_force: !!force });
       const b = await buildRekapBook(d);

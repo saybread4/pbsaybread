@@ -884,6 +884,7 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
         <button class="b s" id="bOpen"><svg class="ic" aria-hidden="true"><use href="#i-expand"/></svg>Buka semua</button>
         <button class="b s" id="bClose"><svg class="ic" aria-hidden="true"><use href="#i-collapse"/></svg>Tutup semua</button>
         <button class="b s" id="bFill" title="Isi PB_FINAL yang masih kosong dengan angka PB_REKOM (hanya baris yang sedang tampil)"><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg>Isi rekomendasi</button>
+        <button class="b s" id="bKosong" style="display:none;color:#b00020;border-color:#e8b4bc" title="Hapus semua data PB (PB_FINAL) agar kosong untuk minggu baru — khusus administrator"><svg class="ic" aria-hidden="true"><use href="#i-trash"/></svg>Kosongkan PB</button>
         <span id="stat"></span>
         <span style="flex:1"></span>
         <div class="dmw"><button class="b p" id="bDl" disabled><svg class="ic" aria-hidden="true"><use href="#i-down"/></svg>Download<svg class="ic r" aria-hidden="true"><use href="#i-chev"/></svg></button>
@@ -1488,7 +1489,7 @@ function loadData(keep,quiet){
 function saveSel(){const o={};KEYS.forEach(k=>o[k]=[...SEL[k]].map(i=>D.d[k][i]).map(x=>k==='tk'?x[0]+SEP+x[1]:x));return o}
 function init(d,keep,lazy){
   const old=keep&&D?saveSel():null;
-  D=d;REK=null;MAN_DIRTY=true;INFO=null;JDW=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;
+  D=d;{const kb=$('#bKosong');if(kb)kb.style.display=INFO_ADM()?'':'none'}REK=null;MAN_DIRTY=true;INFO=null;JDW=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;
   // simpan data terakhir di browser agar pembukaan halaman berikutnya instan (diperbarui diam-diam setelahnya)
   (window.requestIdleCallback?f=>requestIdleCallback(f,{timeout:6000}):f=>setTimeout(f,2500))(()=>{try{const j=JSON.stringify(d);if(j.length<2500000)localStorage.setItem('pb_data',j)}catch(e){}});
   D.rows.forEach((r,i)=>r[13]=i);
@@ -1563,6 +1564,13 @@ function updBtns(){KEYS.forEach(k=>{const n=SEL[k].size;document.querySelector(`
 function closeAll(){document.querySelectorAll('.field.open').forEach(f=>f.classList.remove('open'));$('.nd').classList.remove('open');$('.dmw').classList.remove('open')}
 document.addEventListener('click',closeAll);
 $('#bReset').onclick=()=>{KEYS.forEach(k=>SEL[k].clear());onSel()};
+$('#bKosong').onclick=()=>{
+  const n=(D&&D.rows||[]).filter(r=>r[18]!==1&&r[9]>0).length;
+  confirmDel('Kosongkan <b>SEMUA data PB</b> (PB_FINAL) di seluruh cabang'+(n?' — <b>'+f0(n)+'</b> baris terisi':'')+', termasuk PB Manual &amp; data CSV?<br><br><b style="color:#b00020">Tidak bisa dikembalikan.</b> Pastikan PB minggu lalu sudah diunduh/diarsipkan.',()=>{
+    PEND.clear();setStat('Mengosongkan…');
+    run('kosongkanPB',[TOKEN],c=>{toast(f0(c||0)+' baris PB dikosongkan');setStat('');loadData(true)},e=>{setStat('');failH(e)});
+  });
+};
 $('#bZ').innerHTML=HZ?''+ic('eye')+'Tampilkan ZONA & JADWAL':''+ic('eyeoff')+'Sembunyikan ZONA & JADWAL';
 $('#bZ').onclick=()=>{HZ=!HZ;const t=$('#tbl');if(t){t.classList.toggle('hz',HZ);t.style.minWidth=tblW()+'px'}$('#bZ').innerHTML=HZ?''+ic('eye')+'Tampilkan ZONA & JADWAL':''+ic('eyeoff')+'Sembunyikan ZONA & JADWAL'};
 </script>
