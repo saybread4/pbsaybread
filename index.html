@@ -2410,7 +2410,7 @@ function renderStk(){
   if(R.skip&&R.skip.length)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+'PB berikut <b>tidak ikut dihitung</b> karena tidak sesuai jadwal minggu depan (lihat daftar "PB tidak sesuai jadwal" di bawah): '+R.skip.map(k=>esc(k.nama)+' '+f0(k.pb)+' PB ('+f0(k.n)+' baris)').join(' · ')+'</div>';
   h+=`<div class="kpis" style="margin:10px 0"><div class="kpi"><small>Item dipantau</small><b>${f0(all.length)}</b><span>punya PB minggu depan</span></div><div class="kpi"><small>Item stok kurang</small><b style="color:${kur.length?'#b91c1c':'#15803d'}">${f0(kur.length)}</b><span>${kur.length?'perlu pengurangan PB':'semua cukup'}</span></div><div class="kpi"><small>Total kekurangan</small><b style="color:${tk?'#b91c1c':'#15803d'}">${f0(tk)}</b><span>pcs/ctn sesuai satuan PB</span></div></div>`;
   if(!rows.length){h+='<div class="note" style="padding:8px">Semua item stok Stock-DC cukup untuk PB minggu depan.</div></div>';$('#stk_out').innerHTML=h;bindStk();return}
-  h+='<div class="note" style="padding:0 0 6px">Bila stok kurang, stok dibagi <b>proporsional</b> sesuai PB tiap cabang. <b>JATAH</b> = rekomendasi stok untuk cabang, <span style="color:#b91c1c;font-weight:bold">KURANGI</span> = PB yang perlu dikurangi dari PB final cabang.</div>';
+  h+='<div class="note" style="padding:0 0 6px">Bila stok kurang, stok dibagi <b>proporsional sesuai kontribusi sales</b> tiap cabang (maksimal sebesar PB cabang itu; cabang tanpa sales dibagi sesuai PB). <b>JATAH</b> = rekomendasi stok untuk cabang, <span style="color:#b91c1c;font-weight:bold">KURANGI</span> = PB yang perlu dikurangi dari PB final cabang.</div>';
   h+='<div style="overflow:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="'+th+';text-align:left">DESKRIPSI</th><th style="'+th+';text-align:right">STOCK-DC</th><th style="'+th+';text-align:right">TOTAL PB</th><th style="'+th+';text-align:right">SELISIH</th><th style="'+th+'">STATUS</th>'+R.cabs.map(c=>`<th style="${th};text-align:right">${esc(c.nama.toUpperCase())}<br><span style="font-weight:normal;font-size:10px">PB → JATAH</span></th>`).join('')+'</tr></thead><tbody>';
   rows.forEach((i,n)=>{
     const bg=n%2?'#fafbff':'#fff',bad=i.sel<0;
@@ -2460,7 +2460,7 @@ function stkPage(R,xls){
   const TB_='#e4e8fb',tp=sum(rows.map(i=>i.pb)),ts=sum(rows.map(i=>i.stock));
   h+='<tr>'+td('TOTAL',TB_,'font-weight:bold;text-align:center')+td(f0(ts),TB_,'text-align:right;font-weight:bold')+td(f0(tp),TB_,'text-align:right;font-weight:bold')+td(sg(ts-tp),TB_,'text-align:right;font-weight:bold')+td('',TB_)+
     R.cabs.map((c,ci)=>{const pb=sum(rows.map(i=>i.pbc[ci])),j=sum(rows.map(i=>i.jat[ci]));return td(f0(pb),TB_,'text-align:right;font-weight:bold')+td(f0(j),TB_,'text-align:right;font-weight:bold')+td(pb-j>0?'-'+f0(pb-j):'',TB_,'text-align:right;font-weight:bold;color:#b91c1c')}).join('')+'</tr></tbody></table>';
-  h+='<div style="font-size:10px;color:#64748b;padding-top:3px">JATAH = stok dibagi proporsional sesuai PB cabang bila stok kurang · KURANGI = PB yang perlu dikurangi</div></div>';
+  h+='<div style="font-size:10px;color:#64748b;padding-top:3px">JATAH = stok dibagi proporsional sesuai sales cabang (maks. sebesar PB) bila stok kurang · KURANGI = PB yang perlu dikurangi</div></div>';
   return h;
 }
 /* ---------- PB per Cabang (semua pengguna) ---------- */
