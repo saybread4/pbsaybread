@@ -1941,7 +1941,8 @@ window.__blk=18;
 function rekapData(){
   if(!REK){
     const m=new Map();
-    for(const r of D.rows){const a=m.get(r[0])||{rk:0,fn:0,ip:0,cab:D.d.cab[r[14]]||''};a.rk+=r[8];a.fn+=r[9];if(r[17])a.ip++;m.set(r[0],a)}
+    for(const r of D.rows){if(!(D.d.jd[r[4]]||r[9]>0||r[11]))continue;   /* samakan dengan Input PB: toko tanpa JADWAL_KIRIM (dan tanpa PB) tidak dihitung */
+    const a=m.get(r[0])||{rk:0,fn:0,ip:0,cab:D.d.cab[r[14]]||''};a.rk+=r[8];a.fn+=r[9];if(r[17])a.ip++;m.set(r[0],a)}
     REK=[...m.entries()].map(([i,a])=>({bas:D.d.bas[i]||'(kosong)',cab:a.cab,rk:a.rk,fn:a.fn,v:a.fn-a.rk,ok:a.ip>0})).filter(x=>x.bas!=='(kosong)');
     REK.sort((a,b)=>a.bas.localeCompare(b.bas,'id',{numeric:true}));
   }

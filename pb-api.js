@@ -270,6 +270,9 @@
     return ws;
   }
 
+  // item ditampilkan jika punya PLU (terdaftar di master item) atau total PB-nya > 0
+  const keepPivotItem = it => String((it && it.plu) || '').trim() !== '' || Number(it && it.t) > 0;
+
   // ---- sheet 3: PB PER CABANG (item x cabang) ----
   function sheetPivot(wb, pv, title) {
     const ws = wb.addWorksheet('PB PER CABANG', { properties: { tabColor: { argb: 'FF16A34A' } } }); ws.views = [{ showGridLines: false }];
@@ -338,7 +341,7 @@
     if (jw && (jw.days || []).length) sheetJadwal(wb, jw, who, today);
     if ((ob.items || []).length) sheetSimulasi(wb, ob, d.title);
     const pv = d.pivot || {};
-    if ((pv.items || []).length) sheetPivot(wb, pv, d.title);
+    if ((pv.items || []).length) sheetPivot(wb, Object.assign({}, pv, { items: pv.items.filter(it => keepPivotItem(it)) }), d.title);   // item tidak aktif tidak ikut
     const sp = d.stock || {};
     if ((sp.items || []).length) sheetStock(wb, sp, d.title, ob.stockDate);
     const b = await buildRekapBook({ names: d.names, rows: d.rows }, true, wb);   // FIX PB + PERLU REVISI
@@ -498,7 +501,12 @@
       const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]);
       return mergeJadwal(r[0], r[1], todayJkt());
     },
-    async getPivotCab(token, force) { return rpc('get_pivot_cab', { p_force: !!force }); },
+    async getPivotCab(token, force) {
+      const r = await rpc('get_pivot_cab', { p_force: !!force });
+      // item tidak aktif (tidak ada di master item = PLU kosong, dan total PB = 0) tidak ditampilkan; item aktif ber-PLU tetap tampil walau 0
+      ['next', 'cur'].forEach(w => { if (r && r[w] && Array.isArray(r[w].items)) r[w].items = r[w].items.filter(it => keepPivotItem(it)); });
+      return r;
+    },
     async getStockPlan(token, force) { return rpc('get_stock_plan', { p_force: !!force }); },
     async getOutbound(token, force, w) { return rpc('get_outbound', { p_force: !!force, p_w: w === 'cur' ? 'cur' : 'next' }); },
     async exportMaster() {
