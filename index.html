@@ -1073,9 +1073,9 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
 <script>
 window.__blk=1;
 const NL=String.fromCharCode(10),CR=String.fromCharCode(13),TB=String.fromCharCode(9),BOM=String.fromCharCode(65279),SEP=String.fromCharCode(1),BS=String.fromCharCode(92),LT=String.fromCharCode(60),XH=LT+'/head>',XB=LT+'/body>',XT=LT+'/html>';
-const KEYS=['bas','tk','ds','zn','jd'];
-const LABEL={bas:'BAS',tk:'KODE / TOKO',ds:'DESKRIPSI',zn:'ZONA',jd:'JADWAL_KIRIM'};
-const COL={bas:0,tk:1,ds:2,zn:3,jd:4};
+const KEYS=['cab','bas','tk','ds','zn','jd'];   /* cab: filter Cabang, hanya tampil untuk administrator */
+const LABEL={cab:'CABANG',bas:'BAS',tk:'KODE / TOKO',ds:'DESKRIPSI',zn:'ZONA',jd:'JADWAL_KIRIM'};
+const COL={cab:14,bas:0,tk:1,ds:2,zn:3,jd:4};
 let ALLOPEN=true,TOKEN=null,D=null,DL={},RK={},SEL={},OPT={},CUR=[],NODES=[],ROOT,ORD=[],PEND=new Map(),HZ=true,KT={},KB={},KZ={},MAN=[],MDESC=[],EID=null,VIEW='lap',ft,sv;
 let PRENDER=false,MAN_DIRTY=true,REK=null,JDW=null,JDW_BUSY=false,CABD=null,CAB_BUSY=false,BADD=null,PVD=null,PVB=false,PVW='next',SIM=null,SIMB=false,SIMW='next',SIMC={},STK=null,STKB=false,STKF=false;
 const $=s=>document.querySelector(s);
@@ -1536,7 +1536,7 @@ function cascade(){
 }
 function onSel(){cascade();updBtns();clearTimeout(ft);ft=setTimeout(render,150)}
 function buildFilters(){
-  $('#filters').innerHTML=KEYS.map(k=>`<div class="field" data-k="${k}"><label>${LABEL[k]}</label>
+  $('#filters').innerHTML=KEYS.map(k=>`<div class="field" data-k="${k}"${k==='cab'&&!INFO_ADM()?' style="display:none"':''}><label>${LABEL[k]}</label>
   <button type="button" class="dd-btn"><span>Semua</span><i>${ic('chev','r')}</i></button>
   <div class="dd-panel"><input class="dd-search" placeholder="Cari…">
   <div class="dd-act">${k==='bas'?'':'<a data-a="all">Pilih semua hasil</a>'}<a data-a="none">Kosongkan</a></div>
