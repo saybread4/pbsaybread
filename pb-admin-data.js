@@ -48,7 +48,9 @@
     toko_per_item: { n: 'TOKO PER ITEM', c: [{k:'cab',a:'cab',t:'upper',r:1},{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'deskripsi',a:'deskripsi,item',r:1},{k:'frac',a:'frac',t:'num',r:1}] },
     item:          { n: 'ITEM',          c: [{k:'plu',a:'plu',t:'plu',r:1,u:1},{k:'deskripsi',a:'deskripsi',r:1},{k:'jenis',a:'jenis'},{k:'frc',a:'frc,frac',t:'num'}] },
     zona:          { n: 'ZONA',          c: [{k:'zona',a:'zona',r:1,u:1},{k:'nama_zona',a:'namazona'},{k:'area',a:'area'},{k:'tipe_kiriman',a:'tipekiriman'}] },
-    jadwal:        { n: 'JADWAL',        c: [{k:'zona',a:'zona',r:1},{k:'minggu',a:'minggu',t:'upper',r:1},{k:'tanggal',a:'jadwal,tanggal,tgl',t:'tgl',r:1},{k:'mobil',a:'mobil',t:'int'}] }
+    jadwal:        { n: 'JADWAL',        c: [{k:'zona',a:'zona',r:1},{k:'minggu',a:'minggu',t:'upper',r:1},{k:'tanggal',a:'jadwal,tanggal,tgl',t:'tgl',r:1},{k:'mobil',a:'mobil',t:'int'}] },
+    // PB zona T yang sudah dikirim (per toko per item) -> ditambahkan ke stok toko. Diarsipkan otomatis; unggah di sini bila perlu mengisi/memperbaiki.
+    arsip_pb_toko_item: { n: 'PB ZONA T (KIRIMAN)', c: [{k:'tgl_kirim',a:'jadwalkirim,tglkirim,tanggalkirim,tanggal,jadwal,tgl',t:'tgl',r:1},{k:'zona',a:'zona',t:'upper'},{k:'cab',a:'cab,cabang',t:'upper'},{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'plu',a:'plu',t:'plu'},{k:'deskripsi',a:'deskripsi,description,desc,item',r:1},{k:'pb_final',a:'pbfinal,pb',t:'num',r:1}] }
   };
 
   function parse(t) {
@@ -122,7 +124,8 @@
     toko_per_item: { pk: 'id', kc: 'kode', q: ['cab','kode','toko','deskripsi'], o: ['cab','kode','deskripsi'], c: [{k:'cab',h:'CAB',t:'upper'},{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'frac',h:'FRAC',t:'num',nul:1}] },
     item:          { pk: 'id', kc: null, q: ['plu','deskripsi','jenis'], o: ['deskripsi'], c: [{k:'plu',h:'PLU',t:'plu',nul:1},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'jenis',h:'JENIS'},{k:'frc',h:'FRC',t:'num'},{k:'aktif',h:'AKTIF',t:'bool'},{k:'manual',h:'MANUAL',t:'bool'}] },
     zona:          { pk: 'zona', pkText: 1, kc: null, q: ['zona','nama_zona','area','tipe_kiriman'], o: ['zona'], c: [{k:'zona',h:'ZONA',r:1},{k:'nama_zona',h:'NAMA ZONA'},{k:'area',h:'AREA'},{k:'tipe_kiriman',h:'TIPE KIRIMAN'}] },
-    jadwal:        { pk: 'id', kc: null, q: ['zona','minggu'], o: ['zona','tanggal'], c: [{k:'zona',h:'ZONA',r:1},{k:'minggu',h:'MINGGU',t:'upper',r:1},{k:'tanggal',h:'TANGGAL',t:'date',r:1},{k:'mobil',h:'MOBIL',t:'int',nul:1}] }
+    jadwal:        { pk: 'id', kc: null, q: ['zona','minggu'], o: ['zona','tanggal'], c: [{k:'zona',h:'ZONA',r:1},{k:'minggu',h:'MINGGU',t:'upper',r:1},{k:'tanggal',h:'TANGGAL',t:'date',r:1},{k:'mobil',h:'MOBIL',t:'int',nul:1}] },
+    arsip_pb_toko_item: { pk: 'id', kc: 'kode', q: ['kode','toko','plu','deskripsi'], o: ['tgl_kirim','kode','deskripsi'], c: [{k:'tgl_kirim',h:'TGL KIRIM',t:'date',r:1},{k:'zona',h:'ZONA',t:'upper'},{k:'cab',h:'CAB',t:'upper'},{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'plu',h:'PLU',t:'plu',nul:1},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'pb_final',h:'PB FINAL',t:'num'}] }
   };
   const WARN = { item: 'Pengaturan item (aktif / manual) ikut kembali ke bawaan.' };
 
