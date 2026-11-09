@@ -1353,7 +1353,7 @@ $('#i_out').addEventListener('click',e=>{
 /* pemberitahuan di Input PB: toko yang belum punya BAS */
 function updNoBas(){
   const el=$('#noBas');if(!el||!D)return;
-  const n=Object.keys(D.stores||{}).filter(k=>!D.stores[k][2]).length;
+  const n=Object.keys(D.stores||{}).filter(k=>!D.stores[k][2]&&D.stores[k][3]).length;   /* tanpa BAS DAN sudah punya ZONA (toko tanpa zona tidak tampil di Input PB) */
   if(!n){el.style.display='none';el.innerHTML='';return}
   el.style.display='';
   el.innerHTML='<div class="note" style="background:#fffbe6;border:1px solid #f0d000;border-radius:8px;padding:4px 10px;margin:6px 0;font-size:10.5px;line-height:1.4">'+ic('star','star')+'<b>'+n+' toko baru</b> belum punya nama BAS (kolom BAS kosong). Toko tetap bisa di-PB-kan. Untuk melengkapi BAS-nya, buka menu <a id="nbGo" style="cursor:pointer;color:var(--br2);text-decoration:underline;font-weight:700">Info</a> lalu daftarkan di bagian <b>Toko Baru</b>.</div>';
@@ -1510,6 +1510,7 @@ function init(d,keep,lazy){
   updWeb();applyAccess();updNoBas();
   {const ad=!!(D.user&&D.user.admin);$('#m_items').style.display=ad?'':'none';$('#j_adm').style.display=ad?'':'none';$('#j_seg').style.display=ad?'':'none';if(!ad)jTab('jd')}
   if(!$('#filters').children.length)buildFilters();
+  {const cf=document.querySelector('.field[data-k=cab]');if(cf)cf.style.display=INFO_ADM()?'':'none'}   /* filter CABANG hanya untuk administrator */
   KEYS.forEach(k=>SEL[k]=new Set());
   if(old)KEYS.forEach(k=>{const m=new Map(D.d[k].map((x,i)=>[k==='tk'?x[0]+SEP+x[1]:x,i]));old[k].forEach(v=>{if(m.has(v)&&!(k==='bas'&&SEL[k].size))SEL[k].add(m.get(v))})});
   cascade();updBtns();
