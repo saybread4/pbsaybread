@@ -77,7 +77,8 @@ td{padding:2px 7px;border-bottom:1px solid #e3f1e8}
 .it:hover td{background:#e9f7ef}
 .pf{width:58px;padding:1px 5px;border:1px solid var(--bd);border-radius:6px;text-align:right;font:inherit;background:#fbfffc}
 .pf:focus{outline:2px solid var(--am)}.pf.ed{background:#fff3bf;border-color:#e0b100;font-weight:700}
-.mb{color:#c2610c;font-weight:700;cursor:help}.del{cursor:pointer;margin-left:4px}
+.mb{color:#c2610c;font-weight:700;cursor:help}
+.pzt{color:#0b5fa5;font-weight:700;font-size:.78em;margin-left:2px;cursor:help;white-space:nowrap}td.pzc{background:#e6f1fb}.pzl{display:inline-block;margin:0 0 6px;padding:3px 9px;border-radius:8px;background:#e6f1fb;color:#0b4f87;font-size:12px}.del{cursor:pointer;margin-left:4px}
 .empty{padding:50px 20px;text-align:center;color:var(--mu)}.empty .e{font-size:42px}
 .spin{display:inline-block;width:22px;height:22px;border:3px solid #d6ecdd;border-top-color:var(--am);border-radius:50%;animation:s .8s linear infinite}
 @keyframes s{to{transform:rotate(360deg)}}
@@ -1587,25 +1588,25 @@ window.__blk=12;
 /* Stk saat Kirim = MAX(0, STOCK − QPD × hari dari tanggal Data Update s/d JADWAL_KIRIM) + PB_PCS */
 function dayDiff(a,b){return Math.round((Date.parse(b+'T00:00:00Z')-Date.parse(a+'T00:00:00Z'))/864e5)}
 function kr(r){const j=D.d.jd[r[4]];if(!j||!D.upd)return null;return Math.max(0,r[7]-r[6]*Math.max(0,dayDiff(D.upd,j)))+r[9]*r[5]}
-function mk(lv,key,par){const n={lv,key,par,ch:new Map(),items:[],q:0,st:0,rk:0,fn:0,pc:0,kr:0,kn:0,n:0,id:NODES.length,open:false};NODES.push(n);return n}
+function mk(lv,key,par){const n={lv,key,par,ch:new Map(),items:[],q:0,st:0,rk:0,fn:0,pc:0,kr:0,kn:0,n:0,pz:0,id:NODES.length,open:false};NODES.push(n);return n}
 function buildTree(){
   NODES=[];ORD=[];ROOT=mk(0,null,null);
   for(const r of CUR){
     let n=ROOT.ch.get(r[1]);
     if(!n){n=mk(1,r[1],ROOT);n.label=esc(DL.tk[r[1]]);n.jd=r[4];n.zn=r[3];ROOT.ch.set(r[1],n)}
     n.items.push(r);r.nd=n;
-    n.q+=r[6];n.st+=r[7];n.rk+=r[8];n.fn+=r[9];n.pc+=r[9]*r[5];n.n++;{const k=kr(r);if(k!==null){n.kr+=k;n.kn++}}
+    n.q+=r[6];n.st+=r[7];n.rk+=r[8];n.fn+=r[9];n.pc+=r[9]*r[5];n.pz+=(r[20]||0);n.n++;{const k=kr(r);if(k!==null){n.kr+=k;n.kn++}}
   }
   ROOT.sk=[...ROOT.ch.values()].sort((a,b)=>RK.jd[a.jd]-RK.jd[b.jd]||RK.zn[a.zn]-RK.zn[b.zn]||RK.tk[a.key]-RK.tk[b.key]);
   ROOT.sk.forEach(n=>{n.sk=n.items.sort((a,b)=>(a[18]===1)-(b[18]===1)||b[6]-a[6]||RK.ds[a[2]]-RK.ds[b[2]]);n.sk.forEach(r=>ORD.push(r))});
 }
-function hc(n){const q=n.q;return `<td colspan="3" title="${n.label}">${n.label} <span class="cnt">· ${n.n} item</span></td><td class="r">${f1(q)}</td><td class="r">${f0(n.st)}</td><td class="r">${f0(q?n.st/q:0)}</td><td class="r cf">${n.fn?f0(n.fn):'-'}</td><td class="r">${f0(n.pc)}</td><td class="r">${f0(n.st+n.pc)}</td><td class="r sx">${n.kn?f0(n.kr):'-'}</td><td class="r">${f0(q?(n.st+n.pc)/q:0)}</td><td class="cz zn">${esc(D.d.zn[n.zn])}</td><td class="cz">${esc(D.d.jd[n.jd]?DL.jd[n.jd]:'')}</td>`}
+function hc(n){const q=n.q;return `<td colspan="3" title="${n.label}">${n.label} <span class="cnt">· ${n.n} item</span></td><td class="r">${f1(q)}</td><td class="r${n.pz>0?' pzc':''}">${f0(n.st)}${n.pz>0?`<sup class="pzt" title="Stock toko ini sudah termasuk tambahan PB zona T minggu lalu: ${f0(n.pz)} pcs">+${f0(n.pz)}</sup>`:''}</td><td class="r">${f0(q?n.st/q:0)}</td><td class="r cf">${n.fn?f0(n.fn):'-'}</td><td class="r">${f0(n.pc)}</td><td class="r">${f0(n.st+n.pc)}</td><td class="r sx">${n.kn?f0(n.kr):'-'}</td><td class="r">${f0(q?(n.st+n.pc)/q:0)}</td><td class="cz zn">${esc(D.d.zn[n.zn])}</td><td class="cz">${esc(D.d.jd[n.jd]?DL.jd[n.jd]:'')}</td>`}
 function hdr(n){return `<tr class="gh l1${n.open?' op':''}" data-d="1" data-n="${n.id}">${hc(n)}</tr>`}
 function itemRow(r){
-  const t=D.d.tk[r[1]],pc=r[9]*r[5],q=r[6];
+  const t=D.d.tk[r[1]],pc=r[9]*r[5],q=r[6],pz=r[20]||0;
   const man=r[11]?` <span class="mb" title="Manual: ${esc(r[12])}">${ic('plus','o')}</span><a class="del" data-id="${esc(r[11])}" title="Hapus data manual">${ic('trash','o')}</a>`:(r[15]>0?` <span class="mb" title="Sudah termasuk PB manual ${r[15]}${r[16]?' — '+esc(r[16]):''}">${ic('plus','o')}${r[15]}</span>`:'');
   const xr=r[18]===1;   /* baris tambahan: ada di sales/stock tapi tidak ada di toko per item */
-  return `<tr class="it${xr?' xr':''}" data-d="2" data-i="${r[13]}"${xr?' title="Tidak ada di daftar toko per item — hanya untuk melihat QPD & stock asli (PB final tidak bisa diedit)"':''}><td>${esc(t[0])}</td><td title="${esc(t[1])}">${esc(t[1])}${man}</td><td title="${esc(D.d.ds[r[2]])}">${esc(D.d.ds[r[2]])}</td><td class="r">${f1(q)}</td><td class="r">${f0(r[7])}</td><td class="r">${f0(q?r[7]/q:0)}</td><td class="r cf"><input class="pf${!r[11]&&r[8]>0?' rk':''}${!r[11]&&r[9]&&r[9]!==r[8]?' ed':''}" type="number" min="0" step="1" placeholder="${!r[11]&&r[8]>0?r[8]:'-'}" title="${!r[11]?'Rekomendasi: '+r[8]:''}" value="${xr?'0':fq(r[9])}" data-i="${r[13]}"${xr?' disabled':''}></td><td class="r pc">${f0(pc)}</td><td class="r sp">${f0(r[7]+pc)}</td><td class="r sx kr">${(()=>{const k=kr(r);return k===null?'-':f0(k)})()}</td><td class="r da">${f0(q?(r[7]+pc)/q:0)}</td><td class="cz zn">${esc(D.d.zn[r[3]])}</td><td class="cz">${esc(D.d.jd[r[4]]?DL.jd[r[4]]:'')}</td></tr>`;
+  return `<tr class="it${xr?' xr':''}" data-d="2" data-i="${r[13]}"${xr?' title="Tidak ada di daftar toko per item — hanya untuk melihat QPD & stock asli (PB final tidak bisa diedit)"':''}><td>${esc(t[0])}</td><td title="${esc(t[1])}">${esc(t[1])}${man}</td><td title="${esc(D.d.ds[r[2]])}">${esc(D.d.ds[r[2]])}</td><td class="r">${f1(q)}</td><td class="r${pz>0?' pzc':''}">${f0(r[7])}${pz>0?`<sup class="pzt" title="Stock sudah termasuk tambahan PB zona T minggu lalu: ${f0(r[19]||0)} ctn = ${f0(pz)} pcs${r[21]?' (kirim '+esc(fmtD(r[21]))+')':''}">+${f0(pz)}</sup>`:''}</td><td class="r">${f0(q?r[7]/q:0)}</td><td class="r cf"><input class="pf${!r[11]&&r[8]>0?' rk':''}${!r[11]&&r[9]&&r[9]!==r[8]?' ed':''}" type="number" min="0" step="1" placeholder="${!r[11]&&r[8]>0?r[8]:'-'}" title="${!r[11]?'Rekomendasi: '+r[8]:''}" value="${xr?'0':fq(r[9])}" data-i="${r[13]}"${xr?' disabled':''}></td><td class="r pc">${f0(pc)}</td><td class="r sp">${f0(r[7]+pc)}</td><td class="r sx kr">${(()=>{const k=kr(r);return k===null?'-':f0(k)})()}</td><td class="r da">${f0(q?(r[7]+pc)/q:0)}</td><td class="cz zn">${esc(D.d.zn[r[3]])}</td><td class="cz">${esc(D.d.jd[r[4]]?DL.jd[r[4]]:'')}</td></tr>`;
 }
 function trOf(n){return document.querySelector('tr.gh[data-n="'+n.id+'"]')}
 function openNode(n,tr){tr.insertAdjacentHTML('beforebegin',n.sk.map(itemRow).join(''));n.open=true;tr.classList.add('op')}
@@ -1640,7 +1641,8 @@ function render(){
   const FLAT=dsiOn();   /* filter DSI_AKHIR aktif: hanya baris item, tanpa baris subtotal per toko */
   if(FLAT)ROOT.sk.forEach(n=>n.open=true);
   ALLOPEN=ROOT.sk.every(n=>n.open);
-  const note='';   // keterangan baris merah dihilangkan
+  const pzN=CUR.reduce((a,r)=>a+((r[20]||0)>0?1:0),0);
+  const note=pzN?`<div class="pzl">Angka biru <b>+N</b> di kolom STOCK = stock sudah ditambah <b>PB zona T minggu lalu</b> (N pcs) · ${f0(pzN)} baris</div>`:'';   // keterangan baris merah dihilangkan; legenda hanya tampil bila ada tambahan PB zona T
   $('#bDl').disabled=!CUR.length;
   if(!CUR.length){$('#out').innerHTML='<div class="card empty" style="margin-top:12px"><div class="e">'+ic('search','o')+'</div><div>Tidak ada data untuk filter ini.</div></div>';return}
   $('#out').innerHTML=note+`<div class="tw"><table id="tbl" class="${HZ?'hz':''}" style="width:100%;min-width:${tblW()}px"><thead><tr><th style="width:80px">KODE</th><th style="width:150px">TOKO</th><th style="width:170px">DESKRIPSI</th><th class="r" style="width:58px">QPD</th><th class="r" style="width:62px">STOCK</th><th class="r" style="width:66px">DSI_AWAL</th><th class="r cf" style="width:80px">PB_FINAL ${ic('pencil','o')}</th><th class="r" style="width:62px">PB_PCS</th><th class="r" style="width:76px">STOCK+PB</th><th class="r sx" style="width:80px" title="MAX(0, STOCK − QPD × hari dari tanggal Data Update sampai JADWAL_KIRIM) + PB_PCS">STK SAAT KIRIM</th><th class="r" style="width:70px">DSI_AKHIR</th><th class="cz zn" style="width:60px">ZONA</th><th class="cz" style="width:140px">JADWAL_KIRIM</th></tr></thead><tbody id="tb">${FLAT?ROOT.sk.map(n=>n.sk.map(itemRow).join('')).join(''):ROOT.sk.map(n=>(n.open?n.sk.map(itemRow).join(''):'')+hdr(n)).join('')}</tbody></table></div>`;
@@ -2174,23 +2176,23 @@ async function dlJpgInput(){
 <script>
 window.__blk=20;
 /* ---------- Download (Excel) ---------- */
-const HEAD=['CAB','KODE','TOKO','PLU','DESKRIPSI','FRAC','QPD','STOCK','DSI_AWAL','PB_REKOM','PB_FINAL','PB_PCS','STOCK+PB','STK_SAAT_KIRIM','DSI_AKHIR','ZONA','JADWAL_KIRIM','KETERANGAN'];
+const HEAD=['CAB','KODE','TOKO','PLU','DESKRIPSI','FRAC','QPD','STOCK','DSI_AWAL','PB_REKOM','PB_FINAL','PB_PCS','STOCK+PB','STK_SAAT_KIRIM','DSI_AKHIR','ZONA','JADWAL_KIRIM','KETERANGAN','STOCK_TAMBAHAN_PB_T','TGL_KIRIM_PB_T'];
 function flat(){
   const r2=x=>Math.round(x*100)/100;
   return ORD.map(r=>{const t=D.d.tk[r[1]],pc=r[9]*r[5],q=r[6],j=D.d.jd[r[4]];
-    return [(D.d.cab[r[14]]||''),t[0],t[1],(D.plu||{})[String(D.d.ds[r[2]]).toUpperCase()]||'',D.d.ds[r[2]],r[5],r2(q),r[7],Math.round(q?r[7]/q:0),r[8],r[9],pc,r[7]+pc,(()=>{const k=kr(r);return k===null?'':Math.round(k)})(),Math.round(q?(r[7]+pc)/q:0),D.d.zn[r[3]],j?j.split('-').reverse().join('/'):'',r[12]||(r[11]?'MANUAL':'')]});
+    return [(D.d.cab[r[14]]||''),t[0],t[1],(D.plu||{})[String(D.d.ds[r[2]]).toUpperCase()]||'',D.d.ds[r[2]],r[5],r2(q),r[7],Math.round(q?r[7]/q:0),r[8],r[9],pc,r[7]+pc,(()=>{const k=kr(r);return k===null?'':Math.round(k)})(),Math.round(q?(r[7]+pc)/q:0),D.d.zn[r[3]],j?j.split('-').reverse().join('/'):'',r[12]||(r[11]?'MANUAL':''),(r[20]||0)>0?r[20]:'',(r[20]||0)>0&&r[21]?String(r[21]).split('-').reverse().join('/'):'']});
 }
 function fname(e){const d=new Date(),p=n=>String(n).padStart(2,'0');return`PB_Say_Bread_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}.${e}`}
 function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
-const NUMC=[5,6,7,8,9,10,11,12,13,14];
+const NUMC=[5,6,7,8,9,10,11,12,13,14,18];
 function xrow(arr,bold){return '<tr>'+arr.map((v,i)=>{
   const num=NUMC.indexOf(i)>-1&&v!=='';
   let css='';if(bold)css+='color:#111;background:#ececec;font-weight:'+(i===10?'800':'700')+';';if(!num)css+="mso-number-format:'"+BS+"@'";
   return `<td style="${css}">${num?v:esc(v)}</td>`}).join('')+'</tr>'}
 function dlXls(){
   const data=flat();
-  const agg=a=>{const s={q:0,st:0,rk:0,fn:0,pcs:0,kr:0,kn:0};a.forEach(r=>{s.q+=r[6];s.st+=r[7];s.rk+=r[9];s.fn+=r[10];s.pcs+=r[11];if(r[13]!==''){s.kr+=r[13];s.kn++}});return s};
-  const totArr=(label,s)=>{const q=s.q,st=s.st;return ['','TOTAL '+label,'','','','',q,st,q?Math.round(st/q):0,s.rk,s.fn,s.pcs,st+s.pcs,s.kn?Math.round(s.kr):'',q?Math.round((st+s.pcs)/q):0,'','','']};
+  const agg=a=>{const s={q:0,st:0,rk:0,fn:0,pcs:0,pz:0,kr:0,kn:0};a.forEach(r=>{s.q+=r[6];s.st+=r[7];s.rk+=r[9];s.fn+=r[10];s.pcs+=r[11];s.pz+=(+r[18]||0);if(r[13]!==''){s.kr+=r[13];s.kn++}});return s};
+  const totArr=(label,s)=>{const q=s.q,st=s.st;return ['','TOTAL '+label,'','','','',q,st,q?Math.round(st/q):0,s.rk,s.fn,s.pcs,st+s.pcs,s.kn?Math.round(s.kr):'',q?Math.round((st+s.pcs)/q):0,'','','',s.pz||'','']};
   const rows=[];let buf=[],key='',lbl='';
   const close=()=>{if(!buf.length)return;buf.forEach(r=>rows.push(xrow(r,false)));rows.push(xrow(totArr(lbl,agg(buf)),true));buf=[]};
   data.forEach(r=>{const k=r[1]+SEP+r[2];if(k!==key){close();key=k;lbl=r[1]+' — '+r[2]}buf.push(r)});
