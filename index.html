@@ -862,7 +862,6 @@ setTimeout(function(){if(!window.__ok){var l=document.getElementById('lerr');if(
   <div class="hright"><div class="chips ch1"><span class="chip" id="usr"></span><span class="chip" id="wk" style="display:none"></span><span class="chip" id="upd">Memuat…</span></div>
   <div class="chips ch2"><span class="chip" id="web" style="display:none"><a id="webT" style="margin:0;cursor:pointer"></a></span><span class="chip" id="dataU" style="display:none;cursor:pointer"><svg class="ic" aria-hidden="true"><use href="#i-up"/></svg><a style="margin:0;cursor:pointer">Kelola Data</a></span>
   <span class="chip solid"><a id="rl" style="margin:0">Muat ulang</a> · <a id="lo" style="margin:0">Keluar</a></span></div></div>
-</div>
 </div></header>
 <nav><div class="wrap">
   <button class="nb on" id="nbL"><span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-bar"/></svg></span><span class="nt">Input PB</span></button>
@@ -1184,7 +1183,7 @@ window.__blk=4;
 function setClosed(c){$('#closed').style.display=c?'block':'none';$('#lf').style.display=c?'none':'block';$('#lsub').style.display=c?'none':'block';$('#adm').style.display=c?'block':'none'}
 $('#admL').onclick=()=>{$('#lf').style.display='block';$('#lsub').style.display='block';$('#adm').style.display='none'};
 $('#lpe').onclick=()=>{const p=$('#lp'),s=p.type==='password';p.type=s?'text':'password';$('#lpe').innerHTML=s?''+ic('eyeoff','o')+'':''+ic('eye','o')+'';p.focus()};
-function showLogin(msg,closed){TOKEN=null;D=null;JDW=null;INFO=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;MAN=[];ALLOPEN=true;boot(false);try{sessionStorage.removeItem('pb_tok');localStorage.removeItem('pb_data')}catch(e){}applyView('lap');document.querySelectorAll('#app').forEach(e=>e.style.display='none');document.querySelectorAll('#login').forEach((e,i)=>e.style.display=i?'none':'flex');$('#lerr').textContent=msg||'';$('#lb').disabled=false;setClosed(!!closed);hideInput(false)}
+function showLogin(msg,closed){TOKEN=null;D=null;JDW=null;INFO=null;CABD=null;PVD=null;SIM=null;SIMC={};STK=null;BADD=null;MAN=[];ALLOPEN=true;boot(false);['f_dmin','f_dmax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});try{sessionStorage.removeItem('pb_tok');localStorage.removeItem('pb_data')}catch(e){}applyView('lap');document.querySelectorAll('#app').forEach(e=>e.style.display='none');document.querySelectorAll('#login').forEach((e,i)=>e.style.display=i?'none':'flex');$('#lerr').textContent=msg||'';$('#lb').disabled=false;setClosed(!!closed);hideInput(false)}
 function showApp(u){document.querySelectorAll('#login').forEach(e=>e.style.display='none');document.querySelectorAll('#app').forEach((e,i)=>e.style.display=i?'none':'block');{const uu=u||(D&&D.user);if(uu)$('#mst_dl').style.display=uu.admin?'':'none'}if(u)$('#usr').innerHTML=''+ic('user')+''+esc(u.name+' · '+(u.admin?'SEMUA CAB':u.cabs.join(', ')))}
 $('#lf').onsubmit=ev=>{
   ev.preventDefault();
@@ -1524,8 +1523,13 @@ function init(d,keep,lazy){
 <script>
 window.__blk=11;
 /* ---------- Filter ---------- */
+/* DSI_AKHIR per item = (STOCK + PB_FINAL×FRAC) / QPD, dibulatkan seperti yang tampil di tabel */
+function dsiOf(r){const q=r[6];return q?(r[7]+r[9]*r[5])/q:0}
+function dsiRange(){const g=id=>{const e=document.getElementById(id);if(!e||e.value==='')return null;const v=parseFloat(e.value);return isNaN(v)?null:v};return{mn:g('f_dmin'),mx:g('f_dmax')}}
+function dsiOn(){const R=dsiRange();return R.mn!==null||R.mx!==null}
 function cascade(){
   let cur=D.rows.filter(r=>D.d.jd[r[4]]||r[9]>0||r[11]);   // toko tanpa jadwal kirim tidak ditampilkan
+  {const R=dsiRange();if(R.mn!==null||R.mx!==null)cur=cur.filter(r=>{const d=Math.round(dsiOf(r));return(R.mn===null||d>=R.mn)&&(R.mx===null||d<=R.mx)})}   /* filter DSI_AKHIR (Min–Maks) */
   for(const k of KEYS){
     const c=COL[k],seen=new Set();
     for(const r of cur)seen.add(r[c]);
@@ -1554,6 +1558,8 @@ function buildFilters(){
       onSel();renderList(k);
     };
   });
+  $('#filters').insertAdjacentHTML('beforeend','<div class="field" data-k="dsi"><label>DSI_AKHIR</label><div style="display:flex;gap:4px"><input class="in" id="f_dmin" type="number" inputmode="decimal" min="0" step="any" placeholder="Min" title="DSI_AKHIR minimum"><input class="in" id="f_dmax" type="number" inputmode="decimal" min="0" step="any" placeholder="Maks" title="DSI_AKHIR maksimum"></div></div>');
+  ['f_dmin','f_dmax'].forEach(id=>{document.getElementById(id).oninput=onSel});
 }
 function visible(k){const q=document.querySelector(`.field[data-k=${k}] .dd-search`).value.toLowerCase();return OPT[k].filter(v=>(k==='jd'?D.d.jd[v]:(k!=='bas'||DL[k][v]))&&(!q||DL[k][v].toLowerCase().includes(q)))}   /* BAS kosong tidak ditampilkan di pilihan */
 function renderList(k){
@@ -1564,7 +1570,7 @@ function renderList(k){
 function updBtns(){KEYS.forEach(k=>{const n=SEL[k].size;document.querySelector(`.field[data-k=${k}] .dd-btn span`).textContent=n===0?'Semua':n===1?(DL[k][[...SEL[k]][0]]||'(kosong)'):n+' dipilih'})}
 function closeAll(){document.querySelectorAll('.field.open').forEach(f=>f.classList.remove('open'));$('.nd').classList.remove('open');$('.dmw').classList.remove('open')}
 document.addEventListener('click',closeAll);
-$('#bReset').onclick=()=>{KEYS.forEach(k=>SEL[k].clear());onSel()};
+$('#bReset').onclick=()=>{KEYS.forEach(k=>SEL[k].clear());['f_dmin','f_dmax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});onSel()};
 $('#bKosong').onclick=()=>{
   const n=(D&&D.rows||[]).filter(r=>r[18]!==1&&r[9]>0).length;
   confirmDel('Kosongkan <b>SEMUA data PB</b> (PB_FINAL) di seluruh cabang'+(n?' — <b>'+f0(n)+'</b> baris terisi':'')+', termasuk PB Manual &amp; data CSV?<br><br><b style="color:#b00020">Tidak bisa dikembalikan.</b> Pastikan PB minggu lalu sudah diunduh/diarsipkan.',()=>{
@@ -1629,7 +1635,7 @@ function render(){
   buildTree();calcSum();
   OPENTK++;
   // Membuka ribuan baris sekaligus membuat halaman berat: buka otomatis hanya sampai OPEN_BUDGET baris
-  let used=0,stop=false;const anyF=KEYS.some(k=>SEL[k]&&SEL[k].size),basSel=!!(SEL.bas&&SEL.bas.size);   // BAS dipilih: semua toko dibuka otomatis
+  let used=0,stop=false;const anyF=KEYS.some(k=>SEL[k]&&SEL[k].size)||dsiOn(),basSel=!!(SEL.bas&&SEL.bas.size);   // BAS dipilih: semua toko dibuka otomatis
   for(const n of ROOT.sk){if(anyF&&(basSel||(!stop&&(used===0||used+n.sk.length<=OPEN_BUDGET)))){n.open=true;used+=n.sk.length}else{n.open=false;stop=true}}
   ALLOPEN=ROOT.sk.every(n=>n.open);
   const note='';   // keterangan baris merah dihilangkan
