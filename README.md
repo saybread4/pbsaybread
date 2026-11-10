@@ -8,7 +8,7 @@ Web PB (permintaan barang) SAY BREAD. Situs statis (tanpa build) dengan database
 | `index.html` | Tampilan seluruh halaman |
 | `pb-api.js` | Jembatan ke Supabase (`run('namaFungsi', ...)`) + pembuat file Excel di browser |
 | `pb-admin-data.js` | Menu Unggah Data (administrator) |
-| `pb-dcf.js` | Menu **Stok & Order DCF** (administrator): stok DC, rekomendasi order Takaki, inbound/PO on going |
+| `pb-stokdcf.js` | Menu **Stock DCF** (administrator): sub halaman Stock & Data ED |
 | `_headers` | Header keamanan & anti-cache untuk Cloudflare Pages |
 
 Database: project Supabase **PB SAY BREAD**. Kunci yang ada di `pb-api.js` adalah kunci *publishable* (aman dibuka); akses data dijaga RLS dan fungsi database.
@@ -44,10 +44,8 @@ Toko yang dikirim tiap minggu tetapi zonanya berganti (mis. MINGGU 1 = YH/ZL, MI
 - Tambah toko: `update settings set value = value || '"KODE"'::jsonb where key = 'toko_mingguan';`
 - Logika ada di database: `pb_kirim_trg`, `arsip_pb_put`, `is_toko_mingguan`, `tgl_kirim_zona`, view `v_pb_zona_t`.
 
-## Stok & Order DCF (administrator)
-Menu paling belakang di navigasi, hanya tampil untuk administrator. Satuan semua angka = CTN.
-- **Monitoring Stok** (mirip sheet STOK DCF): stok Takaki (unggah sheet `data ED`), PB sisa minggu, inbound tiba per tanggal, stok akhir, ED per bulan, rekap outbound 4 minggu terakhir dari histori PB web (`arsip_pb_item`), SPD sales (tabel `sales`), DSI awal/akhir, PO on going, sisa stok. Kolom **STOK DC HARI INI** = stok Takaki + inbound tiba − PB per tanggal.
-- **Order Takaki (PO)** (mirip sheet PO TAKAKI): tiap PO punya tanggal kirim & kendaraan (Tronton 1.518 / Jumbo 1.782 / Build-up 2.178 ctn). Isi per item otomatis menyamakan DSI (stok est. ÷ SPD sales) dan total tiap PO = kapasitas kendaraan; kolom CTN bisa diedit. Unduh Excel format PO TAKAKI.
-- **PO On Going / Tiba**: PO yang dijadikan on going dianggap tiba = tanggal kirim + 2 hari. Klik *Tandai tiba* setelah barang sampai; baru saat itu menambah stok DC.
-- **Data & Pengaturan**: unggah stok Takaki, target DSI, pembulatan pallet, lead tiba, kapasitas kendaraan, master item (nama di PO, sorot kuning, dll).
-- Tabel & akses: `migrasi-dcf-stok-order.sql` (tabel `dcf_*`, fungsi `dcf_sales_qpd()` & `dcf_pb_minggu()`, hanya admin).
+## Stock DCF (administrator)
+Menu paling belakang di navigasi, hanya tampil untuk administrator. Satuan = CTN. Dua sub halaman:
+- **Stock** (seperti sheet STOK DCF): PLU DC, Description, QTY STK (jumlah stok per PLU_CUST dari Data ED), PB (periode bisa diganti, angka diisi manual), SISA STOK = QTY STK - PB (min. 0; merah bila 0), Grand Total. Baris kuning = item sorot.
+- **Data ED**: unggah file Monitoring Stock Takaki (sheet `data ED`). Tanggal data terisi dari sel B2 dan bisa diubah sebelum Simpan. Data lama diganti. Tabel menampilkan masa simpan, sisa hari simpan, dan AKTIF.
+- Tabel: `stokdcf_item`, `stokdcf_pb`, `stokdcf_ed` (hanya admin, RLS `is_admin()`). Pasang dengan menjalankan `migrasi-stok-dcf.sql` di Supabase SQL Editor (juga menghapus tabel `dcf_*` lama).
