@@ -8,6 +8,7 @@ Web PB (permintaan barang) SAY BREAD. Situs statis (tanpa build) dengan database
 | `index.html` | Tampilan seluruh halaman |
 | `pb-api.js` | Jembatan ke Supabase (`run('namaFungsi', ...)`) + pembuat file Excel di browser |
 | `pb-admin-data.js` | Menu Unggah Data (administrator) |
+| `pb-dcf.js` | Menu **Stok & Order DCF** (administrator): stok DC, rekomendasi order Takaki, inbound/PO on going |
 | `_headers` | Header keamanan & anti-cache untuk Cloudflare Pages |
 
 Database: project Supabase **PB SAY BREAD**. Kunci yang ada di `pb-api.js` adalah kunci *publishable* (aman dibuka); akses data dijaga RLS dan fungsi database.
@@ -42,3 +43,11 @@ Toko yang dikirim tiap minggu tetapi zonanya berganti (mis. MINGGU 1 = YH/ZL, MI
 - PB minggu lalu otomatis diarsipkan (`arsip_pb_toko_item`) dan **ditambahkan ke STOCK** (tanda `+n` di kolom STOCK), persis seperti zona T.
 - Tambah toko: `update settings set value = value || '"KODE"'::jsonb where key = 'toko_mingguan';`
 - Logika ada di database: `pb_kirim_trg`, `arsip_pb_put`, `is_toko_mingguan`, `tgl_kirim_zona`, view `v_pb_zona_t`.
+
+## Stok & Order DCF (administrator)
+Menu muncul otomatis hanya untuk administrator. Satuan semua angka = CTN.
+- **Stok DC** = stok Takaki (unggah file Monitoring Stock, sheet `data ED`) + inbound sejak tanggal mulai − outbound PB per tanggal (minggu berjalan & depan dari web, sesudahnya rata-rata 4 minggu).
+- **Order Takaki**: rekomendasi = target DSI (default 30 hari) × rata-rata outbound 4 minggu ÷ 7 − estimasi stok akhir periode kirim (termasuk PO on going). Dibulatkan pallet penuh (77 ctn); sisa ≥ 50% pallet dibulatkan naik, sisa kecil tetap ctn. Dibagi ke tanggal kirim, bisa diedit manual, disimpan, dan diunduh sebagai Excel PO Takaki.
+- **Inbound / PO On Going**: matriks tanggal × item. Tanggal sampai hari ini = sudah tiba; sesudahnya = on going. Tombol "Jadikan PO on going" di daftar PO tersimpan memasukkan PO ke inbound.
+- Riwayat outbound mingguan bertambah otomatis dari web setiap menu dibuka.
+- Tabel & kebijakan akses: `migrasi-dcf-stok-order.sql`.
