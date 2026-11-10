@@ -7,3 +7,7 @@
 -- dcf_po / dcf_po_line: PO Takaki tersimpan (per tanggal kirim)
 -- settings: dcf_target_dsi (30), dcf_round_pct (0.5), dcf_inbound_dari (tanggal mulai inbound dihitung)
 -- Skema lengkap: lihat Supabase -> Database -> Tables (dcf_*).
+
+-- v2 (dcf_v2_tiba_kendaraan_spd): dcf_item.nama_po & sorot; dcf_inbound.tiba & tgl_tiba (false = PO on going);
+-- dcf_po.kendaraan & tgl_acuan; settings dcf_kendaraan & dcf_lead_tiba;
+-- fungsi dcf_sales_qpd() (SPD dari sales) dan dcf_pb_minggu() (PB mingguan dari arsip_pb_item), keduanya hanya untuk admin.

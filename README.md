@@ -45,9 +45,9 @@ Toko yang dikirim tiap minggu tetapi zonanya berganti (mis. MINGGU 1 = YH/ZL, MI
 - Logika ada di database: `pb_kirim_trg`, `arsip_pb_put`, `is_toko_mingguan`, `tgl_kirim_zona`, view `v_pb_zona_t`.
 
 ## Stok & Order DCF (administrator)
-Menu muncul otomatis hanya untuk administrator. Satuan semua angka = CTN.
-- **Stok DC** = stok Takaki (unggah file Monitoring Stock, sheet `data ED`) + inbound sejak tanggal mulai − outbound PB per tanggal (minggu berjalan & depan dari web, sesudahnya rata-rata 4 minggu).
-- **Order Takaki**: rekomendasi = target DSI (default 30 hari) × rata-rata outbound 4 minggu ÷ 7 − estimasi stok akhir periode kirim (termasuk PO on going). Dibulatkan pallet penuh (77 ctn); sisa ≥ 50% pallet dibulatkan naik, sisa kecil tetap ctn. Dibagi ke tanggal kirim, bisa diedit manual, disimpan, dan diunduh sebagai Excel PO Takaki.
-- **Inbound / PO On Going**: matriks tanggal × item. Tanggal sampai hari ini = sudah tiba; sesudahnya = on going. Tombol "Jadikan PO on going" di daftar PO tersimpan memasukkan PO ke inbound.
-- Riwayat outbound mingguan bertambah otomatis dari web setiap menu dibuka.
-- Tabel & kebijakan akses: `migrasi-dcf-stok-order.sql`.
+Menu paling belakang di navigasi, hanya tampil untuk administrator. Satuan semua angka = CTN.
+- **Monitoring Stok** (mirip sheet STOK DCF): stok Takaki (unggah sheet `data ED`), PB sisa minggu, inbound tiba per tanggal, stok akhir, ED per bulan, rekap outbound 4 minggu terakhir dari histori PB web (`arsip_pb_item`), SPD sales (tabel `sales`), DSI awal/akhir, PO on going, sisa stok. Kolom **STOK DC HARI INI** = stok Takaki + inbound tiba − PB per tanggal.
+- **Order Takaki (PO)** (mirip sheet PO TAKAKI): tiap PO punya tanggal kirim & kendaraan (Tronton 1.518 / Jumbo 1.782 / Build-up 2.178 ctn). Isi per item otomatis menyamakan DSI (stok est. ÷ SPD sales) dan total tiap PO = kapasitas kendaraan; kolom CTN bisa diedit. Unduh Excel format PO TAKAKI.
+- **PO On Going / Tiba**: PO yang dijadikan on going dianggap tiba = tanggal kirim + 2 hari. Klik *Tandai tiba* setelah barang sampai; baru saat itu menambah stok DC.
+- **Data & Pengaturan**: unggah stok Takaki, target DSI, pembulatan pallet, lead tiba, kapasitas kendaraan, master item (nama di PO, sorot kuning, dll).
+- Tabel & akses: `migrasi-dcf-stok-order.sql` (tabel `dcf_*`, fungsi `dcf_sales_qpd()` & `dcf_pb_minggu()`, hanya admin).
