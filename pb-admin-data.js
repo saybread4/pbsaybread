@@ -49,7 +49,7 @@
     item:          { n: 'ITEM',          c: [{k:'plu',a:'plu',t:'plu',r:1,u:1},{k:'deskripsi',a:'deskripsi',r:1},{k:'jenis',a:'jenis'},{k:'frc',a:'frc,frac',t:'num'}] },
     zona:          { n: 'ZONA',          c: [{k:'zona',a:'zona',r:1,u:1},{k:'nama_zona',a:'namazona'},{k:'area',a:'area'},{k:'tipe_kiriman',a:'tipekiriman'}] },
     jadwal:        { n: 'JADWAL',        c: [{k:'zona',a:'zona',r:1},{k:'minggu',a:'minggu',t:'upper',r:1},{k:'tanggal',a:'jadwal,tanggal,tgl',t:'tgl',r:1},{k:'mobil',a:'mobil',t:'int'}] },
-    // PB zona T yang sudah dikirim (per toko per item) -> ditambahkan ke stok toko. Diarsipkan otomatis; unggah di sini bila perlu mengisi/memperbaiki.
+    // PB zona T & toko kirim mingguan (setting toko_mingguan) yang sudah dikirim (per toko per item) -> ditambahkan ke stok toko. Diarsipkan otomatis; unggah di sini bila perlu mengisi/memperbaiki.
     arsip_pb_toko_item: { n: 'PB ZONA T (KIRIMAN)', c: [{k:'tgl_kirim',a:'jadwalkirim,tglkirim,tanggalkirim,tanggal,jadwal,tgl',t:'tgl',r:1},{k:'zona',a:'zona',t:'upper'},{k:'cab',a:'cab,cabang',t:'upper'},{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'plu',a:'plu',t:'plu'},{k:'deskripsi',a:'deskripsi,description,desc,item',r:1},{k:'pb_final',a:'pbfinal,pb',t:'num',r:1}] }
   };
 
