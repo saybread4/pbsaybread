@@ -44,9 +44,9 @@ Toko yang dikirim tiap minggu tetapi zonanya berganti (mis. MINGGU 1 = YH/ZL, MI
 - Tambah toko: `update settings set value = value || '"KODE"'::jsonb where key = 'toko_mingguan';`
 - Logika ada di database: `pb_kirim_trg`, `arsip_pb_put`, `is_toko_mingguan`, `tgl_kirim_zona`, view `v_pb_zona_t`.
 
-## Stock DCF (administrator)
-Menu paling belakang di navigasi, hanya tampil untuk administrator. Satuan = CTN. Tiga sub halaman (kiri ke kanan):
+## Stock DCF
+Menu paling belakang di navigasi, tampil untuk semua user login. **User biasa hanya melihat**; unggah data, kolom CORE, dan edit Rekap PO hanya untuk administrator (dijaga RLS di database). Satuan = CTN. Tiga sub halaman (kiri ke kanan):
 - **Data ED**: unggah file Monitoring Stock Takaki (sheet `data ED`); tanggal dari sel B2 bisa diubah sebelum Simpan. Baris tanpa keterangan AKTIF ada di paling bawah; sisa hari simpan < 40 hari kuning tipis, < 30 hari merah tipis.
-- **Stock**: PLU, DESKRIPSI, STOCK (jumlah stok per PLU_CUST dari Data ED), PB, SISA STOCK (= STOCK - PB, min. 0; merah bila 0). PB = jumlah PB yang **dikirim** sejak sehari setelah tanggal stock sampai akhir minggu itu (stock 9 Nov -> PB kirim 10-14 Nov), diambil otomatis dari `get_outbound`. Baris hijau = item core (centang kolom CORE untuk mengubah). Urutan: core dulu, lalu sales tertinggi (`stokdcf_sales()`).
+- **Stock**: PLU, DESKRIPSI, STOCK (jumlah stok per PLU_CUST dari Data ED), PB, Est. STOCK (Sabtu, = STOCK - PB, min. 0; merah bila 0), kolom PO ON GOING (tanggal PO <= Sabtu - 3 hari, mis. 7-11 Nov) dan Est. STOCK Minggu (h-1 jadwal kirim minggu depan, = Est. STOCK Sabtu + PO on going). PB = jumlah PB yang **dikirim** sejak sehari setelah tanggal stock sampai akhir minggu itu (stock 9 Nov -> PB kirim 10-14 Nov), diambil otomatis dari `get_outbound`. Baris hijau = item core (centang kolom CORE untuk mengubah). Urutan: core dulu, lalu sales tertinggi (`stokdcf_sales()`).
 - **Rekap PO** (PO on going per tanggal): urutan item sama dengan Stock; angka dan tanggal bisa diedit; bisa tempel dari Excel atau unggah CSV/xlsx (baris judul berisi tanggal, kolom PLU/DESKRIPSI; baris Grand Total/kolom TOTAL diabaikan).
 - Tabel: `stokdcf_item`, `stokdcf_ed`, `stokdcf_po` (hanya admin, RLS `is_admin()`). Skema ada di `migrasi-stok-dcf.sql` (aman dijalankan ulang, tidak menghapus data).

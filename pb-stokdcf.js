@@ -1,7 +1,7 @@
 /* PB SAY BREAD - menu "Stock DCF" (administrator).  Semua satuan CTN.
    Sub halaman (kiri ke kanan): Data ED, Stock, Rekap PO.
    Tabel Supabase: stokdcf_item (kolom core), stokdcf_ed, stokdcf_po; fungsi stokdcf_sales() (lihat migrasi-stok-dcf.sql).
-   Kolom PB di Stock diambil dari fungsi get_outbound (PB per tanggal kirim). Hanya admin. */
+   Kolom PB di Stock diambil dari fungsi get_outbound (PB per tanggal kirim). Semua user login boleh melihat; unggah/edit/kolom core hanya admin (dijaga RLS di database). */
 (function () {
   'use strict';
   const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -13,7 +13,9 @@
   const fd = s => s ? String(pd(s).getUTCDate()).padStart(2, '0') + ' ' + MON[pd(s).getUTCMonth()] + ' ' + pd(s).getUTCFullYear() : '';
   const fdl = s => s ? pd(s).getUTCDate() + ' ' + MONL[pd(s).getUTCMonth()] + ' ' + pd(s).getUTCFullYear() : '';
   const dm = s => pd(s).getUTCDate() + '-' + MON[pd(s).getUTCMonth()];
-  const lab = (a, b) => { const x = pd(a), y = pd(b); return x.getUTCMonth() === y.getUTCMonth() ? x.getUTCDate() + '-' + y.getUTCDate() : x.getUTCDate() + ' ' + MON[x.getUTCMonth()] + ' - ' + y.getUTCDate() + ' ' + MON[y.getUTCMonth()]; };
+  const dmm = s => pd(s).getUTCDate() + ' ' + MON[pd(s).getUTCMonth()];
+  const lab = (a, b) => dmm(a) + '-' + dmm(b);
+  const isoDow = s => pd(s).getUTCDay() || 7;
   const n0 = v => Number(v || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });
   const E = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const Q = (s, r) => (r || document).querySelector(s);
@@ -21,11 +23,12 @@
   const gTok = () => (typeof TOKEN !== 'undefined' ? TOKEN : null), gD = () => (typeof D !== 'undefined' ? D : null);
   const msg = (m, err) => { if (window.toast) window.toast(m, err); else alert(m); };
   const must = r => { if (r.error) throw new Error(r.error.message); return r.data; };
+  const adm = () => { const d = gD(); return !!(d && d.user && d.user.admin); };
   const callApi = (fn, args) => new Promise((ok, no) => window.PBAPI.call(fn, args, ok, no));
   const ic = n => '<svg class="ic" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
   const norm = s => String(s == null ? '' : s).toUpperCase().replace(/\s+/g, ' ').trim();
 
-  const X = { tab: 'stok', ready: false, items: [], ed: [], sales: {}, salesErr: null, poM: new Map(), pb: {}, pbLabel: '-', pbState: 'load', pbErr: '', snap: null, file: null, imp: null, impOpen: false, run: 0 };
+  const X = { tab: 'stok', ready: false, items: [], ed: [], sales: {}, salesErr: null, poM: new Map(), pb: {}, pbLabel: '-', pbTo: null, pbState: 'load', pbErr: '', snap: null, file: null, imp: null, impOpen: false, run: 0 };
 
   // ---------------- gaya (mengikuti tema web: indigo + hijau, kartu putih) ----------------
   function css() {
@@ -45,6 +48,7 @@
 #vStokDcf .sd-tb th{position:sticky;top:0;z-index:2;background:var(--br);color:#fff;padding:3px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;text-align:center;height:21px;border-right:1px solid rgba(255,255,255,.18);letter-spacing:.02em}
 #vStokDcf .sd-tb thead tr+tr th{top:21px}
 #vStokDcf .sd-tb th.g{background:#2f9f61}
+#vStokDcf .sd-tb th[rowspan="2"]{white-space:normal;line-height:1.15;min-width:44px}
 #vStokDcf .sd-tb td{padding:1px 7px;border-bottom:1px solid #e6eee9;white-space:nowrap;text-align:right;height:20px}
 #vStokDcf .sd-tb td.l{text-align:left}#vStokDcf .sd-tb td.c{text-align:center}
 #vStokDcf .sd-tb tbody tr:nth-child(even) td{background:#fafcfb}
@@ -88,23 +92,31 @@
     X.snap = X.ed.length ? X.ed.reduce((m, b) => b.tgl_data > m ? b.tgl_data : m, '0000-00-00') : null;
     X.ready = true;
   }
-  // PB = jumlah PB yang DIKIRIM sejak sehari setelah tanggal stock DCF sampai akhir minggu itu (mis. stock 9 Nov -> kirim 10-14 Nov)
+  // PB = jumlah PB yang DIKIRIM sejak sehari setelah tanggal stock sampai Sabtu minggu itu (stock 9 Nov -> kirim 10-14 Nov)
   async function loadPB(run) {
     X.pbState = 'load'; X.pbErr = ''; X.pb = {};
     const from = X.snap ? addD(X.snap, 1) : null;
-    if (!from) { X.pbLabel = '-'; X.pbState = 'ok'; return; }
+    if (!from) { X.pbLabel = '-'; X.pbTo = null; X.pbState = 'ok'; return; }
+    const dow = isoDow(from), to = addD(from, dow === 7 ? 6 : 6 - dow);
+    X.pbTo = to; X.pbLabel = lab(from, to);
     try {
-      const rs = await Promise.all(['cur', 'next'].map(w => callApi('getOutbound', [gTok(), false, w]).catch(() => null)));
-      if (run !== X.run) return;
-      if (rs.every(r => !r)) throw new Error('data PB (outbound) tidak bisa dimuat');
-      const used = rs.find(R => R && R.dates && R.dates.length && R.dates[R.dates.length - 1] >= from);
+      let used = null, got = false;
+      for (const w of ['cur', 'next']) {   // 'cur' = arsip minggu berjalan (ringan); 'next' hanya bila minggu itu belum tercakup
+        let R = null; try { R = await callApi('getOutbound', [gTok(), false, w]); } catch (e) { R = null; }
+        if (run !== X.run) return;
+        if (R) got = true;
+        if (R && R.dates && R.dates.length) {
+          if (R.dates.some(d => d >= from && d <= to)) { used = R; break; }
+          if (R.dates[R.dates.length - 1] >= from) break;
+        }
+      }
+      if (!got) throw new Error('data PB (outbound) tidak bisa dimuat');
       if (used) {
-        const ks = used.dates.map((d, k) => d >= from ? k : -1).filter(k => k >= 0), to = used.dates[used.dates.length - 1];
+        const ks = used.dates.map((d, k) => d >= from && d <= to ? k : -1).filter(k => k >= 0);
         (used.items || []).forEach(i => { X.pb[String(i.plu).trim()] = ks.reduce((t, k) => t + (Number(i.pb && i.pb[k]) || 0), 0); });
-        X.pbLabel = lab(from, to);
-      } else X.pbLabel = lab(from, from);
+      }
       X.pbState = 'ok';
-    } catch (e) { if (run !== X.run) return; X.pbState = 'err'; X.pbErr = e.message; X.pbLabel = lab(from, from); }
+    } catch (e) { if (run !== X.run) return; X.pbState = 'err'; X.pbErr = e.message; }
   }
   const stokOf = pc => X.ed.reduce((t, b) => String(b.plu_cust).trim() === pc ? t + Number(b.stok || 0) : t, 0);
   // urutan item (dipakai Stock dan Rekap PO): core dulu, lalu sales tertinggi
@@ -133,28 +145,41 @@
   }
 
   // ===== Sub halaman: Stock =====
+  // Est. STOCK (Sabtu) = STOCK - PB (min. 0). PO on going dipakai: tanggal <= Sabtu - 3 hari (stock 14 Nov -> PO tgl 7-11 Nov).
+  // Est. STOCK (Minggu, h-1 jadwal kirim minggu depan) = Est. STOCK Sabtu + total PO on going tersebut.
   function paintStok() {
+    const A = adm(), load = X.pbState === 'load', to = X.pbTo;
+    const e1 = to ? dmm(to) : '-', e2 = to ? dmm(addD(to, 1)) : '-', cut = to ? addD(to, -3) : null;
+    const pcols = cut ? poCols().filter(d => d <= cut) : [];
     const rows = ordered().map(i => {
-      const pc = String(i.plu_cust).trim(), qty = stokOf(pc), pb = X.pb[String(i.plu_dc).trim()] || 0;
-      return { i, qty, pb, sisa: Math.max(0, qty - pb) };
+      const pc = String(i.plu_cust).trim(), qty = stokOf(pc), pb = X.pb[String(i.plu_dc).trim()] || 0, sisa = Math.max(0, qty - pb);
+      const pov = pcols.map(d => poQ(d, i.plu_dc)), po = pov.reduce((t, v) => t + v, 0);
+      return { i, qty, pb, sisa, pov, est2: sisa + po };
     });
-    const T = rows.reduce((t, r) => ({ qty: t.qty + r.qty, pb: t.pb + r.pb, sisa: t.sisa + r.sisa }), { qty: 0, pb: 0, sisa: 0 });
-    const pbTxt = v => X.pbState === 'load' ? '…' : n0(v);
-    let h = head('package', 'MONITORING STOK DCF JATIM', 'Stok DCF ' + (X.snap ? E(fdl(X.snap)) : '-'),
-      badge('PB kirim ' + E(X.pbLabel), 'cal'))
-      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th><th>PB</th><th rowspan="2">SISA STOCK</th><th rowspan="2" title="Centang untuk menjadikan item core">CORE</th></tr>'
-      + '<tr><th>' + E(X.pbLabel) + '</th></tr></thead><tbody>'
+    const T = rows.reduce((t, r) => { t.qty += r.qty; t.pb += r.pb; t.sisa += r.sisa; t.est2 += r.est2; r.pov.forEach((v, k) => { t.pov[k] += v; }); return t; }, { qty: 0, pb: 0, sisa: 0, est2: 0, pov: pcols.map(() => 0) });
+    const L = v => load ? '…' : n0(v), dash = v => v ? n0(v) : '-';
+    let h = head('package', 'MONITORING STOK DCF JATIM', 'Stok DCF ' + (X.snap ? E(fdl(X.snap)) : '-'), badge('PB kirim ' + E(X.pbLabel), 'cal'))
+      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th><th>PB</th>'
+      + '<th rowspan="2">Est. STOCK<br>' + E(e1) + '</th>'
+      + (pcols.length ? '<th colspan="' + pcols.length + '" class="g">PO ON GOING</th>' : '')
+      + '<th rowspan="2">Est. STOCK<br>' + E(e2) + '</th>'
+      + (A ? '<th rowspan="2" title="Centang untuk menjadikan item core">CORE</th>' : '') + '</tr>'
+      + '<tr><th>' + E(X.pbLabel) + '</th>' + pcols.map(d => '<th class="g">' + E(dm(d)) + '</th>').join('') + '</tr></thead><tbody>'
       + rows.map(r => '<tr class="' + (r.i.core ? 'core' : '') + '"><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
-        + '<td>' + n0(r.qty) + '</td><td>' + pbTxt(r.pb) + '</td>'
-        + '<td class="' + (X.pbState !== 'load' && r.sisa === 0 ? 'z' : '') + '">' + (X.pbState === 'load' ? '…' : n0(r.sisa)) + '</td>'
-        + '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td></tr>').join('')
-      + '<tr class="tot"><td class="l" colspan="2">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + pbTxt(T.pb) + '</td><td>' + (X.pbState === 'load' ? '…' : n0(T.sisa)) + '</td><td></td></tr>'
+        + '<td>' + n0(r.qty) + '</td><td>' + L(r.pb) + '</td>'
+        + '<td class="' + (!load && r.sisa === 0 ? 'z' : '') + '">' + L(r.sisa) + '</td>'
+        + r.pov.map(v => '<td>' + dash(v) + '</td>').join('')
+        + '<td style="font-weight:700">' + L(r.est2) + '</td>'
+        + (A ? '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td>' : '') + '</tr>').join('')
+      + '<tr class="tot"><td class="l" colspan="2">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + L(T.pb) + '</td><td>' + L(T.sisa) + '</td>'
+      + T.pov.map(v => '<td>' + dash(v) + '</td>').join('') + '<td>' + L(T.est2) + '</td>' + (A ? '<td></td>' : '') + '</tr>'
       + '</tbody></table></div>'
-      + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core (ubah lewat kolom CORE)</span><span>Urutan: core lebih dulu, lalu sales tertinggi</span>'
+      + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span>'
+      + '<span>' + (pcols.length ? 'PO on going: ' + E(dm(pcols[0])) + ' s/d ' + E(dm(pcols[pcols.length - 1])) + ' · ' : '') + 'Est. STOCK ' + E(e2) + ' = Est. STOCK ' + E(e1) + ' + PO on going</span>'
       + (X.pbState === 'err' ? '<span class="sd-er">PB belum bisa dimuat (' + E(X.pbErr) + ') — klik Muat ulang.</span>' : '')
       + (X.salesErr ? '<span class="sd-er">Sales tidak terbaca (' + E(X.salesErr) + ') — urutan sementara sesuai master.</span>' : '') + '</div>';
     Q('#sdBody').innerHTML = h;
-    Q('#sdBody').onchange = async e => {
+    if (A) Q('#sdBody').onchange = async e => {
       const t = e.target; if (!t.hasAttribute('data-core')) return;
       const p = t.dataset.core, v = t.checked;
       const r = await sbc().from('stokdcf_item').update({ core: v }).eq('plu_dc', p);
@@ -217,13 +242,14 @@
   function paintED() {
     const known = new Set(X.items.filter(i => i.aktif).map(i => String(i.plu_cust).trim()));
     const th = t => '<th>' + t + '</th>';
+    const A = adm();
     let h = head('cal', 'DATA ED', X.snap ? 'Per ' + E(fdl(X.snap)) + ' · ' + n0(X.ed.length) + ' baris' : 'Belum ada data', X.snap ? badge('Tanggal data ' + E(fd(X.snap)), 'cal') : '')
-      + '<div class="sd-card"><div class="sd-row"><div><label class="k">File Monitoring Stock Takaki (.xlsx)</label><br><input type="file" id="sdF" accept=".xlsx"></div>'
+      + (!A ? '' : '<div class="sd-card"><div class="sd-row"><div><label class="k">File Monitoring Stock Takaki (.xlsx)</label><br><input type="file" id="sdF" accept=".xlsx"></div>'
       + '<div><label class="k">Tanggal data</label><br><input type="date" class="in" id="sdTgl" value="' + (X.snap || '') + '" style="width:140px"></div>'
       + '<button class="b p" id="sdSave" disabled>Simpan</button>'
       + (X.snap ? '<button class="b s" id="sdTglOnly" title="Ubah tanggal data yang sudah tersimpan tanpa unggah ulang">Ubah tanggal saja</button>' : '') + '</div>'
       + '<div id="sdFs" class="note" style="padding:5px 0 0"></div>'
-      + '<div class="note" style="padding:2px 0 0">Hanya sheet <b>data ED</b> yang dibaca (PLU_CUST kolom A, deskripsi B, stok C, inbound J, ED K). Tanggal terisi dari sel B2 dan bisa diubah. Data ED lama diganti.</div></div>';
+      + '<div class="note" style="padding:2px 0 0">Hanya sheet <b>data ED</b> yang dibaca (PLU_CUST kolom A, deskripsi B, stok C, inbound J, ED K). Tanggal terisi dari sel B2 dan bisa diubah. Data ED lama diganti.</div></div>');
     if (X.ed.length) {
       const rows = X.ed.map((b, n) => {
         const pc = String(b.plu_cust).trim();
@@ -241,6 +267,7 @@
         + '<div class="sd-leg"><span><i class="sd-sw y"></i>Sisa hari simpan di bawah 40 hari</span><span><i class="sd-sw r"></i>Di bawah 30 hari</span><span>Baris tanpa keterangan AKTIF ada di paling bawah</span></div>';
     }
     Q('#sdBody').innerHTML = h;
+    if (!A) return;
     Q('#sdF').onchange = e => pickFile(e.target.files[0]);
     Q('#sdSave').onclick = saveED;
     const o = Q('#sdTglOnly'); if (o) o.onclick = async () => {
@@ -355,30 +382,31 @@
     } catch (e) { msg('Gagal: ' + e.message, true); }
   }
   function paintPO() {
-    const cols = poCols(), act = ordered();
+    const A = adm(), cols = poCols(), act = ordered();
     const hasD = cols.length > 0;
     let h = head('truck', 'PO TAKAKI JATIM', 'PO on going per tanggal · satuan CTN · urutan item sama dengan halaman Stock',
       hasD ? badge(dm(cols[0]) + ' s/d ' + dm(cols[cols.length - 1]), 'cal') : '')
-      + '<div class="sd-card"><div class="sd-row"><button class="b p" id="sdOpenImp">' + ic('clip') + ' Tempel / unggah data</button>'
+      + (!A ? '' : '<div class="sd-card"><div class="sd-row"><button class="b p" id="sdOpenImp">' + ic('clip') + ' Tempel / unggah data</button>'
       + '<div><label class="k">Tambah kolom tanggal</label><br><input type="date" class="in" id="sdAddD" style="width:140px"></div><button class="b s" id="sdAddB">+ Tanggal</button>'
-      + '<span class="note" style="padding:0 0 4px">Klik angka untuk mengubah · klik tanggal di judul untuk mengganti tanggalnya · × untuk menghapus kolom</span></div></div>'
-      + '<div class="sd-card" id="sdImp" style="display:' + (X.impOpen ? 'block' : 'none') + '"><label class="k">Tempel dari Excel (blok tabel lengkap: baris tanggal + kolom PLU, DESKRIPSI, tanggal…)</label>'
+      + '<span class="note" style="padding:0 0 4px">Klik angka untuk mengubah · klik tanggal di judul untuk mengganti tanggalnya · × untuk menghapus kolom</span></div></div>')
+      + (!A ? '' : '<div class="sd-card" id="sdImp" style="display:' + (X.impOpen ? 'block' : 'none') + '"><label class="k">Tempel dari Excel (blok tabel lengkap: baris tanggal + kolom PLU, DESKRIPSI, tanggal…)</label>'
       + '<textarea class="sd-ta" id="sdTa" placeholder="PLU&#9;DESKRIPSI&#9;7-Nov&#9;8-Nov&#9;…"></textarea>'
       + '<div class="sd-row" style="margin-top:6px"><div><label class="k">atau file CSV / Excel</label><br><input type="file" id="sdPf" accept=".csv,.tsv,.txt,.xlsx"></div>'
       + '<div><label class="k">Cara simpan</label><br><select class="in" id="sdMode"><option value="replace">Ganti seluruh data PO</option><option value="merge">Timpa tanggal yang sama saja</option></select></div>'
       + '<button class="b p" id="sdApply" disabled>Terapkan</button><button class="b s" id="sdCancel">Tutup</button></div>'
-      + '<div id="sdImpS" class="note" style="padding:5px 0 0"></div></div>';
-    if (!hasD) h += '<div class="sd-card"><div class="note" style="padding:10px;text-align:center">Belum ada data PO. Tempel tabel dari Excel / unggah CSV, atau tambahkan kolom tanggal lalu isi angkanya.</div></div>';
+      + '<div id="sdImpS" class="note" style="padding:5px 0 0"></div></div>');
+    if (!hasD) h += '<div class="sd-card"><div class="note" style="padding:10px;text-align:center">Belum ada data PO.' + (A ? ' Tempel tabel dari Excel / unggah CSV, atau tambahkan kolom tanggal lalu isi angkanya.' : '') + '</div></div>';
     else {
       h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th colspan="' + cols.length + '">PO ON GOING</th><th rowspan="2" class="g">TOTAL</th></tr><tr>'
-        + cols.map(d => '<th class="sd-dt" data-d="' + d + '" title="Klik untuk mengganti tanggal"><span class="sd-dl">' + dm(d) + '</span><input type="date" class="sd-dh" value="' + d + '"><b class="sd-x" data-del="' + d + '" title="Hapus kolom ini">×</b></th>').join('') + '</tr></thead><tbody>'
+        + cols.map(d => A ? '<th class="sd-dt" data-d="' + d + '" title="Klik untuk mengganti tanggal"><span class="sd-dl">' + dm(d) + '</span><input type="date" class="sd-dh" value="' + d + '"><b class="sd-x" data-del="' + d + '" title="Hapus kolom ini">×</b></th>' : '<th>' + dm(d) + '</th>').join('') + '</tr></thead><tbody>'
         + act.map(i => '<tr class="' + (i.core ? 'core' : '') + '"><td class="l">' + E(i.plu_dc) + '</td><td class="l">' + E(i.deskripsi) + '</td>'
-          + cols.map(d => { const v = poQ(d, i.plu_dc); return '<td><input class="sd-c" inputmode="numeric" placeholder="-" data-p="' + E(i.plu_dc) + '" data-d="' + d + '" value="' + (v ? v : '') + '"></td>'; }).join('')
+          + cols.map(d => { const v = poQ(d, i.plu_dc); return A ? '<td><input class="sd-c" inputmode="numeric" placeholder="-" data-p="' + E(i.plu_dc) + '" data-d="' + d + '" value="' + (v ? v : '') + '"></td>' : '<td>' + (v ? n0(v) : '-') + '</td>'; }).join('')
           + '<td class="sd-rt" data-p="' + E(i.plu_dc) + '" style="font-weight:700"></td></tr>').join('')
         + '<tr class="tot"><td class="l" colspan="2">Grand Total</td>' + cols.map(d => '<td class="sd-ct" data-d="' + d + '"></td>').join('') + '<td id="sdGT"></td></tr>'
         + '</tbody></table></div><div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span></div>';
     }
     Q('#sdBody').innerHTML = h; if (hasD) fillTotals();
+    if (!A) return;
     const body = Q('#sdBody'), imp = Q('#sdImp');
     Q('#sdOpenImp').onclick = () => { X.impOpen = !X.impOpen; imp.style.display = X.impOpen ? 'block' : 'none'; if (X.impOpen) Q('#sdTa').focus(); };
     Q('#sdCancel').onclick = () => { X.impOpen = false; X.imp = null; imp.style.display = 'none'; };
@@ -439,8 +467,8 @@
     VID.sdcf = '#vStokDcf';
     const av = window.applyView; window.applyView = function (x) { av(x); b.classList.toggle('on', x === 'sdcf'); };
     b.onclick = e => { e.stopPropagation(); window.showView('sdcf'); if (!X.ready) start(); else { if (!Q('#sdSeg')) shell(); paint(); } };
-    setInterval(() => { const d = gD(), adm = !!(d && d.user && d.user.admin && gTok()); b.style.display = adm ? '' : 'none'; if (!adm && X.ready) X.ready = false; }, 1200);
+    setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; if (!ok && X.ready) X.ready = false; }, 1200);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
-  window.PBSTOKDCF = { X, start, parseED, parsePORows };
+  window.PBSTOKDCF = { X, start, parseED, parsePORows, paintStok, paintPO, paintED };
 })();
