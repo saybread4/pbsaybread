@@ -35,7 +35,7 @@
     if (Q('#sdCss')) return;
     const s = document.createElement('style'); s.id = 'sdCss';
     s.textContent = `
-#vStokDcf .sd-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-top:8px}
+#vPoTakaki .sd-head{display:flex;align-items:center;gap:10px;padding:8px 12px;margin-top:8px;border:1px solid var(--bd);border-radius:10px;background:linear-gradient(135deg,#f1f0ff,#e8f7ee)}\n#vPoTakaki .sd-ico{width:30px;height:30px;border-radius:8px;background:var(--br);color:#fff;display:grid;place-items:center;flex:none}\n#vPoTakaki .sd-ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}\n#vPoTakaki .sd-t{font-weight:800;font-size:14px;color:var(--br)}#vPoTakaki .sd-s{font-size:11px;color:var(--mu)}\n#vStokDcf .sd-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:8px 10px;margin-top:8px}
 #vStokDcf .sd-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;margin-top:8px;border:1px solid var(--bd);border-radius:10px;background:linear-gradient(135deg,#f1f0ff,#eef9f2);border-left:4px solid var(--br)}
 #vStokDcf .sd-ico{width:30px;height:30px;border-radius:8px;background:var(--br);color:#fff;display:grid;place-items:center;flex:none}
 #vStokDcf .sd-ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -227,9 +227,6 @@
       + '<td>' + L(T.pb2) + '</td><td>' + dash(T.po2) + '</td><td>' + L(T.est3) + '</td>' + (A ? '<td></td>' : '') + '</tr>'
       + '</tbody></table></div>'
       + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span>'
-      + '<span>' + (pcols.length ? 'PO on going: ' + E(dm(pcols[0])) + ' s/d ' + E(dm(pcols[pcols.length - 1])) + ' · ' : '') + 'Est. STOCK ' + E(e2) + ' = Est. STOCK ' + E(e1) + ' + PO on going</span>'
-      + '<span>Est. STOCK ' + E(e3) + ' = Est. STOCK ' + E(e2) + ' − PB ' + E(X.pbLabel2) + ' (min. 0) + PO on going ' + E(po2lab) + '</span>'
-      + '<span>QPD (Ctn) = sales per hari ÷ FRC · DSI = STOCK ÷ QPD (Ctn)</span>'
       + (X.pbState === 'err' ? '<span class="sd-er">PB belum bisa dimuat (' + E(X.pbErr) + ') — klik Muat ulang.</span>' : '')
       + (X.qpdErr ? '<span class="sd-er">QPD tidak terbaca (' + E(X.qpdErr) + ') — jalankan fungsi <b>stokdcf_qpd</b> di Supabase.</span>' : '')
       + (X.salesErr ? '<span class="sd-er">Sales tidak terbaca (' + E(X.salesErr) + ') — urutan sementara sesuai master.</span>' : '') + '</div>';
@@ -528,7 +525,17 @@
     VID.sdcf = '#vStokDcf';
     const av = window.applyView; window.applyView = function (x) { av(x); b.classList.toggle('on', x === 'sdcf'); };
     b.onclick = e => { e.stopPropagation(); window.showView('sdcf'); if (!X.ready) start(); else { if (!Q('#sdSeg')) shell(); paint(); } };
-    setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; if (!ok && X.ready) X.ready = false; }, 1200);
+    // menu PO TAKAKI (di kanan Stock DCF) - isi halaman menyusul
+    const b2 = document.createElement('button'); b2.className = 'nb'; b2.id = 'nbPT'; b2.style.display = 'none';
+    b2.innerHTML = '<span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-truck"/></svg></span><span class="nt">PO TAKAKI</span>';
+    b.after(b2);
+    const v2 = document.createElement('div'); v2.id = 'vPoTakaki'; v2.style.display = 'none'; Q('main .wrap').appendChild(v2);
+    v2.innerHTML = '<div class="sd-head"><span class="sd-ico"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg></span><div><div class="sd-t">PO TAKAKI</div><div class="sd-s">Halaman ini sedang disiapkan</div></div></div>'
+      + '<div class="card empty" style="margin-top:10px">Isi halaman PO TAKAKI menyusul.</div>';
+    VID.potakaki = '#vPoTakaki';
+    const av2 = window.applyView; window.applyView = function (x) { av2(x); b2.classList.toggle('on', x === 'potakaki'); };
+    b2.onclick = e => { e.stopPropagation(); window.showView('potakaki'); };
+    setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; b2.style.display = ok ? '' : 'none'; if (!ok && X.ready) X.ready = false; }, 1200);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
   // Est. STOCK h-1 jadwal kirim minggu depan (mis. 15 Nov) per PLU DC -> dipakai tabel Stock-DC vs PB di Rekap Cabang
@@ -538,7 +545,9 @@
     if (X.pbState !== 'ok') throw new Error(X.pbErr || 'PB belum termuat');
     const C = calcStok(), map = {}, byD = {};
     C.rows.forEach(r => { const o = { est: r.est2, ds: r.i.deskripsi }; map[String(r.i.plu_dc).trim()] = o; byD[norm(r.i.deskripsi)] = o; });
-    return { date: addD(C.to, 1), label: 'Est. STOCK ' + dmm(addD(C.to, 1)), map, byD };
+    C.rows.forEach(r => { const o = map[String(r.i.plu_dc).trim()]; o.now = r.qty; o.est3 = r.est3; byD[norm(r.i.deskripsi)].now = r.qty; byD[norm(r.i.deskripsi)].est3 = r.est3; });
+    // stok awal per tanggal: snap = STOCK Data Exp Date, d2 = Est. STOCK h-1 minggu depan (mis. 15 Nov), d3 = Est. STOCK berikutnya (mis. 22 Nov)
+    return { date: addD(C.to, 1), label: 'Est. STOCK ' + dmm(addD(C.to, 1)), snap: X.snap, d3: addD(C.to2, 1), map, byD };
   }
   window.PBSTOKDCF = { est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED };
 })();

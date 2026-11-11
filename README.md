@@ -53,3 +53,7 @@ Menu paling belakang di navigasi, tampil untuk semua user login. **User biasa ha
 
 ## Stock-DC vs PB (Rekap Cabang)
 Stok yang dipakai = **Est. STOCK h-1 jadwal kirim minggu depan** dari Stock DCF (mis. Est. STOCK 15 Nov), bukan lagi sheet STOCK-DC. Menu unggah/lihat **STOCK-DC** di Data dihapus. Pembagian JATAH per cabang dihitung ulang di browser (`allocJatah`, sama dengan fungsi database `alloc_jatah`). Item PB yang tidak ada di daftar Stock DCF dianggap stok 0 dan diberi peringatan. Sheet STOCK-DC VS PB di Download Master memakai stok yang sama.
+
+## Simulasi Outbound & PO TAKAKI
+- **Simulasi Outbound**: STOCK AKHIR minggu depan = **Est. STOCK 15 Nov** (Stock DCF), minggu berjalan = STOCK per tanggal Data Exp Date. Sheet SIMULASI di Download Master memakai angka yang sama. Tabel `stock_dc` di Supabase tidak dipakai lagi.
+- **PO TAKAKI**: menu baru di kanan Stock DCF (`pb-stokdcf.js`), isi halaman menyusul.

@@ -515,6 +515,7 @@
       try { const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]); jw = mergeJadwal(r[0], r[1], today); } catch (e) { jw = null; }   // sheet JADWAL dilewati bila gagal dimuat
       try { const u = await me(); who = u.name + ' \u00b7 ' + (u.admin ? 'SEMUA CAB' : u.cabs.join(', ')); } catch (e) { /* pakai teks bawaan */ }
       try { if (d.stock && d.stock.items && window.stkUseEst) await window.stkUseEst(d.stock, false); } catch (e) { /* tetap pakai stok bawaan */ }   // stok = Est. STOCK Stock DCF
+      try { if (d.outbound && d.outbound.items && window.simUseEst) await window.simUseEst(d.outbound, 'next', false); } catch (e) { /* tetap pakai stok bawaan */ }   // STOCK AKHIR simulasi = Est. STOCK
       const m = await buildMasterBook(d, jw, who, today);
       return { name: 'Master PB ' + d.title + '.xlsx', b64: await toB64(m.wb), bad: m.bad };
     },

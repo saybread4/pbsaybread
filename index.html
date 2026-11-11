@@ -2441,6 +2441,20 @@ async function stkUseEst(R,force){
   }catch(e){R.estWarn='Est. STOCK dari Stock DCF belum bisa dibaca ('+((e&&e.message)||e)+') — memakai stok lama dari database.'}
 }
 window.stkUseEst=stkUseEst;
+/* Simulasi Outbound: STOCK AKHIR = stok h-1 pengiriman pertama di minggu itu, diambil dari Stock DCF:
+   h-1 = tanggal Data Exp Date -> STOCK; h-1 = Est. STOCK minggu depan (mis. 15 Nov) -> Est. STOCK; berikutnya (22 Nov) -> Est. STOCK berikutnya.
+   Jadi saat jadwal baru masuk, angka "minggu depan" otomatis menjadi stok awal "minggu berjalan". */
+async function simUseEst(R,w,force){
+  try{
+    const E=await PBSTOKDCF.est15(force),nm=s=>String(s==null?'':s).toUpperCase().replace(/\s+/g,' ').trim();
+    const first=(R.dates&&R.dates[0])||'',c=[[E.snap,'now'],[E.date,'est'],[E.d3,'est3']].filter(x=>x[0]);
+    let pick=c.filter(x=>x[0]<first).sort((a,b)=>a[0]<b[0]?1:-1)[0]||c.sort((a,b)=>a[0]<b[0]?-1:1)[0];
+    if(!pick)return;
+    R.items.forEach(i=>{const m=E.map[String(i.plu||'').trim()]||E.byD[nm(i.ds)];i.stock=m?(m[pick[1]]||0):0});
+    R.stockDate=pick[0];
+  }catch(e){/* gagal membaca Stock DCF: tetap memakai stok bawaan */}
+}
+window.simUseEst=simUseEst;
 function renderStk(){
   const R=STK;if(!R)return;
   const fd=iso=>{const p=iso.split('-');return p[2]+'.'+p[1]+'.'+p[0].slice(2)};
@@ -2741,7 +2755,7 @@ function loadSim(force){
   if(SIMC[SIMW]&&!force){SIM=SIMC[SIMW];renderSim();return}
   if(SIMB)return;SIMB=true;const w=SIMW;
   $('#sim_out').innerHTML='<div class="card empty" style="margin-top:10px"><span class="spin"></span><div>Menghitung simulasi…</div></div>';
-  run('getOutbound',[TOKEN,!!force,w],r=>{SIMB=false;SIMC[w]=r;if(w===SIMW){SIM=r;renderSim()}},e=>{SIMB=false;$('#sim_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat:<br>'+esc((e&&e.message)||e)+'</div>';failH(e)});
+  run('getOutbound',[TOKEN,!!force,w],async r=>{if(r&&r.items)await simUseEst(r,w,!!force);SIMB=false;SIMC[w]=r;if(w===SIMW){SIM=r;renderSim()}},e=>{SIMB=false;$('#sim_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat:<br>'+esc((e&&e.message)||e)+'</div>';failH(e)});
 }
 $('#sim_rl').onclick=()=>loadSim(true);
 $('#sim_dl').onclick=e=>{e.stopPropagation();const m=$('#sim_menu');m.style.display=m.style.display==='none'?'block':'none'};
