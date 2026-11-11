@@ -1,4 +1,4 @@
-/* PB SAY BREAD - menu "Stock DCF" (administrator).  Semua satuan CTN.
+/* PB SAY BREAD - menu "Stock DCF" (semua user login; edit hanya administrator) + tombol menu PO TAKAKI (isi halaman: pb-potakaki.js).  Semua satuan CTN.
    Sub halaman (kiri ke kanan): Data ED, Stock, Rekap PO.
    Tabel Supabase: stokdcf_item (kolom core), stokdcf_ed, stokdcf_po; fungsi stokdcf_sales() (lihat migrasi-stok-dcf.sql).
    Kolom PB di Stock diambil dari fungsi get_outbound (PB per tanggal kirim). Semua user login boleh melihat; unggah/edit/kolom core hanya admin (dijaga RLS di database). */
@@ -528,16 +528,14 @@
     VID.sdcf = '#vStokDcf';
     const av = window.applyView; window.applyView = function (x) { av(x); b.classList.toggle('on', x === 'sdcf'); };
     b.onclick = e => { e.stopPropagation(); window.showView('sdcf'); if (!X.ready) start(); else { if (!Q('#sdSeg')) shell(); paint(); } };
-    // menu PO TAKAKI (di kanan Stock DCF) - isi halaman menyusul
+    // menu PO TAKAKI (di kanan Stock DCF); isi halaman ada di pb-potakaki.js
     const b2 = document.createElement('button'); b2.className = 'nb'; b2.id = 'nbPT'; b2.style.display = 'none';
     b2.innerHTML = '<span class="ni"><svg class="ic o" aria-hidden="true"><use href="#i-truck"/></svg></span><span class="nt">PO TAKAKI</span>';
     b.after(b2);
     const v2 = document.createElement('div'); v2.id = 'vPoTakaki'; v2.style.display = 'none'; Q('main .wrap').appendChild(v2);
-    v2.innerHTML = '<div class="sd-head"><span class="sd-ico"><svg class="ic" aria-hidden="true"><use href="#i-truck"/></svg></span><div><div class="sd-t">PO TAKAKI</div><div class="sd-s">Halaman ini sedang disiapkan</div></div></div>'
-      + '<div class="card empty" style="margin-top:10px">Isi halaman PO TAKAKI menyusul.</div>';
     VID.potakaki = '#vPoTakaki';
     const av2 = window.applyView; window.applyView = function (x) { av2(x); b2.classList.toggle('on', x === 'potakaki'); };
-    b2.onclick = e => { e.stopPropagation(); if (adm()) window.showView('potakaki'); };   // hanya administrator
+    b2.onclick = e => { e.stopPropagation(); if (!adm()) return; window.showView('potakaki'); if (window.PBPOTAKAKI) window.PBPOTAKAKI.open(); };   // hanya administrator
     setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; const isA = ok && adm(); b2.style.display = isA ? '' : 'none'; if (!isA && v2.style.display !== 'none') window.showView('lap'); if (!ok && X.ready) X.ready = false; }, 1200);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
@@ -558,5 +556,5 @@
     // stok awal per tanggal: snap = STOCK Data Exp Date, d2 = Est. STOCK h-1 minggu depan (mis. 15 Nov), d3 = Est. STOCK berikutnya (mis. 22 Nov)
     return { date: addD(C.to, 1), label: 'Est. STOCK ' + dmm(addD(C.to, 1)), snap: X.snap, d3: addD(C.to2, 1), map, byD };
   }
-  window.PBSTOKDCF = { est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED };
+  window.PBSTOKDCF = { est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED, calcStok };
 })();

@@ -9,6 +9,8 @@ Web PB (permintaan barang) SAY BREAD. Situs statis (tanpa build) dengan database
 | `pb-api.js` | Jembatan ke Supabase (`run('namaFungsi', ...)`) + pembuat file Excel di browser |
 | `pb-admin-data.js` | Menu Unggah Data (administrator) |
 | `pb-stokdcf.js` | Menu **Stock DCF** (administrator): sub halaman Stock & Data ED |
+| `pb-potakaki.js` | Menu **PO TAKAKI** (hanya administrator): PO per mobil, rekomendasi jumlah PO |
+| `migrasi-po-takaki.sql` | Tabel & fungsi database halaman PO TAKAKI (jalankan sekali di Supabase SQL Editor) |
 | `_headers` | Header keamanan & anti-cache untuk Cloudflare Pages |
 
 Database: project Supabase **PB SAY BREAD**. Kunci yang ada di `pb-api.js` adalah kunci *publishable* (aman dibuka); akses data dijaga RLS dan fungsi database.
@@ -56,4 +58,13 @@ Stok yang dipakai = **Est. STOCK h-1 jadwal kirim minggu depan** dari Stock DCF 
 
 ## Simulasi Outbound & PO TAKAKI
 - **Simulasi Outbound**: STOCK AKHIR minggu depan = **Est. STOCK 15 Nov** (Stock DCF), minggu berjalan = STOCK per tanggal Data Exp Date. Sheet SIMULASI di Download Master memakai angka yang sama. Tabel `stock_dc` di Supabase tidak dipakai lagi.
-- **PO TAKAKI** (hanya administrator): menu baru di kanan Stock DCF (`pb-stokdcf.js`), isi halaman menyusul.
+- **PO TAKAKI** (hanya administrator): lihat bagian di bawah.
+
+## PO TAKAKI (hanya administrator)
+Menu di kanan Stock DCF, isi mengikuti Excel *EST. PO TAKAKI JATIM*. Satuan CTN; PALLET boleh desimal (koma/titik). **Jalankan `migrasi-po-takaki.sql` di Supabase dulu** (hanya menambah tabel `potakaki_po`, `potakaki_po_item`, `potakaki_cfg` dan fungsi `potakaki_info()`; RLS `is_admin()`).
+- **Periode** = request pengiriman Senin-Sabtu setelah Est. STOCK terakhir di Stock DCF (mis. Est. STOCK 22 Nov -> request 23-28 Nov). Data PO disimpan per periode.
+- **PO 1, PO 2, ...** = satu mobil per PO (maks. 12). Tiap PO punya pilihan kendaraan (TRONTON / JUMBO / BUILT-UP), tanggal kirim, dan ctn per pallet (default 77, biru = bisa diedit). CTN = PALLET x ctn/plt, dibulatkan. Tombol **+ Tambah PO (mobil)**; x di header PO untuk menghapus.
+- **STOCK (jika tanpa forecast)** = Est. STOCK terakhir (Stock DCF); **STOCK (jika ada forecast)** = STOCK + TOTAL PO. **BUFFER %** = (STOCK - rata-rata PB/minggu) / rata-rata PB/minggu, minimal 0. **DSI** = STOCK / QPD (Ctn). **QPD (Ctn)** = sales per hari / FRC. **JML TOKO JUAL** = jumlah toko yang punya item (tabel `toko_per_item`). **AVERAGE OUTB (PB) PER WEEK** = rata-rata PB (CTN) per minggu dari `arsip_pb_item`, maks. 4 minggu terakhir yang tersedia.
+- **Rekomendasi**: kebutuhan CTN = jumlah per item `max(0, target DSI x QPD - STOCK)`. Jumlah PO = kombinasi kendaraan paling sedikit yang muat (lalu yang paling pas). **Terapkan rekomendasi** mengisi pallet per item (kelipatan 1/2 pallet): *Kendaraan diisi penuh* meratakan DSI (water-filling) atau *Pas sampai target DSI*. Setelah itu pallet tetap bisa diedit; baris bawah tabel menampilkan sisa kapasitas tiap mobil (merah bila melebihi tonase).
+- Target DSI (default 30 hari) dan tonase kendaraan (ctn) bisa diubah di halaman, tersimpan di `potakaki_cfg`.
+- **Download** (satu tombol, pilihan JPG atau Excel .xlsx): JPG = gambar tabel seperti Excel; Excel = tabel yang sama dengan rumus (CTN = ROUND(pallet x ctn/plt), STOCK ada forecast, buffer, DSI) + kapasitas & sisa tiap mobil. Excel memakai pustaka ExcelJS dari cdn.jsdelivr.net (sama seperti download Master PB).
