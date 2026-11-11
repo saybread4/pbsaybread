@@ -97,14 +97,17 @@
   }
   // PB = jumlah PB yang DIKIRIM. Minggu berjalan: sehari setelah tanggal stock s/d Sabtu (stock 9 Nov -> kirim 10-14 Nov).
   // Minggu depan: Senin s/d Sabtu berikutnya (16-21 Nov). Hari Minggu (15 Nov) tidak ada pengiriman.
-  async function loadPB(run) {
+  // loadPB dibungkus: simpan promise (agar halaman lain menunggu, bukan memanggil ulang) dan waktu muat (cache)
+  function loadPB(run) { const p = loadPB0(run); X.pbP = p; return p; }
+  async function loadPB0(run) {
     X.pbState = 'load'; X.pbErr = ''; X.pb = {}; X.pb2 = {};
     const from = X.snap ? addD(X.snap, 1) : null;
     if (!from) { X.pbLabel = X.pbLabel2 = '-'; X.pbTo = X.pbTo2 = null; X.pbState = 'ok'; return; }
     const dow = isoDow(from), to = addD(from, dow === 7 ? 6 : 6 - dow), from2 = addD(to, 2), to2 = addD(to, 7);
     X.pbTo = to; X.pbLabel = lab(from, to); X.pbTo2 = to2; X.pbLabel2 = lab(from2, to2);
     try {
-      const get = w => callApi('getOutbound', [gTok(), false, w]).catch(() => null);
+      const tryGet = async w => { try { return await callApi('getOutbound', [gTok(), false, w]); } catch (e) { if (/timeout|canceling/i.test(String(e && e.message || e))) { await new Promise(r => setTimeout(r, 1500)); return callApi('getOutbound', [gTok(), false, w]); } throw e; } };   // 1x ulang bila timeout
+      const get = w => tryGet(w).catch(() => null);
       const res = await Promise.all([get('cur'), get('next')]);
       if (run !== X.run) return;
       if (!res[0] && !res[1]) throw new Error('data PB (outbound) tidak bisa dimuat');
@@ -118,7 +121,7 @@
           ks.forEach(([k, wk]) => { const v = Number(i.pb && i.pb[k]) || 0; if (!v) return; const o = wk === 1 ? X.pb : X.pb2; o[p] = (o[p] || 0) + v; });
         });
       });
-      X.pbState = 'ok';
+      X.pbState = 'ok'; X.pbAt = Date.now();
     } catch (e) { if (run !== X.run) return; X.pbState = 'err'; X.pbErr = e.message; }
   }
   const stokOf = pc => X.ed.reduce((t, b) => String(b.plu_cust).trim() === pc ? t + Number(b.stok || 0) : t, 0);
@@ -534,14 +537,20 @@
       + '<div class="card empty" style="margin-top:10px">Isi halaman PO TAKAKI menyusul.</div>';
     VID.potakaki = '#vPoTakaki';
     const av2 = window.applyView; window.applyView = function (x) { av2(x); b2.classList.toggle('on', x === 'potakaki'); };
-    b2.onclick = e => { e.stopPropagation(); window.showView('potakaki'); };
-    setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; b2.style.display = ok ? '' : 'none'; if (!ok && X.ready) X.ready = false; }, 1200);
+    b2.onclick = e => { e.stopPropagation(); if (adm()) window.showView('potakaki'); };   // hanya administrator
+    setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; const isA = ok && adm(); b2.style.display = isA ? '' : 'none'; if (!isA && v2.style.display !== 'none') window.showView('lap'); if (!ok && X.ready) X.ready = false; }, 1200);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
   // Est. STOCK h-1 jadwal kirim minggu depan (mis. 15 Nov) per PLU DC -> dipakai tabel Stock-DC vs PB di Rekap Cabang
-  async function est15(force) {
+  let estP = null;   // beberapa halaman (Rekap Cabang, Simulasi) minta bersamaan -> satu permintaan saja
+  function est15(force) {
+    if (!estP) estP = est15Run(force).finally(() => { estP = null; });
+    return estP;
+  }
+  async function est15Run(force) {
     if (force || !X.ready) await loadAll();
-    if (force || X.pbState !== 'ok') await loadPB(++X.run);
+    if (X.pbState === 'load' && X.pbP) await X.pbP;                                  // PB sedang dimuat halaman lain: tunggu
+    if (X.pbState !== 'ok' || !X.pbAt || Date.now() - X.pbAt > (force ? 30000 : 180000)) await loadPB(++X.run);   // PB dipakai ulang selama 3 menit
     if (X.pbState !== 'ok') throw new Error(X.pbErr || 'PB belum termuat');
     const C = calcStok(), map = {}, byD = {};
     C.rows.forEach(r => { const o = { est: r.est2, ds: r.i.deskripsi }; map[String(r.i.plu_dc).trim()] = o; byD[norm(r.i.deskripsi)] = o; });
