@@ -2400,21 +2400,60 @@ function loadStk(force){
   if(STK&&!force){renderStk();return}
   if(STKB)return;STKB=true;
   $('#stk_out').innerHTML='<div class="card empty" style="margin-top:10px"><span class="spin"></span><div>Menghitung Stock-DC vs PB…</div></div>';
-  run('getStockPlan',[TOKEN,!!force],r=>{STKB=false;if(r&&r.items)r.items.sort((a,b)=>(a.sel-b.sel)||(b.pb-a.pb)||String(a.ds).localeCompare(String(b.ds)));STK=r;renderStk()},e=>{STKB=false;$('#stk_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat Stock-DC vs PB:<br>'+esc((e&&e.message)||e)+'</div>'});
+  run('getStockPlan',[TOKEN,!!force],async r=>{if(r&&r.items){await stkUseEst(r,!!force);r.items.sort((a,b)=>(a.sel-b.sel)||(b.pb-a.pb)||String(a.ds).localeCompare(String(b.ds)))}STKB=false;STK=r;renderStk()},e=>{STKB=false;$('#stk_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat Stock-DC vs PB:<br>'+esc((e&&e.message)||e)+'</div>'});
 }
+/* pembagian stok per cabang (sama dengan fungsi database alloc_jatah): stok kurang -> dibagi proporsional sales cabang, maks. sebesar PB */
+function allocJatah(stock,pb,w){
+  const n=pb.length;if(!n)return[];
+  const P=pb.map(v=>+v||0),W=w.map(v=>Math.max(+v||0,0)),fixed=P.map(()=>false),res=P.map(()=>0);
+  if(Math.floor(Math.max(+stock||0,0))>=P.reduce((a,b)=>a+b,0))return P.slice();
+  let rem=Math.floor(Math.max(+stock||0,0)),sw=0,i;
+  for(;;){
+    sw=0;for(i=0;i<n;i++)if(!fixed[i]&&P[i]>0)sw+=W[i];
+    if(sw===0){for(i=0;i<n;i++)if(!fixed[i])W[i]=P[i];for(i=0;i<n;i++)if(!fixed[i]&&P[i]>0)sw+=W[i]}
+    if(sw===0||rem<=0)break;
+    const cap=[];let any=false;
+    for(i=0;i<n;i++)if(!fixed[i]&&P[i]>0&&rem*W[i]/sw>=P[i]){cap[i]=true;any=true}
+    if(!any)break;
+    for(i=0;i<n;i++)if(cap[i]){res[i]=P[i];fixed[i]=true;rem-=P[i]}
+  }
+  if(rem>0&&sw>0){
+    const fr=P.map(()=>0);let sfl=0;
+    for(i=0;i<n;i++)if(!fixed[i]&&P[i]>0){res[i]=Math.floor(rem*W[i]/sw);fr[i]=rem*W[i]/sw-res[i];sfl+=res[i]}
+    let r=Math.floor(rem)-sfl;
+    while(r>0){let best=-1,bf=-1;for(i=0;i<n;i++)if(!fixed[i]&&P[i]>0&&res[i]<P[i]&&fr[i]>bf){best=i;bf=fr[i]}if(best<0)break;res[best]++;fr[best]=-1;r--}
+  }
+  return res;
+}
+/* stok = kolom Est. STOCK h-1 jadwal kirim minggu depan (Stock DCF), bukan lagi sheet STOCK-DC */
+async function stkUseEst(R,force){
+  R.stkLbl='STOCK-DC';R.estWarn='';
+  try{
+    if(!window.PBSTOKDCF||!PBSTOKDCF.est15)throw new Error('modul Stock DCF belum termuat');
+    const E=await PBSTOKDCF.est15(force),nm=s=>String(s==null?'':s).toUpperCase().replace(/\s+/g,' ').trim(),miss=[];
+    R.items.forEach(i=>{
+      const m=E.map[String(i.plu||'').trim()]||E.byD[nm(i.ds)];
+      if(!m)miss.push(i.ds);
+      i.stock=m?m.est:0;i.sel=i.stock-i.pb;i.jat=allocJatah(i.stock,i.pbc||[],i.slc||[]);
+    });
+    R.stockDate=E.date;R.stkLbl=E.label.toUpperCase();R.hasStock=true;
+    if(miss.length)R.estWarn='Item berikut belum ada di daftar Stock DCF sehingga stoknya dianggap 0: '+miss.slice(0,8).join(', ')+(miss.length>8?' … (+'+(miss.length-8)+')':'');
+  }catch(e){R.estWarn='Est. STOCK dari Stock DCF belum bisa dibaca ('+((e&&e.message)||e)+') — memakai stok lama dari database.'}
+}
+window.stkUseEst=stkUseEst;
 function renderStk(){
   const R=STK;if(!R)return;
   const fd=iso=>{const p=iso.split('-');return p[2]+'.'+p[1]+'.'+p[0].slice(2)};
   const all=R.items,kur=all.filter(i=>i.sel<0),tk=kur.reduce((t,i)=>t+(-i.sel),0),rows=STKF?kur:all;
   const th='padding:5px 8px;background:#3730a3;color:#fff;font-size:11px;white-space:nowrap';
   const td='padding:4px 8px;border-bottom:1px solid #edf0f8;white-space:nowrap;font-size:12.5px';
-  let h=`<div class="card" style="margin-top:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;color:var(--br)">${ic('package')}Stock-DC vs PB</h3><span class="note" style="padding:0">Minggu depan · ${esc(R.title)} · stock akhir ${esc(fd(R.stockDate))} · diperbarui ${esc(R.updated)}</span><span style="flex:1"></span><label style="font-size:12px"><input type="checkbox" id="stk_f" ${STKF?'checked':''}> Hanya yang kurang</label><span style="position:relative;display:inline-block"><button class="b s" id="stk_dl">${ic('down')}Download${ic('chev','r')}</button><div id="stk_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="stk_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="stk_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span><button class="b s" id="stk_rl">${ic('refresh')}Muat ulang</button></div>`;
-  if(!R.hasStock)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+'Sheet <b>STOCK-DC</b> belum berisi stock akhir — stok dianggap 0.</div>';
+  let h=`<div class="card" style="margin-top:14px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;color:var(--br)">${ic('package')}Stock-DC vs PB</h3><span class="note" style="padding:0">Minggu depan · ${esc(R.title)} · stok = ${esc(R.stkLbl||'STOCK-DC')} (${esc(fd(R.stockDate))}) · diperbarui ${esc(R.updated)}</span><span style="flex:1"></span><label style="font-size:12px"><input type="checkbox" id="stk_f" ${STKF?'checked':''}> Hanya yang kurang</label><span style="position:relative;display:inline-block"><button class="b s" id="stk_dl">${ic('down')}Download${ic('chev','r')}</button><div id="stk_menu" style="display:none;position:absolute;right:0;top:100%;margin-top:4px;z-index:40;background:#fff;border:1px solid var(--bd);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.15);padding:4px;min-width:150px"><button class="b s" id="stk_xls" style="display:block;width:100%;text-align:left;margin:0">${ic('bar')}Excel (.xls)</button><button class="b s" id="stk_jpg" style="display:block;width:100%;text-align:left;margin:2px 0 0">${ic('image')}Gambar (.jpg)</button></div></span><button class="b s" id="stk_rl">${ic('refresh')}Muat ulang</button></div>`;
+  if(R.estWarn)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+esc(R.estWarn)+'</div>';
   if(R.skip&&R.skip.length)h+='<div class="note wn" style="padding-top:6px">'+ic('warn')+'PB berikut <b>tidak ikut dihitung</b> karena tidak sesuai jadwal minggu depan (lihat daftar "PB tidak sesuai jadwal" di bawah): '+R.skip.map(k=>esc(k.nama)+' '+f0(k.pb)+' PB ('+f0(k.n)+' baris)').join(' · ')+'</div>';
   h+=`<div class="kpis" style="margin:10px 0"><div class="kpi"><small>Item dipantau</small><b>${f0(all.length)}</b><span>punya PB minggu depan</span></div><div class="kpi"><small>Item stok kurang</small><b style="color:${kur.length?'#b91c1c':'#15803d'}">${f0(kur.length)}</b><span>${kur.length?'perlu pengurangan PB':'semua cukup'}</span></div><div class="kpi"><small>Total kekurangan</small><b style="color:${tk?'#b91c1c':'#15803d'}">${f0(tk)}</b><span>pcs/ctn sesuai satuan PB</span></div></div>`;
   if(!rows.length){h+='<div class="note" style="padding:8px">Semua item stok Stock-DC cukup untuk PB minggu depan.</div></div>';$('#stk_out').innerHTML=h;bindStk();return}
   h+='<div class="note" style="padding:0 0 6px">Bila stok kurang, stok dibagi <b>proporsional sesuai kontribusi sales</b> tiap cabang (maksimal sebesar PB cabang itu; cabang tanpa sales dibagi sesuai PB). <b>JATAH</b> = rekomendasi stok untuk cabang, <span style="color:#b91c1c;font-weight:bold">KURANGI</span> = PB yang perlu dikurangi dari PB final cabang.</div>';
-  h+='<div style="overflow:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="'+th+';text-align:left">DESKRIPSI</th><th style="'+th+';text-align:right">STOCK-DC</th><th style="'+th+';text-align:right">TOTAL PB</th><th style="'+th+';text-align:right">SELISIH</th><th style="'+th+'">STATUS</th>'+R.cabs.map(c=>`<th style="${th};text-align:right">${esc(c.nama.toUpperCase())}<br><span style="font-weight:normal;font-size:10px">PB → JATAH</span></th>`).join('')+'</tr></thead><tbody>';
+  h+='<div style="overflow:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="'+th+';text-align:left">DESKRIPSI</th><th style="'+th+';text-align:right">'+esc(R.stkLbl||'STOCK-DC')+'</th><th style="'+th+';text-align:right">TOTAL PB</th><th style="'+th+';text-align:right">SELISIH</th><th style="'+th+'">STATUS</th>'+R.cabs.map(c=>`<th style="${th};text-align:right">${esc(c.nama.toUpperCase())}<br><span style="font-weight:normal;font-size:10px">PB → JATAH</span></th>`).join('')+'</tr></thead><tbody>';
   rows.forEach((i,n)=>{
     const bg=n%2?'#fafbff':'#fff',bad=i.sel<0;
     h+=`<tr style="background:${bg}"><td style="${td}">${esc(i.ds)}</td><td style="${td};text-align:right">${f0(i.stock)}</td><td style="${td};text-align:right">${f0(i.pb)}</td><td style="${td};text-align:right;font-weight:bold;color:${bad?'#b91c1c':'#15803d'}">${sg(i.sel)}</td><td style="${td};text-align:center"><span style="padding:1px 8px;border-radius:8px;font-size:10px;font-weight:bold;background:${bad?'#fee2e2':'#dcfce7'};color:${bad?'#b91c1c':'#15803d'}">${bad?'KURANG':'CUKUP'}</span></td>`+
@@ -2453,8 +2492,8 @@ function stkPage(R,xls){
   const th=(t,ex,bg)=>`<th ${ex||''} style="${FF}${bd}${pd}background-color:${bg||'#3730a3'};color:#ffffff;font-size:${fs}px;font-weight:bold;white-space:nowrap;text-align:center">${t}</th>`;
   const td=(t,bg,st)=>`<td style="${FF}${bd}${pd}background-color:${bg};font-size:${fs}px;white-space:nowrap;${st||''}">${t}</td>`;
   const sum=(a)=>a.reduce((t,v)=>t+v,0);
-  let h=`<div style="${FF}display:inline-block;background:#fff;padding:8px"><div style="font-weight:bold;font-size:17px;color:#3730a3">STOCK-DC vs PB</div><div style="font-size:12px;color:#475569;padding-bottom:4px">PERIODE : ${esc(R.title)} · STOCK AKHIR ${esc(fd(R.stockDate))}${STKF?' · HANYA YANG KURANG':''}</div>`;
-  h+='<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead><tr>'+th('DESKRIPSI','rowspan="2"')+th('STOCK-DC','rowspan="2"')+th('TOTAL PB','rowspan="2"')+th('SELISIH','rowspan="2"')+th('STATUS','rowspan="2"')+R.cabs.map(c=>th(esc(c.nama.toUpperCase()),'colspan="3"','#4f46e5')).join('')+'</tr><tr>'+R.cabs.map(()=>th('PB')+th('JATAH')+th('KURANGI','','#b91c1c')).join('')+'</tr></thead><tbody>';
+  let h=`<div style="${FF}display:inline-block;background:#fff;padding:8px"><div style="font-weight:bold;font-size:17px;color:#3730a3">STOCK-DC vs PB</div><div style="font-size:12px;color:#475569;padding-bottom:4px">PERIODE : ${esc(R.title)} · STOK = ${esc(R.stkLbl||'STOCK-DC')} (${esc(fd(R.stockDate))})${STKF?' · HANYA YANG KURANG':''}</div>`;
+  h+='<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead><tr>'+th('DESKRIPSI','rowspan="2"')+th(esc(R.stkLbl||'STOCK-DC'),'rowspan="2"')+th('TOTAL PB','rowspan="2"')+th('SELISIH','rowspan="2"')+th('STATUS','rowspan="2"')+R.cabs.map(c=>th(esc(c.nama.toUpperCase()),'colspan="3"','#4f46e5')).join('')+'</tr><tr>'+R.cabs.map(()=>th('PB')+th('JATAH')+th('KURANGI','','#b91c1c')).join('')+'</tr></thead><tbody>';
   rows.forEach((i,n)=>{
     const bg=n%2?'#f6f7fd':'#ffffff',bad=i.sel<0;
     h+='<tr>'+td(esc(i.ds),bg)+td(f0(i.stock),bg,'text-align:right')+td(f0(i.pb),bg,'text-align:right')+td(sg(i.sel),bg,'text-align:right;font-weight:bold;color:'+(bad?'#b91c1c':'#15803d'))+td(bad?'KURANG':'CUKUP',bad?'#fee2e2':'#dcfce7','text-align:center;font-weight:bold;color:'+(bad?'#b91c1c':'#15803d'))+

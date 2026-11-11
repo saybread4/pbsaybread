@@ -28,7 +28,7 @@
   const ic = n => '<svg class="ic" aria-hidden="true"><use href="#i-' + n + '"/></svg>';
   const norm = s => String(s == null ? '' : s).toUpperCase().replace(/\s+/g, ' ').trim();
 
-  const X = { tab: 'stok', ready: false, items: [], ed: [], sales: {}, salesErr: null, poM: new Map(), pb: {}, pbLabel: '-', pbTo: null, pbState: 'load', pbErr: '', snap: null, file: null, imp: null, impOpen: false, run: 0 };
+  const X = { tab: 'stok', ready: false, items: [], ed: [], sales: {}, salesErr: null, poM: new Map(), pb: {}, pb2: {}, pbLabel: '-', pbLabel2: '-', pbTo: null, pbTo2: null, qpd: {}, qpdErr: null, pbState: 'load', pbErr: '', snap: null, file: null, imp: null, impOpen: false, run: 0 };
 
   // ---------------- gaya (mengikuti tema web: indigo + hijau, kartu putih) ----------------
   function css() {
@@ -43,10 +43,11 @@
 #vStokDcf .sd-s{font-size:11px;color:var(--mu)}
 #vStokDcf .sd-badge{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;border-radius:99px;background:#fff;border:1px solid #cfe5d6;font-size:11px;font-weight:700;color:var(--br2)}
 #vStokDcf .sd-badge svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
-#vStokDcf .sd-wrap{overflow:auto;max-height:calc(100vh - 235px);margin-top:8px;border:1px solid var(--bd);border-radius:9px;background:#fff;display:inline-block;max-width:100%;vertical-align:top}
+#vStokDcf .sd-wrap{overflow-x:auto;overflow-y:hidden;margin-top:8px;border:1px solid var(--bd);border-radius:9px;background:#fff;display:inline-block;max-width:100%;vertical-align:top}
 #vStokDcf table.sd-tb{border-collapse:separate;border-spacing:0;font-size:11.5px;line-height:1.25}
-#vStokDcf .sd-tb th{position:sticky;top:0;z-index:2;background:var(--br);color:#fff;padding:3px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;text-align:center;height:21px;border-right:1px solid rgba(255,255,255,.18);letter-spacing:.02em}
-#vStokDcf .sd-tb thead tr+tr th{top:21px}
+#vStokDcf .sd-tb th{background:var(--br);color:#fff;padding:3px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;text-align:center;height:21px;border-right:1px solid rgba(255,255,255,.18);letter-spacing:.02em}
+#vStokDcf .sd-tb th.sp,#vStokDcf .sd-tb td.sp{width:12px;min-width:12px;padding:0;background:#fff!important;border-right:0;border-bottom-color:transparent}
+#vStokDcf .sd-tb tbody tr:nth-child(even) td.sp,#vStokDcf .sd-tb tbody tr.core td.sp{background:#fff!important}
 #vStokDcf .sd-tb th.g{background:#2f9f61}
 #vStokDcf .sd-tb th[rowspan="2"]{white-space:normal;line-height:1.15;min-width:44px}
 #vStokDcf .sd-tb td{padding:1px 7px;border-bottom:1px solid #e6eee9;white-space:nowrap;text-align:right;height:20px}
@@ -57,7 +58,7 @@
 #vStokDcf .sd-tb tbody tr.r td{background:#fde4e6}
 #vStokDcf .sd-tb td.z{background:#fde4e6!important;color:#9c0006;font-weight:700}
 #vStokDcf .sd-tb td.rr{color:#9c0006;font-weight:700}
-#vStokDcf .sd-tb tr.tot td{background:#d9f0e2;font-weight:800;color:var(--br);position:sticky;bottom:0;border-top:1px solid #b9dcc6}
+#vStokDcf .sd-tb tr.tot td{background:#d9f0e2;font-weight:800;color:var(--br);border-top:1px solid #b9dcc6}
 #vStokDcf .sd-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu);padding:6px 2px 0;align-items:center}
 #vStokDcf .sd-sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-2px;margin-right:4px}
 #vStokDcf .sd-sw.g{background:#e3f5e8}#vStokDcf .sd-sw.y{background:#fff8cc}#vStokDcf .sd-sw.r{background:#fde4e6}
@@ -67,54 +68,56 @@
 #vStokDcf input[type=checkbox].sd-ck{accent-color:#2f9f61;width:14px;height:14px;cursor:pointer;vertical-align:middle}
 #vStokDcf .sd-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 #vStokDcf .sd-row .in{width:auto;padding:3px 7px}
-#vStokDcf .sd-dt{cursor:pointer;position:relative}
+#vStokDcf .sd-dt{cursor:pointer}
 #vStokDcf .sd-dt:hover{background:#4b43c4}
-#vStokDcf .sd-dt input.sd-dh{position:absolute;left:0;bottom:0;width:100%;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+#vStokDcf .sd-dt input.sd-dh{width:128px;font:inherit;font-size:11px;padding:1px 3px;border:0;border-radius:4px;background:#fff;color:#111}
 #vStokDcf .sd-x{margin-left:5px;opacity:.55;font-size:12px;line-height:1}#vStokDcf .sd-x:hover{opacity:1;color:#ffd2d6}
 #vStokDcf textarea.sd-ta{width:100%;min-height:80px;font:12px/1.35 ui-monospace,Consolas,monospace;border:1px solid var(--bd);border-radius:8px;padding:6px 8px;resize:vertical}
 #vStokDcf .sd-ok{color:#15803d}#vStokDcf .sd-er{color:#b00020}
-@media(max-width:700px){#vStokDcf .sd-wrap{max-height:calc(100vh - 260px)}}`;
+`;
     document.head.appendChild(s);
   }
 
   // ---------------- data ----------------
   async function loadAll() {
     const s = sbc();
-    const [it, ed, po, sl] = await Promise.all([
+    const [it, ed, po, sl, qp] = await Promise.all([
       s.from('stokdcf_item').select('*').order('urut'),
       s.from('stokdcf_ed').select('*').order('tgl_exp').limit(10000),
       s.from('stokdcf_po').select('tgl,plu_dc,qty').limit(20000),
-      s.rpc('stokdcf_sales')]);
+      s.rpc('stokdcf_sales'), s.rpc('stokdcf_qpd')]);
     X.items = must(it); X.ed = must(ed);
     X.poM = new Map(); must(po).forEach(r => X.poM.set(r.tgl + '|' + r.plu_dc, Number(r.qty) || 0));
     X.sales = {}; X.salesErr = sl.error ? sl.error.message : null;
     if (!sl.error) (sl.data || []).forEach(r => { X.sales[String(r.plu).trim()] = Number(r.qty) || 0; });
+    X.qpd = {}; X.qpdErr = qp.error ? qp.error.message : null;
+    if (!qp.error) (qp.data || []).forEach(r => { X.qpd[String(r.plu).trim()] = { qpd: Number(r.qpd) || 0, frc: Number(r.frc) || 0 }; });
     X.snap = X.ed.length ? X.ed.reduce((m, b) => b.tgl_data > m ? b.tgl_data : m, '0000-00-00') : null;
     X.ready = true;
   }
-  // PB = jumlah PB yang DIKIRIM sejak sehari setelah tanggal stock sampai Sabtu minggu itu (stock 9 Nov -> kirim 10-14 Nov)
+  // PB = jumlah PB yang DIKIRIM. Minggu berjalan: sehari setelah tanggal stock s/d Sabtu (stock 9 Nov -> kirim 10-14 Nov).
+  // Minggu depan: Senin s/d Sabtu berikutnya (16-21 Nov). Hari Minggu (15 Nov) tidak ada pengiriman.
   async function loadPB(run) {
-    X.pbState = 'load'; X.pbErr = ''; X.pb = {};
+    X.pbState = 'load'; X.pbErr = ''; X.pb = {}; X.pb2 = {};
     const from = X.snap ? addD(X.snap, 1) : null;
-    if (!from) { X.pbLabel = '-'; X.pbTo = null; X.pbState = 'ok'; return; }
-    const dow = isoDow(from), to = addD(from, dow === 7 ? 6 : 6 - dow);
-    X.pbTo = to; X.pbLabel = lab(from, to);
+    if (!from) { X.pbLabel = X.pbLabel2 = '-'; X.pbTo = X.pbTo2 = null; X.pbState = 'ok'; return; }
+    const dow = isoDow(from), to = addD(from, dow === 7 ? 6 : 6 - dow), from2 = addD(to, 2), to2 = addD(to, 7);
+    X.pbTo = to; X.pbLabel = lab(from, to); X.pbTo2 = to2; X.pbLabel2 = lab(from2, to2);
     try {
-      let used = null, got = false;
-      for (const w of ['cur', 'next']) {   // 'cur' = arsip minggu berjalan (ringan); 'next' hanya bila minggu itu belum tercakup
-        let R = null; try { R = await callApi('getOutbound', [gTok(), false, w]); } catch (e) { R = null; }
-        if (run !== X.run) return;
-        if (R) got = true;
-        if (R && R.dates && R.dates.length) {
-          if (R.dates.some(d => d >= from && d <= to)) { used = R; break; }
-          if (R.dates[R.dates.length - 1] >= from) break;
-        }
-      }
-      if (!got) throw new Error('data PB (outbound) tidak bisa dimuat');
-      if (used) {
-        const ks = used.dates.map((d, k) => d >= from && d <= to ? k : -1).filter(k => k >= 0);
-        (used.items || []).forEach(i => { X.pb[String(i.plu).trim()] = ks.reduce((t, k) => t + (Number(i.pb && i.pb[k]) || 0), 0); });
-      }
+      const get = w => callApi('getOutbound', [gTok(), false, w]).catch(() => null);
+      const res = await Promise.all([get('cur'), get('next')]);
+      if (run !== X.run) return;
+      if (!res[0] && !res[1]) throw new Error('data PB (outbound) tidak bisa dimuat');
+      const seen = new Set();
+      res.forEach(R => {
+        if (!R || !R.dates || !R.dates.length) return;
+        const ks = [];   // [indeks kolom, minggu 1/2]
+        R.dates.forEach((d, k) => { if (seen.has(d)) return; const wk = d >= from && d <= to ? 1 : (d >= from2 && d <= to2 ? 2 : 0); if (wk) { seen.add(d); ks.push([k, wk]); } });
+        (R.items || []).forEach(i => {
+          const p = String(i.plu).trim();
+          ks.forEach(([k, wk]) => { const v = Number(i.pb && i.pb[k]) || 0; if (!v) return; const o = wk === 1 ? X.pb : X.pb2; o[p] = (o[p] || 0) + v; });
+        });
+      });
       X.pbState = 'ok';
     } catch (e) { if (run !== X.run) return; X.pbState = 'err'; X.pbErr = e.message; }
   }
@@ -130,7 +133,7 @@
 
   function shell() {
     css();
-    const tabs = [['ed', 'Data ED'], ['stok', 'Stock'], ['po', 'Rekap PO']];
+    const tabs = [['ed', 'Data Exp Date'], ['stok', 'Stock'], ['po', 'Rekap PO']];
     root().innerHTML = '<div class="card" style="padding:8px 12px"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><h3 style="margin:0;color:var(--br);font-size:15px">Stock DCF</h3><span id="sdSub" class="note" style="padding:0"></span><span style="flex:1"></span>'
       + '<span id="sdSeg" style="display:inline-flex;gap:4px">' + tabs.map(t => '<button class="b ' + (X.tab === t[0] ? 'p' : 's') + '" data-t="' + t[0] + '">' + t[1] + '</button>').join('') + '</span>'
       + '<button class="b s" id="sdRl">Muat ulang</button></div></div><div id="sdBody"></div>';
@@ -146,37 +149,58 @@
 
   // ===== Sub halaman: Stock =====
   // Est. STOCK (Sabtu) = STOCK - PB (min. 0). PO on going dipakai: tanggal <= Sabtu - 3 hari (stock 14 Nov -> PO tgl 7-11 Nov).
-  // Est. STOCK (Minggu, h-1 jadwal kirim minggu depan) = Est. STOCK Sabtu + total PO on going tersebut.
-  function paintStok() {
-    const A = adm(), load = X.pbState === 'load', to = X.pbTo;
-    const e1 = to ? dmm(to) : '-', e2 = to ? dmm(addD(to, 1)) : '-', cut = to ? addD(to, -3) : null;
-    const pcols = cut ? poCols().filter(d => d <= cut) : [];
+  // Est. STOCK (h-1 jadwal kirim minggu depan, mis. 15 Nov) = Est. STOCK Sabtu + total PO on going tersebut.
+  // Est. STOCK (h-1 jadwal kirim berikutnya, mis. 22 Nov) = (Est. STOCK 15 Nov - PB minggu depan, min. 0) + PO on going tanggal 12-18 Nov.
+  // QPD (Ctn) = sales per hari (pcs) / FRC.  DSI = STOCK / QPD (Ctn).
+  function calcStok() {
+    const to = X.pbTo, to2 = X.pbTo2, cut1 = to ? addD(to, -3) : null, cut2 = to2 ? addD(to2, -3) : null;
+    const cols = poCols(), pcols = cut1 ? cols.filter(d => d <= cut1) : [], p2cols = cut1 ? cols.filter(d => d > cut1 && d <= cut2) : [];
     const rows = ordered().map(i => {
-      const pc = String(i.plu_cust).trim(), qty = stokOf(pc), pb = X.pb[String(i.plu_dc).trim()] || 0, sisa = Math.max(0, qty - pb);
-      const pov = pcols.map(d => poQ(d, i.plu_dc)), po = pov.reduce((t, v) => t + v, 0);
-      return { i, qty, pb, sisa, pov, est2: sisa + po };
+      const k = String(i.plu_dc).trim(), qty = stokOf(String(i.plu_cust).trim()), pb = X.pb[k] || 0, pb2 = X.pb2[k] || 0, sisa = Math.max(0, qty - pb);
+      const pov = pcols.map(d => poQ(d, i.plu_dc)), po = pov.reduce((t, v) => t + v, 0), est2 = sisa + po;
+      const sisa2 = Math.max(0, est2 - pb2), po2 = p2cols.reduce((t, d) => t + poQ(d, i.plu_dc), 0);
+      const q = X.qpd[k] || { qpd: 0, frc: 0 }, qc = q.frc > 0 ? q.qpd / q.frc : 0;
+      return { i, qty, pb, sisa, pov, est2, pb2, sisa2, po2, est3: sisa2 + po2, qc, dsi: qc > 0 ? qty / qc : null };
     });
-    const T = rows.reduce((t, r) => { t.qty += r.qty; t.pb += r.pb; t.sisa += r.sisa; t.est2 += r.est2; r.pov.forEach((v, k) => { t.pov[k] += v; }); return t; }, { qty: 0, pb: 0, sisa: 0, est2: 0, pov: pcols.map(() => 0) });
+    return { to, to2, cut1, cut2, pcols, p2cols, rows };
+  }
+  function paintStok() {
+    const A = adm(), load = X.pbState === 'load', C = calcStok(), { to, to2, pcols, p2cols, rows } = C;
+    const e1 = to ? dmm(to) : '-', e2 = to ? dmm(addD(to, 1)) : '-', e3 = to2 ? dmm(addD(to2, 1)) : '-';
+    const T = rows.reduce((t, r) => { t.qty += r.qty; t.qc += r.qc; t.pb += r.pb; t.sisa += r.sisa; t.est2 += r.est2; t.pb2 += r.pb2; t.po2 += r.po2; t.est3 += r.est3; r.pov.forEach((v, k) => { t.pov[k] += v; }); return t; },
+      { qty: 0, qc: 0, pb: 0, sisa: 0, est2: 0, pb2: 0, po2: 0, est3: 0, pov: pcols.map(() => 0) });
     const L = v => load ? '…' : n0(v), dash = v => v ? n0(v) : '-';
+    const q1 = v => v ? (v >= 10 ? n0(v) : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 1 })) : '-';
+    const po2lab = to ? (p2cols.length ? lab(p2cols[0], p2cols[p2cols.length - 1]) : lab(addD(C.cut1, 1), C.cut2)) : '-';
     let h = head('package', 'MONITORING STOK DCF JATIM', 'Stok DCF ' + (X.snap ? E(fdl(X.snap)) : '-'), badge('PB kirim ' + E(X.pbLabel), 'cal'))
-      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th><th>PB</th>'
-      + '<th rowspan="2">Est. STOCK<br>' + E(e1) + '</th>'
+      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th>'
+      + '<th rowspan="2" title="Sales per hari dibagi FRC">QPD<br>(Ctn)</th><th rowspan="2" title="Stock dibagi QPD (Ctn)">DSI</th><th rowspan="2" class="sp"></th>'
+      + '<th>PB</th><th rowspan="2">Est. STOCK<br>' + E(e1) + '</th>'
       + (pcols.length ? '<th colspan="' + pcols.length + '" class="g">PO ON GOING</th>' : '')
       + '<th rowspan="2">Est. STOCK<br>' + E(e2) + '</th>'
+      + '<th>PB</th><th class="g">PO ON GOING</th><th rowspan="2">Est. STOCK<br>' + E(e3) + '</th>'
       + (A ? '<th rowspan="2" title="Centang untuk menjadikan item core">CORE</th>' : '') + '</tr>'
-      + '<tr><th>' + E(X.pbLabel) + '</th>' + pcols.map(d => '<th class="g">' + E(dm(d)) + '</th>').join('') + '</tr></thead><tbody>'
+      + '<tr><th>' + E(X.pbLabel) + '</th>' + pcols.map(d => '<th class="g">' + E(dm(d)) + '</th>').join('') + '<th>' + E(X.pbLabel2) + '</th><th class="g">' + E(po2lab) + '</th></tr></thead><tbody>'
       + rows.map(r => '<tr class="' + (r.i.core ? 'core' : '') + '"><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
-        + '<td>' + n0(r.qty) + '</td><td>' + L(r.pb) + '</td>'
+        + '<td>' + n0(r.qty) + '</td><td>' + q1(r.qc) + '</td><td>' + (r.dsi == null ? '-' : n0(r.dsi)) + '</td><td class="sp"></td>'
+        + '<td>' + L(r.pb) + '</td>'
         + '<td class="' + (!load && r.sisa === 0 ? 'z' : '') + '">' + L(r.sisa) + '</td>'
         + r.pov.map(v => '<td>' + dash(v) + '</td>').join('')
         + '<td style="font-weight:700">' + L(r.est2) + '</td>'
+        + '<td>' + L(r.pb2) + '</td><td>' + dash(r.po2) + '</td>'
+        + '<td class="' + (!load && r.sisa2 === 0 && r.po2 === 0 ? 'z' : '') + '" style="font-weight:700">' + L(r.est3) + '</td>'
         + (A ? '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td>' : '') + '</tr>').join('')
-      + '<tr class="tot"><td class="l" colspan="2">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + L(T.pb) + '</td><td>' + L(T.sisa) + '</td>'
-      + T.pov.map(v => '<td>' + dash(v) + '</td>').join('') + '<td>' + L(T.est2) + '</td>' + (A ? '<td></td>' : '') + '</tr>'
+      + '<tr class="tot"><td class="l" colspan="2">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + q1(T.qc) + '</td><td>' + (T.qc > 0 ? n0(T.qty / T.qc) : '-') + '</td><td class="sp"></td>'
+      + '<td>' + L(T.pb) + '</td><td>' + L(T.sisa) + '</td>'
+      + T.pov.map(v => '<td>' + dash(v) + '</td>').join('') + '<td>' + L(T.est2) + '</td>'
+      + '<td>' + L(T.pb2) + '</td><td>' + dash(T.po2) + '</td><td>' + L(T.est3) + '</td>' + (A ? '<td></td>' : '') + '</tr>'
       + '</tbody></table></div>'
       + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span>'
       + '<span>' + (pcols.length ? 'PO on going: ' + E(dm(pcols[0])) + ' s/d ' + E(dm(pcols[pcols.length - 1])) + ' · ' : '') + 'Est. STOCK ' + E(e2) + ' = Est. STOCK ' + E(e1) + ' + PO on going</span>'
+      + '<span>Est. STOCK ' + E(e3) + ' = Est. STOCK ' + E(e2) + ' − PB ' + E(X.pbLabel2) + ' (min. 0) + PO on going ' + E(po2lab) + '</span>'
+      + '<span>QPD (Ctn) = sales per hari ÷ FRC · DSI = STOCK ÷ QPD (Ctn)</span>'
       + (X.pbState === 'err' ? '<span class="sd-er">PB belum bisa dimuat (' + E(X.pbErr) + ') — klik Muat ulang.</span>' : '')
+      + (X.qpdErr ? '<span class="sd-er">QPD tidak terbaca (' + E(X.qpdErr) + ') — jalankan fungsi <b>stokdcf_qpd</b> di Supabase.</span>' : '')
       + (X.salesErr ? '<span class="sd-er">Sales tidak terbaca (' + E(X.salesErr) + ') — urutan sementara sesuai master.</span>' : '') + '</div>';
     Q('#sdBody').innerHTML = h;
     if (A) Q('#sdBody').onchange = async e => {
@@ -243,28 +267,28 @@
     const known = new Set(X.items.filter(i => i.aktif).map(i => String(i.plu_cust).trim()));
     const th = t => '<th>' + t + '</th>';
     const A = adm();
-    let h = head('cal', 'DATA ED', X.snap ? 'Per ' + E(fdl(X.snap)) + ' · ' + n0(X.ed.length) + ' baris' : 'Belum ada data', X.snap ? badge('Tanggal data ' + E(fd(X.snap)), 'cal') : '')
+    let h = head('cal', 'DATA EXP DATE', X.snap ? 'Per ' + E(fdl(X.snap)) + ' · ' + n0(X.ed.length) + ' baris' : 'Belum ada data', X.snap ? badge('Tanggal data ' + E(fd(X.snap)), 'cal') : '')
       + (!A ? '' : '<div class="sd-card"><div class="sd-row"><div><label class="k">File Monitoring Stock Takaki (.xlsx)</label><br><input type="file" id="sdF" accept=".xlsx"></div>'
       + '<div><label class="k">Tanggal data</label><br><input type="date" class="in" id="sdTgl" value="' + (X.snap || '') + '" style="width:140px"></div>'
       + '<button class="b p" id="sdSave" disabled>Simpan</button>'
       + (X.snap ? '<button class="b s" id="sdTglOnly" title="Ubah tanggal data yang sudah tersimpan tanpa unggah ulang">Ubah tanggal saja</button>' : '') + '</div>'
       + '<div id="sdFs" class="note" style="padding:5px 0 0"></div>'
-      + '<div class="note" style="padding:2px 0 0">Hanya sheet <b>data ED</b> yang dibaca (PLU_CUST kolom A, deskripsi B, stok C, inbound J, ED K). Tanggal terisi dari sel B2 dan bisa diubah. Data ED lama diganti.</div></div>');
+      + '<div class="note" style="padding:2px 0 0">Hanya sheet <b>data ED</b> di file yang dibaca (PLU_CUST kolom A, deskripsi B, stok C, inbound J, ED K). Tanggal terisi dari sel B2 dan bisa diubah. Data ED lama diganti.</div></div>');
     if (X.ed.length) {
       const rows = X.ed.map((b, n) => {
         const pc = String(b.plu_cust).trim();
         return { b, n, pc, aktif: known.has(pc), ms: dayDiff(b.tgl_inbound, b.tgl_exp), sh: dayDiff(X.snap, b.tgl_exp) };
       }).sort((a, b) => (Number(b.aktif) - Number(a.aktif)) || (a.n - b.n));   // yang tidak AKTIF di paling bawah
-      h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr>' + ['PLU_CUST', 'DESKRIPSI', 'STOK', 'INBOUND', 'EXP DATE', 'MASA SIMPAN', 'SISA HARI SIMPAN', 'AKTIF'].map(th).join('') + '</tr></thead><tbody>'
+      h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr>' + ['PLU_CUST', 'DESKRIPSI', 'STOK', 'INBOUND', 'EXP DATE', 'MASA SIMPAN', 'SISA HARI SIMPAN'].concat(A ? ['AKTIF'] : []).map(th).join('') + '</tr></thead><tbody>'
         + rows.map(r => {
           const cls = r.sh != null && r.sh < 30 ? 'r' : (r.sh != null && r.sh < 40 ? 'y' : '');
           return '<tr class="' + cls + '"><td class="l">' + E(r.pc) + '</td><td class="l">' + E(r.b.deskripsi) + '</td><td>' + n0(r.b.stok) + '</td>'
             + '<td class="c">' + E(fd(r.b.tgl_inbound)) + '</td><td class="c">' + E(fd(r.b.tgl_exp)) + '</td>'
             + '<td>' + (r.ms == null ? '' : r.ms + ' Hari') + '</td>'
             + '<td' + (cls === 'r' ? ' class="rr"' : '') + '>' + (r.sh == null ? '' : r.sh + ' Hari') + '</td>'
-            + '<td class="c">' + (r.aktif ? 'AKTIF' : '') + '</td></tr>';
+            + (A ? '<td class="c">' + (r.aktif ? 'AKTIF' : '') + '</td>' : '') + '</tr>';
         }).join('') + '</tbody></table></div>'
-        + '<div class="sd-leg"><span><i class="sd-sw y"></i>Sisa hari simpan di bawah 40 hari</span><span><i class="sd-sw r"></i>Di bawah 30 hari</span><span>Baris tanpa keterangan AKTIF ada di paling bawah</span></div>';
+        + '<div class="sd-leg"><span><i class="sd-sw y"></i>Sisa hari simpan di bawah 40 hari</span><span><i class="sd-sw r"></i>Di bawah 30 hari</span>' + (A ? '<span>Baris tanpa keterangan AKTIF ada di paling bawah</span>' : '') + '</div>';
     }
     Q('#sdBody').innerHTML = h;
     if (!A) return;
@@ -398,7 +422,7 @@
     if (!hasD) h += '<div class="sd-card"><div class="note" style="padding:10px;text-align:center">Belum ada data PO.' + (A ? ' Tempel tabel dari Excel / unggah CSV, atau tambahkan kolom tanggal lalu isi angkanya.' : '') + '</div></div>';
     else {
       h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th colspan="' + cols.length + '">PO ON GOING</th><th rowspan="2" class="g">TOTAL</th></tr><tr>'
-        + cols.map(d => A ? '<th class="sd-dt" data-d="' + d + '" title="Klik untuk mengganti tanggal"><span class="sd-dl">' + dm(d) + '</span><input type="date" class="sd-dh" value="' + d + '"><b class="sd-x" data-del="' + d + '" title="Hapus kolom ini">×</b></th>' : '<th>' + dm(d) + '</th>').join('') + '</tr></thead><tbody>'
+        + cols.map(d => A ? '<th class="sd-dt" data-d="' + d + '" title="Klik untuk mengganti tanggal"><span class="sd-dl">' + dm(d) + '</span><b class="sd-x" data-del="' + d + '" title="Hapus kolom ini">×</b></th>' : '<th>' + dm(d) + '</th>').join('') + '</tr></thead><tbody>'
         + act.map(i => '<tr class="' + (i.core ? 'core' : '') + '"><td class="l">' + E(i.plu_dc) + '</td><td class="l">' + E(i.deskripsi) + '</td>'
           + cols.map(d => { const v = poQ(d, i.plu_dc); return A ? '<td><input class="sd-c" inputmode="numeric" placeholder="-" data-p="' + E(i.plu_dc) + '" data-d="' + d + '" value="' + (v ? v : '') + '"></td>' : '<td>' + (v ? n0(v) : '-') + '</td>'; }).join('')
           + '<td class="sd-rt" data-p="' + E(i.plu_dc) + '" style="font-weight:700"></td></tr>').join('')
@@ -428,7 +452,12 @@
         [...X.poM.keys()].forEach(k => { if (k.startsWith(d + '|')) X.poM.delete(k); }); return paintPO();
       }
       const th = e.target.closest('th.sd-dt');
-      if (th && !e.target.classList.contains('sd-dh')) { const inp = Q('input.sd-dh', th); try { inp.showPicker(); } catch (er) { inp.focus(); inp.click(); } }
+      if (th && !e.target.classList.contains('sd-dh') && !Q('input.sd-dh', th)) {   // ubah judul jadi kolom tanggal; Enter/pilih tanggal = simpan, Esc = batal
+        th.innerHTML = '<input type="date" class="sd-dh" value="' + th.dataset.d + '">';
+        const inp = Q('input.sd-dh', th); inp.focus();
+        inp.onkeydown = ev => { if (ev.key === 'Escape') paintPO(); };
+        try { inp.showPicker(); } catch (er) { /* browser lama: ketik tanggal lalu Enter */ }
+      }
     };
     body.onchange = async e => {
       const t = e.target;
@@ -437,7 +466,7 @@
         if (poCols().includes(nw)) { msg('Tanggal ' + dm(nw) + ' sudah ada', true); return paintPO(); }
         const r = await sbc().from('stokdcf_po').update({ tgl: nw }).eq('tgl', old); if (r.error) { msg('Gagal: ' + r.error.message, true); return paintPO(); }
         [...X.poM.keys()].forEach(k => { if (k.startsWith(old + '|')) { X.poM.set(nw + '|' + k.split('|')[1], X.poM.get(k)); X.poM.delete(k); } });
-        msg('Tanggal diubah menjadi ' + dm(nw)); return paintPO();
+        msg('Tanggal diubah menjadi ' + dm(nw) + ' — kolom diurutkan otomatis'); return paintPO();   // poCols() selalu urut tanggal
       }
       if (!t.classList.contains('sd-c')) return;
       const v = num(t.value), d = t.dataset.d, p = t.dataset.p;
@@ -470,5 +499,14 @@
     setInterval(() => { const d = gD(), ok = !!(d && d.user && gTok()); b.style.display = ok ? '' : 'none'; if (!ok && X.ready) X.ready = false; }, 1200);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount); else mount();
-  window.PBSTOKDCF = { X, start, parseED, parsePORows, paintStok, paintPO, paintED };
+  // Est. STOCK h-1 jadwal kirim minggu depan (mis. 15 Nov) per PLU DC -> dipakai tabel Stock-DC vs PB di Rekap Cabang
+  async function est15(force) {
+    if (force || !X.ready) await loadAll();
+    if (force || X.pbState !== 'ok') await loadPB(++X.run);
+    if (X.pbState !== 'ok') throw new Error(X.pbErr || 'PB belum termuat');
+    const C = calcStok(), map = {}, byD = {};
+    C.rows.forEach(r => { const o = { est: r.est2, ds: r.i.deskripsi }; map[String(r.i.plu_dc).trim()] = o; byD[norm(r.i.deskripsi)] = o; });
+    return { date: addD(C.to, 1), label: 'Est. STOCK ' + dmm(addD(C.to, 1)), map, byD };
+  }
+  window.PBSTOKDCF = { est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED };
 })();

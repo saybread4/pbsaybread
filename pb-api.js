@@ -302,9 +302,9 @@
     ws.getColumn(1).width = 30; [10.8, 10.8, 10.8, 10.1].forEach((w, i) => ws.getColumn(i + 2).width = w);
     for (let c = 6; c <= nc; c++) ws.getColumn(c).width = 9.5;
     put(ws, 1, 1, 'STOCK-DC vs PB', { sz: 17, b: true, fc: 'FF3730A3' });
-    put(ws, 2, 1, 'PERIODE : ' + (title || '') + (stockDate ? ' \u00b7 STOCK AKHIR ' + dotYY(stockDate) : ''), { sz: 12, fc: 'FF475569' });
+    put(ws, 2, 1, 'PERIODE : ' + (title || '') + (sp.stkLbl ? ' \u00b7 STOK = ' + sp.stkLbl + ' (' + dotYY(sp.stockDate) + ')' : (stockDate ? ' \u00b7 STOCK AKHIR ' + dotYY(stockDate) : '')), { sz: 12, fc: 'FF475569' });
     const H = { b: true, fc: 'FFFFFFFF', bg: 'FF3730A3', h: 'center', bd: BD };
-    ['DESKRIPSI', 'STOCK-DC', 'TOTAL PB', 'SELISIH', 'STATUS'].forEach((t, i) => putM(ws, 4, i + 1, 5, i + 1, t, H));
+    ['DESKRIPSI', sp.stkLbl || 'STOCK-DC', 'TOTAL PB', 'SELISIH', 'STATUS'].forEach((t, i) => putM(ws, 4, i + 1, 5, i + 1, t, H));
     sc.forEach((c, ci) => {
       const b = 6 + ci * 3;
       putM(ws, 4, b, 4, b + 2, String(c.nama).toUpperCase(), Object.assign({}, H, { bg: 'FF4F46E5' }));
@@ -514,6 +514,7 @@
       let jw = null, who = 'Administrator \u00b7 SEMUA CAB';
       try { const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]); jw = mergeJadwal(r[0], r[1], today); } catch (e) { jw = null; }   // sheet JADWAL dilewati bila gagal dimuat
       try { const u = await me(); who = u.name + ' \u00b7 ' + (u.admin ? 'SEMUA CAB' : u.cabs.join(', ')); } catch (e) { /* pakai teks bawaan */ }
+      try { if (d.stock && d.stock.items && window.stkUseEst) await window.stkUseEst(d.stock, false); } catch (e) { /* tetap pakai stok bawaan */ }   // stok = Est. STOCK Stock DCF
       const m = await buildMasterBook(d, jw, who, today);
       return { name: 'Master PB ' + d.title + '.xlsx', b64: await toB64(m.wb), bad: m.bad };
     },

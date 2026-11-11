@@ -42,7 +42,6 @@
   const T = {
     stock:         { n: 'STOCK',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'plu',a:'plu',t:'plu'},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'jenis',a:'jenis'},{k:'stock_qty',a:'stockqty,stock,qty,stok',t:'num',r:1}] },
     sales:         { n: 'SALES',         tgl: true,  c: [{k:'kode',a:'kode',t:'kode',r:1},{k:'deskripsi',a:'deskripsi,description,item',r:1},{k:'sales_qty',a:'salesqty,sales,qty',t:'num',r:1},{k:'qpd',a:'qpd',t:'num'}] },
-    stock_dc:      { n: 'STOCK-DC',      tgl: true,  c: [{k:'plu',a:'pludc,plu',t:'plu',r:1,u:1},{k:'description',a:'description,deskripsi',r:1},{k:'stok_akh',a:'stokakh,stok,stock',t:'num',r:1}] },
     toko_zona:     { n: 'TOKO PER ZONA', c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'cab',a:'cab',t:'upper',r:1},{k:'zona',a:'zona'},{k:'ket',a:'ket,keterangan',p:1}] },
     bas:           { n: 'BAS',           c: [{k:'kode',a:'kode',t:'kode',r:1,u:1},{k:'toko',a:'toko'},{k:'bas',a:'bas'}] },
     toko_per_item: { n: 'TOKO PER ITEM', c: [{k:'cab',a:'cab',t:'upper',r:1},{k:'kode',a:'kode',t:'kode',r:1},{k:'toko',a:'toko'},{k:'deskripsi',a:'deskripsi,item',r:1},{k:'frac',a:'frac',t:'num',r:1}] },
@@ -118,7 +117,6 @@
   const V = {
     stock:         { pk: 'id', kc: 'kode', q: ['kode','toko','plu','deskripsi'], o: ['kode','deskripsi'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'plu',h:'PLU'},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'jenis',h:'JENIS'},{k:'stock_qty',h:'STOCK QTY',t:'num'}] },
     sales:         { pk: 'id', kc: 'kode', q: ['kode','deskripsi'], o: ['kode','deskripsi'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'sales_qty',h:'SALES QTY',t:'num'},{k:'qpd',h:'QPD',t:'num',nul:1}] },
-    stock_dc:      { pk: 'plu', pkText: 1, kc: null, q: ['plu','description'], o: ['plu'], c: [{k:'plu',h:'PLU',t:'plu',r:1},{k:'description',h:'DESCRIPTION'},{k:'stok_akh',h:'STOK AKHIR',t:'num'}] },
     toko_zona:     { pk: 'kode', pkText: 1, kc: 'kode', q: ['kode','toko','cab','zona','ket'], o: ['cab','kode'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'cab',h:'CAB',t:'upper',r:1},{k:'zona',h:'ZONA'},{k:'ket',h:'KET'}] },
     bas:           { pk: 'kode', pkText: 1, kc: 'kode', q: ['kode','toko','bas'], o: ['kode'], c: [{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'bas',h:'BAS'}] },
     toko_per_item: { pk: 'id', kc: 'kode', q: ['cab','kode','toko','deskripsi'], o: ['cab','kode','deskripsi'], c: [{k:'cab',h:'CAB',t:'upper'},{k:'kode',h:'KODE',t:'kode',r:1},{k:'toko',h:'TOKO'},{k:'deskripsi',h:'DESKRIPSI',r:1},{k:'frac',h:'FRAC',t:'num',nul:1}] },
@@ -220,7 +218,7 @@
       <div class="kd-hint" id="dH"></div>
       <div id="kSF"><div class="drop" id="dDrop"><input type="file" id="dF" accept=".csv,.txt,.tsv,text/csv,text/plain"><div class="note" style="padding:6px 0 0">atau seret file ke sini</div></div></div>
       <div id="kSP" style="display:none"><textarea class="in" id="dP" rows="5" style="width:100%;font-family:monospace;font-size:12px" placeholder="Salin sel dari Excel termasuk baris judul, lalu tempel di sini.&#10;KODE&#9;TOKO&#9;..."></textarea></div>
-      <div id="dTglW" style="display:none;margin-top:8px"><label class="k">Tanggal data (STOCK/SALES jadi "Data Update"; STOCK-DC jadi tanggal stock akhir)</label><input type="date" class="in" id="dTgl" value="${today()}" style="max-width:220px"></div>
+      <div id="dTglW" style="display:none;margin-top:8px"><label class="k">Tanggal data (STOCK/SALES jadi "Data Update")</label><input type="date" class="in" id="dTgl" value="${today()}" style="max-width:220px"></div>
 
       <h4>2. Cara pengisian</h4>
       <div class="kd-r">
