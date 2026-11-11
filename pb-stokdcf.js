@@ -479,9 +479,15 @@
     body.onclick = async e => {
       const x = e.target.closest('.sd-x');
       if (x) {
-        e.stopPropagation(); const d = x.dataset.del; if (!confirm('Hapus kolom ' + dm(d) + ' beserta angkanya?')) return;
-        const r = await sbc().from('stokdcf_po').delete().eq('tgl', d); if (r.error) return msg('Gagal: ' + r.error.message, true);
-        [...X.poM.keys()].forEach(k => { if (k.startsWith(d + '|')) X.poM.delete(k); }); return paintPO();
+        e.stopPropagation(); const d = x.dataset.del;
+        const del = async () => {
+          const r = await sbc().from('stokdcf_po').delete().eq('tgl', d); if (r.error) return msg('Gagal: ' + r.error.message, true);
+          [...X.poM.keys()].forEach(k => { if (k.startsWith(d + '|')) X.poM.delete(k); }); paintPO();
+        };
+        const tx = 'Hapus kolom ' + dm(d) + ' beserta angkanya?';
+        // confirm() bawaan diblokir di iframe Google Sites -> pakai dialog sendiri (pbConfirm di index.html)
+        if (window.pbConfirm) window.pbConfirm(tx, () => del().catch(er => msg('Gagal: ' + er.message, true)), 'Hapus'); else if (confirm(tx)) del();
+        return;
       }
       const th = e.target.closest('th.sd-dt');
       if (th && !e.target.classList.contains('sd-dh') && !Q('input.sd-dh', th)) {   // ubah judul jadi kolom tanggal; Enter/pilih tanggal = simpan, Esc = batal

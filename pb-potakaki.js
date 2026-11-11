@@ -155,7 +155,8 @@
 #vPoTakaki .pt-chip{display:inline-block;padding:1px 9px;border-radius:99px;background:#eef2ff;border:1px solid #c7d2fe;color:#3730a3;font-weight:700;font-size:11.5px;margin:0 3px 0 0}
 #vPoTakaki .pt-chip.k{background:#fff3cd;border-color:#f5d36b;color:#7a5a00}
 #vPoTakaki .pt-wrap{overflow:auto;margin-top:8px;border:1px solid #9aa3a0;background:#fff;max-width:100%;max-height:calc(100vh - 170px)}
-#vPoTakaki table.pt-tb{border-collapse:separate;border-spacing:0;font-size:11.5px;line-height:1.25;color:#111}
+#vPoTakaki table.pt-tb{border-collapse:separate;border-spacing:0;font-size:11.5px;line-height:1.25;color:#111;width:max-content!important;min-width:0!important;max-width:none!important;table-layout:auto}
+#vPoTakaki .pt-tb th,#vPoTakaki .pt-tb td{width:auto}
 #vPoTakaki .pt-tb th{position:sticky;top:0;z-index:2;background:#fff;color:#111;border-right:1px solid #8b9490;border-bottom:1px solid #8b9490;padding:3px 7px;font-size:10.5px;font-weight:700;text-align:center;white-space:nowrap}
 #vPoTakaki .pt-tb th.y{background:#ffe600}
 #vPoTakaki .pt-tb th.gr{background:#d9f0e2}
@@ -277,7 +278,7 @@
     return h;
   }
   function tableHtml() {
-    const pos = P.pos, np = pos.length, d1 = P.estDate ? dmy(P.estDate) : '', ds = P.estDate ? dmm(P.estDate).replace(' ', '-') : '';
+    const pos = P.pos, np = pos.length, d1 = P.reqTo ? dmy(P.reqTo) : '', ds = P.reqTo ? dmm(P.reqTo).replace(' ', '-') : '';
     const kopt = sel => Object.keys(P.cfg.kend).map(k => '<option' + (k === sel ? ' selected' : '') + '>' + E(k) + '</option>').join('');
     const poh = pos.map((po, i) => '<th colspan="2" class="y"><div class="pt-poh1"><b>PO ' + (i + 1) + '</b><select class="pt-kd" data-po="' + po.id + '">' + kopt(po.kendaraan) + '</select><span class="pt-x" data-del="' + po.id + '" title="Hapus PO ini">×</span></div>'
       + '<div class="pt-poh2">Kirim <input type="date" class="pt-dt" data-po="' + po.id + '" value="' + E(po.tgl_kirim || '') + '"><input class="pt-cp" data-po="' + po.id + '" inputmode="decimal" value="' + E(String(cpOf(po)).replace('.', ',')) + '" title="CTN per pallet"> ctn/plt</div></th>').join('');
@@ -304,7 +305,7 @@
     return h;
   }
   function tonHtml() {
-    return '<div class="pt-leg"><span><i class="pt-sw"></i>Item core</span><span>PALLET dan ctn/plt (biru) bisa diedit · CTN = PALLET × ctn/plt · STOCK = Est. STOCK ' + E(P.estDate ? dml(P.estDate) : '') + ' (Stock DCF)</span></div>'
+    return '<div class="pt-leg"><span><i class="pt-sw"></i>Item core</span></div>'
       + '<div class="pt-ton"><b>Tonase Kendaraan (ctn)</b><table>' + Object.keys(P.cfg.kend).map(k => '<tr><td><input class="pt-cap" data-k="' + E(k) + '" inputmode="numeric" value="' + n0(P.cfg.kend[k]) + '"></td><td>' + E(k) + '</td></tr>').join('') + '</table></div>'
       + '<div class="pt-leg"><span>Rata-rata PB per minggu = ' + (P.nw ? 'rata-rata ' + P.nw + ' minggu terakhir yang tersedia' : 'belum ada data') + ' (arsip PB) · JML TOKO JUAL = jumlah toko yang punya item tersebut</span></div>';
   }
@@ -371,7 +372,7 @@
     const td = (t, bg, st) => '<td style="' + FF + bdl + 'padding:2px 7px;background-color:' + bg + ';color:#111;font-size:12px;white-space:nowrap;text-align:right;' + (st || '') + '">' + t + '</td>';
     const bufTd = (v, st) => { const w = Math.min(100, v * 100 / 3); return td(n0(v * 100) + '%', '#ffffff', 'min-width:58px;' + (st <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : (w > 0 ? 'background-image:linear-gradient(90deg,#f6b26b ' + w + '%,#fff3e0 ' + w + '%);' : ''))); };
     const zc = v => v <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : '';
-    const d1 = dmy(P.estDate), ds = dmm(P.estDate).replace(' ', '-');
+    const d1 = dmy(P.reqTo), ds = dmm(P.reqTo).replace(' ', '-');
     let h = '<div style="' + FF + 'display:inline-block;background-color:#ffffff;padding:10px"><div style="font-weight:bold;font-size:19px;color:#111">EST. PO TAKAKI JATIM</div>'
       + '<div style="font-size:12px;color:#333;padding-bottom:5px">REQUEST PENGIRIMAN : ' + E(reqText()) + ' · satuan CTN</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
@@ -399,7 +400,7 @@
         + pos.map((po, k) => { const cap = capOf(po), left = cap - T.ctn[k]; return td(cap ? (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' / ' + n0(cap) + ' (' + Math.round(T.ctn[k] / cap * 100) + '%)' : '-', PC, 'text-align:center;font-weight:bold;' + (left < 0 ? 'color:#c00000;' : '')).replace('<td ', '<td colspan="2" '); }).join('')
         + '<td colspan="10" style="background-color:' + PC + ';' + bdl + '"></td></tr>';
     }
-    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + Y + ';border:1px solid #999;vertical-align:-1px"></span> item core · STOCK = Est. STOCK ' + E(dml(P.estDate)) + ' (Stock DCF); jika ada forecast = STOCK + TOTAL PO · BUFFER % = (STOCK - rata-rata PB/minggu) ÷ rata-rata PB/minggu · DSI = STOCK ÷ QPD (Ctn)</div>'
+    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + Y + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
       + '<div style="display:inline-block;margin-top:6px;background-color:#fbe5d6;border:1px solid #efc9ae;padding:5px 12px;font-size:12px"><b>Tonase Kendaraan (ctn)</b>'
       + Object.keys(P.cfg.kend).map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
     const hold = document.createElement('div'); hold.style.cssText = 'position:fixed;left:-99999px;top:0'; hold.innerHTML = h; document.body.appendChild(hold);
@@ -445,11 +446,11 @@
     if (np) merge(4, 5, 4, 4 + 2 * np, 'PO TAKAKI', hd(Y));
     pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k) + ' ' + po.kendaraan, hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
     merge(4, cT, 5, cT, 'TOTAL PO', hd(Y)); put(6, cT, 'CTN', hd(Y));
-    merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(P.estDate), hd(G));
+    merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(P.reqTo), hd(G));
     merge(5, c1, 5, cb1, 'JIKA TANPA FORECAST', hd(G)); merge(5, cs2, 5, cb2, 'JIKA ADA FORECAST', hd(G));
     put(6, c1, 'STOCK', hd(G)); put(6, cb1, 'BUFFER %', hd(G)); put(6, cs2, 'STOCK', hd(G)); put(6, cb2, 'BUFFER %', hd(G));
-    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(P.estDate), hd(B)); put(5, cd1, 'JIKA TANPA FORECAST', hd(B)); put(5, cd2, 'JIKA ADA FORECAST', hd(B));
-    put(6, cd1, dmm(P.estDate).replace(' ', '-'), hd(B)); put(6, cd2, dmm(P.estDate).replace(' ', '-'), hd(B));
+    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(P.reqTo), hd(B)); put(5, cd1, 'JIKA TANPA FORECAST', hd(B)); put(5, cd2, 'JIKA ADA FORECAST', hd(B));
+    put(6, cd1, dmm(P.reqTo).replace(' ', '-'), hd(B)); put(6, cd2, dmm(P.reqTo).replace(' ', '-'), hd(B));
     merge(4, cq, 5, cq, 'QPD (Ctn)', hd(TN)); put(6, cq, 'per hari', hd(TN));
     merge(4, cj, 5, cj, 'JML TOKO JUAL', hd(Y)); put(6, cj, '(toko)', hd(Y));
     put(4, ca, 'AVERAGE', hd(PC)); put(5, ca, 'OUTB (PB)', hd(PC)); put(6, ca, 'PER WEEK', hd(PC));
@@ -524,31 +525,39 @@
       P.pos.push(r); paint();
     } catch (e) { msg('Gagal menambah PO: ' + e.message, true); }
   }
-  async function delPO(id) {
+  // confirm() bawaan diblokir di iframe Google Sites -> pakai dialog sendiri (pbConfirm di index.html)
+  const ask = (text, fn, okText) => { if (window.pbConfirm) window.pbConfirm(text, fn, okText); else if (confirm(text)) fn(); };
+  function delPO(id) {
     const i = P.pos.findIndex(p => String(p.id) === String(id)); if (i < 0) return;
-    if (!confirm('Hapus PO ' + (i + 1) + ' beserta isinya?')) return;
-    try {
-      must(await sbc().from('potakaki_po').delete().eq('id', P.pos[i].id));
-      [...P.pal.keys()].forEach(k => { if (k.startsWith(P.pos[i].id + '|')) P.pal.delete(k); });
-      P.pos.splice(i, 1); paint();
-    } catch (e) { msg('Gagal menghapus PO: ' + e.message, true); }
+    const po = P.pos[i];
+    ask('Hapus PO ' + (i + 1) + ' beserta isinya?', async () => {
+      try {
+        must(await sbc().from('potakaki_po').delete().eq('id', po.id));
+        [...P.pal.keys()].forEach(k => { if (k.startsWith(po.id + '|')) P.pal.delete(k); });
+        const j = P.pos.findIndex(p => p.id === po.id); if (j >= 0) P.pos.splice(j, 1); paint();
+      } catch (e) { msg('Gagal menghapus PO: ' + e.message, true); }
+    }, 'Hapus');
   }
-  async function applyReco() {
+  function applyReco() {
     const R = reco(); if (!R.veh.length || P.busy) return;
     const has = P.pos.length && [...P.pal.values()].some(v => v > 0);
-    if (P.pos.length && !confirm('Ganti ' + P.pos.length + ' PO yang ada' + (has ? ' (termasuk isinya)' : '') + ' dengan rekomendasi ' + R.veh.length + ' PO?')) return;
-    P.busy = true; const b = Q('#ptApply'); if (b) b.disabled = true;
-    try {
-      const s = sbc();
-      if (P.pos.length) must(await s.from('potakaki_po').delete().eq('periode', P.periode));
-      const ins = must(await s.from('potakaki_po').insert(R.plan.map((m, i) => ({ periode: P.periode, urut: i + 1, kendaraan: m.kendaraan, ctn_pallet: P.cfg.cp }))).select());
-      ins.sort((a, b2) => a.urut - b2.urut);
-      const items = []; ins.forEach((po, i) => Object.keys(R.plan[i].items).forEach(plu => { if (R.plan[i].items[plu] > 0) items.push({ po_id: po.id, plu_dc: plu, pallet: R.plan[i].items[plu] }); }));
-      if (items.length) must(await s.from('potakaki_po_item').insert(items));
-      P.pos = ins; P.pal = new Map(); items.forEach(r => P.pal.set(pk(r.po_id, r.plu_dc), r.pallet));
-      msg('Rekomendasi diterapkan: ' + ins.length + ' PO — pallet masih bisa diedit');
-    } catch (e) { msg('Gagal menerapkan: ' + e.message, true); await load(false); }
-    P.busy = false; paint();
+    const go = async () => {
+      if (P.busy) return;
+      P.busy = true; const b = Q('#ptApply'); if (b) b.disabled = true;
+      try {
+        const s = sbc();
+        if (P.pos.length) must(await s.from('potakaki_po').delete().eq('periode', P.periode));
+        const ins = must(await s.from('potakaki_po').insert(R.plan.map((m, i) => ({ periode: P.periode, urut: i + 1, kendaraan: m.kendaraan, ctn_pallet: P.cfg.cp }))).select());
+        ins.sort((a, b2) => a.urut - b2.urut);
+        const items = []; ins.forEach((po, i) => Object.keys(R.plan[i].items).forEach(plu => { if (R.plan[i].items[plu] > 0) items.push({ po_id: po.id, plu_dc: plu, pallet: R.plan[i].items[plu] }); }));
+        if (items.length) must(await s.from('potakaki_po_item').insert(items));
+        P.pos = ins; P.pal = new Map(); items.forEach(r => P.pal.set(pk(r.po_id, r.plu_dc), r.pallet));
+        msg('Rekomendasi diterapkan: ' + ins.length + ' PO — pallet masih bisa diedit');
+      } catch (e) { msg('Gagal menerapkan: ' + e.message, true); await load(false); }
+      P.busy = false; paint();
+    };
+    if (P.pos.length) ask('Ganti ' + P.pos.length + ' PO yang ada' + (has ? ' (termasuk isinya)' : '') + ' dengan rekomendasi ' + R.veh.length + ' PO?', go, 'Ganti');
+    else go();
   }
   async function saveCfg(key, value) {
     const r = await sbc().from('potakaki_cfg').upsert({ key, value }, { onConflict: 'key' });
