@@ -46,7 +46,7 @@
 #vStokDcf .sd-wrap{overflow-x:auto;overflow-y:hidden;margin-top:8px;border:1px solid var(--bd);border-radius:9px;background:#fff;display:inline-block;max-width:100%;vertical-align:top}
 #vStokDcf table.sd-tb{border-collapse:separate;border-spacing:0;font-size:11.5px;line-height:1.25}
 #vStokDcf .sd-tb th{background:var(--br);color:#fff;padding:3px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;text-align:center;height:21px;border-right:1px solid rgba(255,255,255,.18);letter-spacing:.02em}
-#vStokDcf .sd-tb th.sp,#vStokDcf .sd-tb td.sp{width:12px;min-width:12px;padding:0;background:#fff!important;border-right:0;border-bottom-color:transparent}
+#vStokDcf .sd-tb th.sp,#vStokDcf .sd-tb th.sp[rowspan="2"],#vStokDcf .sd-tb td.sp{width:8px;min-width:0;max-width:8px;padding:0;background:#fff!important;border-right:0;border-bottom-color:transparent}
 #vStokDcf .sd-tb tbody tr:nth-child(even) td.sp,#vStokDcf .sd-tb tbody tr.core td.sp{background:#fff!important}
 #vStokDcf .sd-tb th.g{background:#2f9f61}
 #vStokDcf .sd-tb th[rowspan="2"]{white-space:normal;line-height:1.15;min-width:44px}
@@ -164,6 +164,37 @@
     });
     return { to, to2, cut1, cut2, pcols, p2cols, rows };
   }
+  // Download JPG: kolom NO s/d DSI (tabel dibuat ulang dengan gaya inline lalu digambar ke canvas)
+  async function downloadJpg() {
+    const b = Q('#sdJpg'); if (b) b.disabled = true;
+    try {
+      const C = calcStok(), FF = 'font-family:Calibri,Arial,sans-serif;', bd = 'border:1px solid #cdd3e6;', pd = 'padding:3px 8px;';
+      const th = t => '<th style="' + FF + bd + pd + 'background-color:#3730a3;color:#ffffff;font-size:12px;font-weight:bold;white-space:nowrap;text-align:center">' + t + '</th>';
+      const td = (t, bg, st) => '<td style="' + FF + bd + pd + 'background-color:' + bg + ';font-size:12px;white-space:nowrap;' + (st || '') + '">' + t + '</td>';
+      const q1 = v => v ? (v >= 10 ? n0(v) : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 1 })) : '-';
+      let tq = 0, tc = 0;
+      let h = '<div style="' + FF + 'display:inline-block;background-color:#ffffff;padding:8px"><div style="font-weight:bold;font-size:17px;color:#3730a3">MONITORING STOK DCF JATIM</div>'
+        + '<div style="font-size:12px;color:#475569;padding-bottom:4px">Stok DCF ' + E(X.snap ? fdl(X.snap) : '-') + ' · satuan CTN</div>'
+        + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead><tr>' + ['NO', 'PLU', 'DESKRIPSI', 'STOCK', 'QPD (Ctn)', 'DSI'].map(th).join('') + '</tr></thead><tbody>';
+      C.rows.forEach((r, n) => {
+        const bg = r.i.core ? '#e3f5e8' : (n % 2 ? '#fafcfb' : '#ffffff'); tq += r.qty; tc += r.qc;
+        h += '<tr>' + td(n + 1, bg, 'text-align:center') + td(E(r.i.plu_dc), bg) + td(E(r.i.deskripsi), bg) + td(n0(r.qty), bg, 'text-align:right') + td(q1(r.qc), bg, 'text-align:right') + td(r.dsi == null ? '-' : n0(r.dsi), bg, 'text-align:right') + '</tr>';
+      });
+      const TB = '#d9f0e2', ts = 'text-align:right;font-weight:bold;';
+      h += '<tr>' + td('Grand Total', TB, 'font-weight:bold').replace('<td ', '<td colspan="3" ') + td(n0(tq), TB, ts) + td(q1(tc), TB, ts) + td(tc > 0 ? n0(tq / tc) : '-', TB, ts) + '</tr></tbody></table>'
+        + '<div style="font-size:10px;color:#64748b;padding-top:3px">QPD (Ctn) = sales per hari ÷ FRC · DSI = STOCK ÷ QPD (Ctn) · baris hijau = item core</div></div>';
+      const hold = document.createElement('div'); hold.style.cssText = 'position:fixed;left:-99999px;top:0'; hold.innerHTML = h; document.body.appendChild(hold);
+      const el = hold.firstElementChild, w = Math.ceil(el.offsetWidth) + 2, ht = Math.ceil(el.offsetHeight) + 2; hold.remove();
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + ht + '"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">' + h.replace(/&nbsp;/g, '&#160;') + '</div></foreignObject></svg>';
+      const img = new Image(); await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error('gagal merender gambar')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+      const sc = Math.max(1, Math.min(3, Math.floor(14000 / Math.max(w, ht)))), c = document.createElement('canvas'); c.width = w * sc; c.height = ht * sc;
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.scale(sc, sc); g.drawImage(img, 0, 0);
+      const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .93)); if (!blob) throw new Error('gagal membuat JPG');
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'Stock DCF ' + (X.snap || '') + '.jpg'; document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    } catch (e) { msg('Gagal membuat JPG: ' + e.message, true); }
+    if (b) b.disabled = false;
+  }
   function paintStok() {
     const A = adm(), load = X.pbState === 'load', C = calcStok(), { to, to2, pcols, p2cols, rows } = C;
     const e1 = to ? dmm(to) : '-', e2 = to ? dmm(addD(to, 1)) : '-', e3 = to2 ? dmm(addD(to2, 1)) : '-';
@@ -172,8 +203,8 @@
     const L = v => load ? '…' : n0(v), dash = v => v ? n0(v) : '-';
     const q1 = v => v ? (v >= 10 ? n0(v) : Number(v).toLocaleString('id-ID', { maximumFractionDigits: 1 })) : '-';
     const po2lab = to ? (p2cols.length ? lab(p2cols[0], p2cols[p2cols.length - 1]) : lab(addD(C.cut1, 1), C.cut2)) : '-';
-    let h = head('package', 'MONITORING STOK DCF JATIM', 'Stok DCF ' + (X.snap ? E(fdl(X.snap)) : '-'), badge('PB kirim ' + E(X.pbLabel), 'cal'))
-      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th>'
+    let h = head('package', 'MONITORING STOK DCF JATIM', 'Stok DCF ' + (X.snap ? E(fdl(X.snap)) : '-'), badge('PB kirim ' + E(X.pbLabel), 'cal') + ' <button class="b s" id="sdJpg" title="Unduh kolom NO sampai DSI sebagai gambar">' + ic('image') + ' Download JPG</button>')
+      + '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">NO</th><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th rowspan="2">STOCK</th>'
       + '<th rowspan="2" title="Sales per hari dibagi FRC">QPD<br>(Ctn)</th><th rowspan="2" title="Stock dibagi QPD (Ctn)">DSI</th><th rowspan="2" class="sp"></th>'
       + '<th>PB</th><th rowspan="2">Est. STOCK<br>' + E(e1) + '</th>'
       + (pcols.length ? '<th colspan="' + pcols.length + '" class="g">PO ON GOING</th>' : '')
@@ -181,7 +212,7 @@
       + '<th>PB</th><th class="g">PO ON GOING</th><th rowspan="2">Est. STOCK<br>' + E(e3) + '</th>'
       + (A ? '<th rowspan="2" title="Centang untuk menjadikan item core">CORE</th>' : '') + '</tr>'
       + '<tr><th>' + E(X.pbLabel) + '</th>' + pcols.map(d => '<th class="g">' + E(dm(d)) + '</th>').join('') + '<th>' + E(X.pbLabel2) + '</th><th class="g">' + E(po2lab) + '</th></tr></thead><tbody>'
-      + rows.map(r => '<tr class="' + (r.i.core ? 'core' : '') + '"><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
+      + rows.map((r, n) => '<tr class="' + (r.i.core ? 'core' : '') + '"><td class="c">' + (n + 1) + '</td><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
         + '<td>' + n0(r.qty) + '</td><td>' + q1(r.qc) + '</td><td>' + (r.dsi == null ? '-' : n0(r.dsi)) + '</td><td class="sp"></td>'
         + '<td>' + L(r.pb) + '</td>'
         + '<td class="' + (!load && r.sisa === 0 ? 'z' : '') + '">' + L(r.sisa) + '</td>'
@@ -190,7 +221,7 @@
         + '<td>' + L(r.pb2) + '</td><td>' + dash(r.po2) + '</td>'
         + '<td class="' + (!load && r.sisa2 === 0 && r.po2 === 0 ? 'z' : '') + '" style="font-weight:700">' + L(r.est3) + '</td>'
         + (A ? '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td>' : '') + '</tr>').join('')
-      + '<tr class="tot"><td class="l" colspan="2">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + q1(T.qc) + '</td><td>' + (T.qc > 0 ? n0(T.qty / T.qc) : '-') + '</td><td class="sp"></td>'
+      + '<tr class="tot"><td class="l" colspan="3">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + q1(T.qc) + '</td><td>' + (T.qc > 0 ? n0(T.qty / T.qc) : '-') + '</td><td class="sp"></td>'
       + '<td>' + L(T.pb) + '</td><td>' + L(T.sisa) + '</td>'
       + T.pov.map(v => '<td>' + dash(v) + '</td>').join('') + '<td>' + L(T.est2) + '</td>'
       + '<td>' + L(T.pb2) + '</td><td>' + dash(T.po2) + '</td><td>' + L(T.est3) + '</td>' + (A ? '<td></td>' : '') + '</tr>'
@@ -203,6 +234,7 @@
       + (X.qpdErr ? '<span class="sd-er">QPD tidak terbaca (' + E(X.qpdErr) + ') — jalankan fungsi <b>stokdcf_qpd</b> di Supabase.</span>' : '')
       + (X.salesErr ? '<span class="sd-er">Sales tidak terbaca (' + E(X.salesErr) + ') — urutan sementara sesuai master.</span>' : '') + '</div>';
     Q('#sdBody').innerHTML = h;
+    Q('#sdJpg').onclick = downloadJpg;
     if (A) Q('#sdBody').onchange = async e => {
       const t = e.target; if (!t.hasAttribute('data-core')) return;
       const p = t.dataset.core, v = t.checked;
