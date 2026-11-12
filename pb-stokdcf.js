@@ -314,6 +314,12 @@
     });
     return rows;
   }
+  // gabungkan baris dengan PLU_CUST + tanggal inbound + tanggal exp yang sama: stok dijumlahkan (urutan baris pertama dipertahankan)
+  function groupED(rows) {
+    const m = new Map();
+    rows.forEach(r => { const k = String(r.plu_cust).trim() + '|' + (r.tgl_inbound || '') + '|' + (r.tgl_exp || ''); const o = m.get(k); if (o) o.stok += Number(r.stok) || 0; else m.set(k, Object.assign({}, r, { plu_cust: String(r.plu_cust).trim(), stok: Number(r.stok) || 0 })); });
+    return [...m.values()];
+  }
   // format file STOCKM_SI05_yyyymmdd.xlsx (baris 1 = nama kolom): _PLU_CUST, _DESCRIPTION, SOH (stok), _TRANSC (inbound), _EXP_DATE;
   // tanggal data = TGL_IMPORT (cadangan: yyyymmdd di nama file)
   function parseStockM(ws, fname) {
@@ -345,9 +351,10 @@
         rows = r.rows; t = r.tgl;
       }
       if (!rows.length) throw new Error('Tidak ada baris data di file ini.');
+      const n0r = rows.length; rows = groupED(rows);   // inbound tanggal sama langsung ditotal
       X.file = { name: f.name, rows };
       if (t) Q('#sdTgl').value = t;
-      st.textContent = f.name + ' — ' + n0(rows.length) + ' baris, total ' + n0(rows.reduce((a, r) => a + r.stok, 0)) + ' ctn. Periksa tanggal lalu klik Simpan.';
+      st.textContent = f.name + ' — ' + n0(n0r) + ' baris digabung jadi ' + n0(rows.length) + ' baris (inbound & exp sama ditotal), total ' + n0(rows.reduce((a, r) => a + r.stok, 0)) + ' ctn. Periksa tanggal lalu klik Simpan.';
       Q('#sdSave').disabled = false;
     } catch (e) { st.textContent = ''; Q('#sdSave').disabled = true; msg('Gagal: ' + e.message, true); }
   }
@@ -373,7 +380,7 @@
       + '<div id="sdFs" class="note" style="padding:5px 0 0"></div>'
       + '<div class="note" style="padding:2px 0 0">File <b>STOCKM_SI05</b> dibaca menurut nama kolom: _PLU_CUST, _DESCRIPTION, SOH (stok), _TRANSC (inbound), _EXP_DATE. (Format lama sheet <b>data ED</b> tetap bisa.) Tanggal terisi dari TGL_IMPORT dan bisa diubah. Data ED lama diganti.</div></div>');
     if (X.ed.length) {
-      const rows = X.ed.map((b, n) => {
+      const rows = groupED(X.ed).map((b, n) => {
         const pc = String(b.plu_cust).trim();
         return { b, n, pc, aktif: known.has(pc), ms: dayDiff(b.tgl_inbound, b.tgl_exp), sh: dayDiff(X.snap, b.tgl_exp) };
       }).sort((a, b) => (Number(b.aktif) - Number(a.aktif)) || (a.n - b.n));   // yang tidak AKTIF di paling bawah
@@ -628,5 +635,5 @@
     // stok awal per tanggal: snap = STOCK Data Exp Date, d2 = Est. STOCK h-1 minggu depan (mis. 15 Nov), d3 = Est. STOCK berikutnya (mis. 22 Nov)
     return { date: addD(C.to, 1), label: 'Est. STOCK ' + dmm(addD(C.to, 1)), snap: X.snap, d3: addD(C.to2, 1), map, byD };
   }
-  window.PBSTOKDCF = { est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED, calcStok };
+  window.PBSTOKDCF = { groupED, est15, X, start, parseED, parsePORows, paintStok, paintPO, paintED, calcStok };
 })();
