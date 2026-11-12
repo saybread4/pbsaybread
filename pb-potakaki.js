@@ -132,7 +132,7 @@
 
   // ---------------- status ----------------
   const P = { ready: false, loading: false, err: '', noTbl: false, run: 0, busy: false, mode: 'full',
-    periode: null, reqCustom: '', all: [], hid: new Set(), estDate: null, reqFrom: null, reqTo: null, rows: [], pos: [], pal: new Map(), info: {}, nw: 0,
+    periode: null, tab: 'hitung', tglPO: '', reqCustom: '', all: [], hid: new Set(), estDate: null, reqFrom: null, reqTo: null, rows: [], pos: [], pal: new Map(), info: {}, nw: 0,
     cfg: { target: 30, cp: 77, kend: Object.assign({}, KEND0) } };
   const pk = (id, plu) => id + '|' + plu;
   const palOf = (id, plu) => P.pal.get(pk(id, plu)) || 0;
@@ -202,7 +202,8 @@
   }
 
   // baris item mengikuti urutan & penanda core halaman Stock DCF
-  const mapRows = rows => { const SD = window.PBSTOKDCF; return rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, raw: r.i.plu_dc, desk: r.i.deskripsi, core: !!r.i.core, s1: Number(r.est3) || 0, qc: Number(r.qc) || 0, frc: (SD.X.qpd[k] || {}).frc || 0 }; }); };
+  const mapRows = rows => { const SD = window.PBSTOKDCF; return rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, raw: r.i.plu_dc, desk: r.i.deskripsi, core: !!r.i.core, s1: Number(r.estLast != null ? r.estLast : r.est3) || 0,   // Est. STOCK kolom terakhir di Stock DCF (termasuk minggu Est. PB tambahan)
+         qc: Number(r.qc) || 0, frc: (SD.X.qpd[k] || {}).frc || 0 }; }); };
 
   // ---------------- data ----------------
   async function load(force) {
@@ -275,7 +276,9 @@
   function head() {
     const rq = P.reqFrom ? reqLine() : '';
     return '<div class="pt-head"><span class="pt-ico">' + ic('truck') + '</span><div><div class="pt-t">EST. PO TAKAKI JATIM</div><div class="pt-s">'
-      + (P.reqFrom ? '<input class="pt-rq" id="ptRq" size="' + rqSize(rq) + '" value="' + E(rq) + '" spellcheck="false" title="Klik untuk mengubah teks ini (ikut tampil di hasil download). Kosongkan lalu Enter untuk kembali otomatis."> · satuan CTN · hanya administrator' : 'satuan CTN · hanya administrator') + '</div></div><span style="flex:1"></span>'
+      + (P.reqFrom && P.tab !== 'kirim' ? '<input class="pt-rq" id="ptRq" size="' + rqSize(rq) + '" value="' + E(rq) + '" spellcheck="false" title="Klik untuk mengubah teks ini (ikut tampil di hasil download). Kosongkan lalu Enter untuk kembali otomatis."> · satuan CTN · hanya administrator' : 'satuan CTN · hanya administrator') + '</div></div>'
+      + (P.ready && !P.loading && !P.err ? '<span id="ptSeg" style="display:inline-flex;gap:4px;margin-left:6px"><button class="b ' + (P.tab !== 'kirim' ? 'p' : 's') + '" data-t="hitung">Hitung PO</button><button class="b ' + (P.tab === 'kirim' ? 'p' : 's') + '" data-t="kirim">Kirim PO</button></span>' : '')
+      + '<span style="flex:1"></span>'
       + '<button class="b s" id="ptRl">' + ic('refresh') + ' Muat ulang</button>'
       + (P.ready && !P.loading && !P.err ? '<div class="dmw" id="ptDm"><button class="b p" id="ptDl">' + ic('down') + ' Download ' + ic('chev') + '</button>'
         + '<div class="dmn"><a data-f="jpg">' + ic('image') + ' JPG</a><a data-f="xls">' + ic('sheet') + ' Excel (.xlsx)</a></div></div>' : '') + '</div>';
@@ -344,6 +347,7 @@
         + (P.noTbl ? '<br><span class="note">Jalankan <b>migrasi-po-takaki.sql</b> di Supabase (SQL Editor) lalu klik Muat ulang.</span>' : '') + '</div>';
       bindHead(); return;
     }
+    if (P.tab === 'kirim') { el.innerHTML = head() + kirimPage(); bindHead(); return; }
     el.innerHTML = head() + '<div id="ptReco">' + recoHtml() + '</div>' + tableHtml() + tonHtml();
     bindHead(); recalc(); fixSticky();
   }
@@ -428,6 +432,11 @@
     h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + CORE + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
       + '<div style="display:inline-block;margin-top:6px;background-color:#fbe5d6;border:1px solid #efc9ae;padding:5px 12px;font-size:12px"><b>Tonase Kendaraan (ctn)</b>'
       + Object.keys(P.cfg.kend).map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
+    await htmlToJpg(h, fname('jpg'));
+  }
+
+  // html bergaya inline -> JPG (dipakai Hitung PO dan Kirim PO)
+  async function htmlToJpg(h, name) {
     const hold = document.createElement('div'); hold.style.cssText = 'position:fixed;left:-99999px;top:0'; hold.innerHTML = h; document.body.appendChild(hold);
     const el = hold.firstElementChild, w = Math.ceil(el.offsetWidth) + 2, ht = Math.ceil(el.offsetHeight) + 2; hold.remove();
     // Ukuran ukur di halaman bisa lebih kecil dari hasil gambar (gaya halaman ikut mempengaruhi) -> kanvas dibuat longgar,
@@ -449,7 +458,7 @@
     const sc = Math.max(1, Math.min(3, Math.floor(14000 / Math.max(cw, ch)))), c = document.createElement('canvas'); c.width = cw * sc; c.height = ch * sc;
     const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.scale(sc, sc); g.translate(-cx, -cy); g.drawImage(img, 0, 0);
     const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .93)); if (!blob) throw new Error('gagal membuat JPG');
-    saveBlob(blob, fname('jpg'));
+    saveBlob(blob, name);
   }
 
   function loadExcelJS() {
@@ -549,9 +558,119 @@
     const buf = await wb.xlsx.writeBuffer();
     saveBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname('xlsx'));
   }
+
+  // ======================= Kirim PO =======================
+  // Lembar PO yang dikirim ke Takaki: data diambil dari Hitung PO (item, stock, PO 1..n). Download JPG / Excel.
+  const pad2 = v => String(v).padStart(2, '0');
+  const todayIso = () => { const d = new Date(); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+  const tglPO = () => P.tglPO || todayIso();                       // otomatis hari ini, bisa diubah
+  const tglPOText = () => { const t = tglPO(); return pd(t).getUTCDate() + ' ' + MONL[pd(t).getUTCMonth()] + " '" + String(pd(t).getUTCFullYear()).slice(2); };
+  const kirimLabel = (po, i) => 'PO ' + (i + 1) + ' (kirim ' + (po.tgl_kirim ? dml(po.tgl_kirim) : '? ' + MONL[pd(P.reqFrom).getUTCMonth()]) + ')';
+  const kirimFname = ext => 'PO TAKAKI ' + tglPO() + '.' + ext;
+  function kirimData() {
+    const C = calc(), pos = P.pos, T = C.T;
+    const rows = C.rows.map(x => ({ plu: x.r.plu, desk: x.r.desk, core: x.r.core, frc: x.r.frc, s1: x.r.s1, qc: x.r.qc, pal: pos.map(po => palOf(po.id, x.r.plu)), ctn: x.ctn, pcs: x.ctn.map(c => c * (x.r.frc || 0)), d1: x.d1, d2: x.d2 }));
+    const pcs = pos.map((po, k) => rows.reduce((a, r) => a + r.pcs[k], 0));
+    return { rows, pos, T, pcs, d1: T.qc > 0 ? T.s1 / T.qc : null, d2: T.qc > 0 ? T.s2 / T.qc : null, avg: rows.length ? T.s1 / rows.length : 0 };
+  }
+  const KFF = 'font-family:Calibri,Arial,sans-serif;', KB = 'border:1px solid #333;';
+  const KS = {
+    h: KB + 'background-color:#ffe600;font-weight:bold;text-align:center;', hb: KB + 'background-color:#cfe8f7;font-weight:bold;text-align:center;',
+    hw: KB + 'background-color:#ffffff;font-weight:bold;text-align:center;', hn: 'border:0;background-color:#ffffff;text-align:center;', nb: 'border:0;background-color:#ffffff;',
+    l: KB + 'text-align:left;', c: KB + 'text-align:center;', r: KB + 'text-align:right;', core: KB + 'background-color:#e3f5e8;text-align:left;',
+    tl: KB + 'background-color:#ffe600;font-weight:bold;text-align:left;', ty: KB + 'background-color:#ffe600;font-weight:bold;text-align:right;', tr: KB + 'font-weight:bold;text-align:right;',
+    tc: KB + 'font-weight:bold;text-align:center;', av: 'border:0;background-color:#ffffff;font-weight:bold;text-align:center;'
+  };
+  const kc = (t, k, at) => '<td ' + (at || '') + ' style="' + KFF + 'padding:2px 7px;font-size:12px;color:#111;white-space:nowrap;vertical-align:middle;' + KS[k] + '">' + t + '</td>';
+  // dokumen (judul + tabel) bergaya inline: sama untuk tampilan halaman dan JPG; web = true menambah isian tanggal kirim di header PO
+  function kirimDoc(web) {
+    const D = kirimData(), pos = D.pos, np = pos.length, d1 = dmy(P.reqTo), T = D.T;
+    const pcsT = D.pcs.reduce((a, b) => a + b, 0), q = v => v == null ? '-' : n0(v);
+    let h = '<div style="' + KFF + 'display:inline-block;background-color:#ffffff;padding:10px 12px"><div style="font-weight:bold;font-size:20px;color:#000">PO TAKAKI (U/ DCF SBY)</div>'
+      + '<div style="font-style:italic;font-size:12px;color:#000;padding-bottom:6px">Tanggal PO : ' + E(tglPOText()) + '</div>'
+      + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
+      + '<tr>' + kc('', 'nb', 'colspan="5"') + (np ? kc('PO TAKAKI', 'hw', 'colspan="' + 3 * np + '"') : '') + kc('', 'nb', 'colspan="2"') + '</tr>'
+      + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="2"') + kc('DESCRIPTION', 'hw', 'rowspan="2"') + kc('FRC', 'hw', 'rowspan="2"') + kc('ASUMSI SISA', 'hn') + kc('QPD<br>(CTN)', 'hb', 'rowspan="2"')
+      + pos.map((po, i) => kc(E(kirimLabel(po, i)) + (web ? '<br><input type="date" class="pt-dt" data-po="' + E(po.id) + '" value="' + E(po.tgl_kirim || '') + '" style="font-size:11px;width:118px" title="Tanggal kirim PO ini (sama dengan Hitung PO)">' : ''), 'h', 'colspan="3"')).join('')
+      + kc('DSI DCF', 'h', 'colspan="2"') + '</tr>'
+      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF ' + E(d1), 'h') + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
+    D.rows.forEach(r => {
+      const ck = r.core ? 'core' : 'l';
+      h += '<tr>' + kc(E(r.plu), ck) + kc(E(r.desk), ck) + kc(r.frc ? n0(r.frc) : '-', 'c') + kc(n0(r.s1), 'r') + kc(q1(r.qc), 'r')
+        + pos.map((po, k) => kc(fmtP1(r.pal[k]), 'c') + kc(r.ctn[k] ? n0(r.ctn[k]) : '-', 'c') + kc(r.pcs[k] ? n0(r.pcs[k]) : '-', 'c')).join('')
+        + kc(q(r.d1), 'c') + kc(q(r.d2), 'c') + '</tr>';
+    });
+    h += '<tr>' + kc('Grand Total', 'tl', 'colspan="3"') + kc(n0(T.s1), 'ty') + kc(q1(T.qc), 'tr')
+      + pos.map((po, k) => kc(fmtP1(T.pal[k]), 'tc') + kc(T.ctn[k] ? n0(T.ctn[k]) : '-', 'tc') + kc(D.pcs[k] ? n0(D.pcs[k]) : '-', 'tc')).join('')
+      + kc(q(D.d1), 'tc') + kc(q(D.d2), 'tc') + '</tr>'
+      + '<tr>' + kc('AVERAGE STOCK DCF', 'hn', 'colspan="3"') + kc(n0(D.avg) + ' CTN', 'av', 'colspan="2"') + pos.map(po => kc(E(po.kendaraan), 'av', 'colspan="3"')).join('') + kc('', 'nb', 'colspan="2"') + '</tr>'
+      + '</tbody></table></div>';
+    return h;
+  }
+  function kirimPage() {
+    let h = '<div class="pt-card"><div class="pt-row"><div><label class="k">Tanggal PO</label><br><input type="date" class="in" id="ptTgl" value="' + E(tglPO()) + '"></div>'
+      + '<button class="b s" id="ptTglNow" title="Kembali otomatis ke hari ini">Hari ini</button>'
+      + '<span class="pt-s" style="padding-bottom:6px">Data (item, stock, PO 1-' + Math.max(1, P.pos.length) + ') diambil dari Hitung PO. Tanggal kirim tiap PO bisa diisi langsung di header tabel.</span></div></div>';
+    if (!P.pos.length) h += '<div class="card empty" style="margin-top:10px">Belum ada PO. Tambah PO (mobil) di tab <b>Hitung PO</b> terlebih dulu.</div>';
+    h += '<div class="pt-wrap" style="margin-top:10px">' + kirimDoc(true) + '</div>';
+    return h;
+  }
+  async function downloadKirimJpg() { await htmlToJpg(kirimDoc(false), kirimFname('jpg')); }
+  async function downloadKirimXlsx() {
+    const EJ = await loadExcelJS(), D = kirimData(), pos = D.pos, np = pos.length, n = D.rows.length, T = D.T;
+    const wb = new EJ.Workbook(), ws = wb.addWorksheet('PO TAKAKI', { properties: { tabColor: { argb: 'FFFFE600' } } });
+    const L = c => { let t = ''; while (c > 0) { const m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; };
+    const solid = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } });
+    const bs = { style: 'thin', color: { argb: 'FF333333' } }, bx = { top: bs, left: bs, bottom: bs, right: bs };
+    const Y = 'FFFFE600', BL = 'FFCFE8F7', CORE = 'FFE3F5E8';
+    const put = (r, c, v, o) => { const cell = ws.getCell(r, c); if (v !== undefined && v !== null) cell.value = v; o = o || {};
+      cell.font = Object.assign({ name: 'Calibri', size: 10 }, o.font || {}); cell.alignment = { vertical: 'middle', horizontal: o.h || 'right', wrapText: !!o.wrap };
+      if (!o.nb) cell.border = bx; if (o.fill) cell.fill = solid(o.fill); if (o.nf) cell.numFmt = o.nf; return cell; };
+    const merge = (r1, c1, r2, c2, v, o) => { for (let r = r1; r <= r2; r++) for (let c = c1; c <= c2; c++) put(r, c, null, o); if (r1 !== r2 || c1 !== c2) ws.mergeCells(r1, c1, r2, c2); put(r1, c1, v, o); };
+    const cd1 = 6 + 3 * np, cd2 = cd1 + 1, R0 = 7, RG = R0 + n, RA = RG + 1, NC = cd2;
+    const NI = '#,##0;-#,##0;"-"', NP = '#,##0.0#;-#,##0.0#;"-"', NQ = '#,##0.0';
+    ws.getCell(1, 1).value = 'PO TAKAKI (U/ DCF SBY)'; ws.getCell(1, 1).font = { name: 'Calibri', size: 16, bold: true };
+    ws.getCell(2, 1).value = 'Tanggal PO : ' + tglPOText(); ws.getCell(2, 1).font = { name: 'Calibri', size: 10, italic: true };
+    const hw = { font: { bold: true }, h: 'center', wrap: true, fill: 'FFFFFFFF' }, hy = { font: { bold: true }, h: 'center', wrap: true, fill: Y }, hb = { font: { bold: true }, h: 'center', wrap: true, fill: BL };
+    if (np) merge(4, 6, 4, 5 + 3 * np, 'PO TAKAKI', hw);
+    merge(5, 1, 6, 1, 'PLU_DC', hw); merge(5, 2, 6, 2, 'DESCRIPTION', hw); merge(5, 3, 6, 3, 'FRC', hw);
+    put(5, 4, 'ASUMSI SISA', { nb: true, h: 'center' }); merge(5, 5, 6, 5, 'QPD (CTN)', hb);
+    put(6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
+    pos.forEach((po, k) => { const pc = 6 + 3 * k; merge(5, pc, 5, pc + 2, kirimLabel(po, k), hy); put(6, pc, 'PALLET', hy); put(6, pc + 1, 'CTN', hy); put(6, pc + 2, 'PCS', hy); });
+    merge(5, cd1, 5, cd2, 'DSI DCF', hy); put(6, cd1, 'AWAL', hy); put(6, cd2, 'AKHIR', hy);
+    ws.getRow(6).height = 42;
+    D.rows.forEach((r, i) => {
+      const x = R0 + i, f = r.core ? CORE : null, ctns = pos.map((po, k) => L(8 + 3 * k - 1) + x);   // kolom CTN tiap PO
+      put(x, 1, r.plu, { h: 'left', nf: '@', fill: f }); put(x, 2, r.desc || r.desk, { h: 'left', fill: f }); put(x, 3, r.frc || '-', { h: 'center' });
+      put(x, 4, r.s1, { nf: NI }); put(x, 5, r.qc, { nf: NQ });
+      pos.forEach((po, k) => { const pc = 6 + 3 * k;
+        put(x, pc, r.pal[k] || 0, { h: 'center', nf: NP }); put(x, pc + 1, r.ctn[k] || 0, { h: 'center', nf: NI });
+        put(x, pc + 2, { formula: L(pc + 1) + x + '*' + (r.frc || 0), result: r.pcs[k] }, { h: 'center', nf: NI }); });
+      const sum = ctns.length ? '+' + ctns.join('+') : '';
+      put(x, cd1, { formula: 'IF(E' + x + '>0,D' + x + '/E' + x + ',0)', result: r.d1 || 0 }, { h: 'center', nf: NI });
+      put(x, cd2, { formula: 'IF(E' + x + '>0,(D' + x + sum + ')/E' + x + ',0)', result: r.d2 || 0 }, { h: 'center', nf: NI });
+    });
+    const rng = c => L(c) + R0 + ':' + L(c) + (RG - 1), tot = pos.map((po, k) => L(7 + 3 * k) + RG);
+    merge(RG, 1, RG, 3, 'Grand Total', { font: { bold: true }, h: 'left', fill: Y });
+    put(RG, 4, { formula: n ? 'SUM(' + rng(4) + ')' : '0', result: T.s1 }, { nf: NI, font: { bold: true }, fill: Y }); put(RG, 5, { formula: n ? 'SUM(' + rng(5) + ')' : '0', result: T.qc }, { nf: NQ, font: { bold: true } });
+    pos.forEach((po, k) => { const pc = 6 + 3 * k;
+      put(RG, pc, { formula: n ? 'SUM(' + rng(pc) + ')' : '0', result: T.pal[k] }, { h: 'center', nf: NP, font: { bold: true } });
+      put(RG, pc + 1, { formula: n ? 'SUM(' + rng(pc + 1) + ')' : '0', result: T.ctn[k] }, { h: 'center', nf: NI, font: { bold: true } });
+      put(RG, pc + 2, { formula: n ? 'SUM(' + rng(pc + 2) + ')' : '0', result: D.pcs[k] }, { h: 'center', nf: NI, font: { bold: true } }); });
+    put(RG, cd1, { formula: 'IF(E' + RG + '>0,D' + RG + '/E' + RG + ',0)', result: D.d1 || 0 }, { h: 'center', nf: NI, font: { bold: true } });
+    put(RG, cd2, { formula: 'IF(E' + RG + '>0,(D' + RG + (tot.length ? '+' + tot.join('+') : '') + ')/E' + RG + ',0)', result: D.d2 || 0 }, { h: 'center', nf: NI, font: { bold: true } });
+    merge(RA, 1, RA, 3, 'AVERAGE STOCK DCF', { nb: true, h: 'center' });
+    merge(RA, 4, RA, 5, { formula: n ? 'ROUND(D' + RG + '/' + n + ',0)&" CTN"' : '"0 CTN"', result: n0(D.avg) + ' CTN' }, { nb: true, h: 'center', font: { bold: true } });
+    pos.forEach((po, k) => merge(RA, 6 + 3 * k, RA, 8 + 3 * k, po.kendaraan, { nb: true, h: 'center', font: { bold: true } }));
+    const wd = { 1: 11, 2: 32, 3: 6, 4: 15, 5: 8 }; for (let c = 1; c <= NC; c++) ws.getColumn(c).width = wd[c] || 9;
+    ws.views = [{ state: 'frozen', xSplit: 2, ySplit: 6, showGridLines: false }];
+    try { ws.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 0 }; } catch (e) { /* opsional */ }
+    const buf = await wb.xlsx.writeBuffer();
+    saveBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), kirimFname('xlsx'));
+  }
   async function doDownload(f) {
     const b = Q('#ptDl'); if (b) b.disabled = true;
-    try { if (f === 'jpg') await downloadJpg(); else await downloadXlsx(); }
+    try { if (P.tab === 'kirim') { if (f === 'jpg') await downloadKirimJpg(); else await downloadKirimXlsx(); } else if (f === 'jpg') await downloadJpg(); else await downloadXlsx(); }
     catch (e) { msg('Gagal download ' + (f === 'jpg' ? 'JPG' : 'Excel') + ': ' + e.message, true); }
     const b2 = Q('#ptDl'); if (b2) b2.disabled = false;
   }
@@ -624,6 +743,8 @@
     el.addEventListener('input', e => { if (e.target.id === 'ptRq') { e.target.size = rqSize(e.target.value); fitRq(e.target); } });
     el.addEventListener('keydown', e => { if (e.target.id === 'ptRq' && e.key === 'Enter') e.target.blur(); });
     el.addEventListener('click', e => {
+      const sg = e.target.closest('#ptSeg button'); if (sg) { e.stopPropagation(); P.tab = sg.dataset.t; return paint(); }
+      if (e.target.closest('#ptTglNow')) { P.tglPO = ''; return paint(); }
       const rm = e.target.closest('.pt-rm'); if (rm) { e.stopPropagation(); return rmItem(rm.dataset.rm); }
       const x = e.target.closest('.pt-x'); if (x) { e.stopPropagation(); return delPO(x.dataset.del); }
       const dl = e.target.closest('#ptDl'); if (dl) { e.stopPropagation(); const w = dl.closest('.dmw'), o = w.classList.contains('open'); w.classList.toggle('open', !o); return; }
@@ -643,7 +764,9 @@
         } else if (c.contains('pt-kd') && po) {          // kendaraan
           must(await sbc().from('potakaki_po').update({ kendaraan: t.value }).eq('id', po.id)); po.kendaraan = t.value; recalc();
         } else if (c.contains('pt-dt') && po) {          // tanggal kirim
-          const v = t.value || null; must(await sbc().from('potakaki_po').update({ tgl_kirim: v }).eq('id', po.id)); po.tgl_kirim = v;
+          const v = t.value || null; must(await sbc().from('potakaki_po').update({ tgl_kirim: v }).eq('id', po.id)); po.tgl_kirim = v; if (P.tab === 'kirim') paint();
+        } else if (t.id === 'ptTgl') {                   // tanggal PO (Kirim PO); kosong = hari ini
+          P.tglPO = t.value || ''; paint();
         } else if (t.id === 'ptRq') {                    // teks REQUEST PENGIRIMAN (kosong = otomatis)
           const v = String(t.value).replace(/\s+/g, ' ').trim(), store = v && v !== defLine() ? v : '';
           await saveCfg('request_text|' + P.periode, store); P.reqCustom = store; t.value = reqLine(); t.size = rqSize(t.value); fitRq(t);
