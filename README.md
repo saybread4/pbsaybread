@@ -69,6 +69,7 @@ Menu di kanan Stock DCF, isi mengikuti Excel *EST. PO TAKAKI JATIM*. Satuan CTN;
 - Target DSI (default 30 hari) dan tonase kendaraan (ctn) bisa diubah di halaman, tersimpan di `potakaki_cfg`.
 - **Teks REQUEST PENGIRIMAN** di bawah judul bisa diklik dan diubah sendiri (tersimpan per periode di `potakaki_cfg`, key `request_text|<tanggal periode>`; kosongkan lalu Enter = kembali otomatis). Ikut tampil di JPG & Excel.
 - **Item core**: warna hijau dan urutan baris otomatis mengikuti Stock DCF (kolom CORE di Stock DCF); tidak diubah dari halaman ini.
+- **Rekomendasi DSI**: item core ditargetkan DSI = Target DSI, item lainnya = Target DSI - 5 hari (konstanta `GAP` di `pb-potakaki.js`). Berlaku di rekomendasi, isi otomatis, dan hitungan "Item DSI < target".
 - **Hapus / tambah item**: tombol × di kiri tiap baris menyembunyikan item dari tabel (total, rekomendasi, JPG & Excel ikut tanpa item itu); item yang dihapus bisa dikembalikan lewat pilihan *+ Tambah item…* di atas tabel. Tersimpan di `potakaki_cfg` key `item_hidden`.
 - **CTN per pallet** satu isian di atas tabel, berlaku untuk semua PO (tidak ada lagi di header PO).
 - **Baris Muatan kendaraan**: menampilkan nama kendaraan; bila muatan 100% hanya nama (mis. TRONTON), bila belum penuh ditambah `Sisa x / kapasitas (%)`. Header JPG/Excel tidak lagi memuat nama kendaraan dan ctn/plt (di Excel baris 3 ctn/plt disembunyikan, rumus tetap jalan).

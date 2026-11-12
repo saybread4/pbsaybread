@@ -42,8 +42,11 @@
   const UP = 10;
   // kapasitas kendaraan dalam satuan 0,1 pallet (muatan yang bisa diisi otomatis tanpa melebihi tonase)
   const unitsCap = (cap, cp) => Math.floor(cap / cp * UP + 1e-9);
-  // kebutuhan CTN agar setiap item mencapai DSI target (hanya item yang punya QPD)
-  const needCtn = (rows, T) => rows.reduce((t, r) => t + (r.qc > 0 ? Math.max(0, T * r.qc - r.s1) : 0), 0);
+  // DSI akhir item CORE harus lebih tinggi minimal GAP hari dari item lainnya (mis. core 40 hari -> item lain 35 hari)
+  const GAP = 5;
+  const tgtOf = (r, T) => r.core ? T : Math.max(0, T - GAP);
+  // kebutuhan CTN agar setiap item mencapai DSI target (core = T, lainnya = T - GAP; hanya item yang punya QPD)
+  const needCtn = (rows, T) => rows.reduce((t, r) => t + (r.qc > 0 ? Math.max(0, tgtOf(r, T) * r.qc - r.s1) : 0), 0);
   // jumlah PO paling sedikit, lalu kapasitas paling pas, dari kombinasi jenis kendaraan
   function pickVehicles(need, caps, cp) {
     if (!(need > 0)) return [];
@@ -73,14 +76,14 @@
   function recommend(rows, T, caps, cp, mode) {
     const items = rows.filter(r => r.qc > 0), cu = cp / UP;
     const need = needCtn(rows, T);
-    const mn = items.map(r => Math.ceil(Math.max(0, T * r.qc - r.s1) / cu - 1e-9));
+    const mn = items.map(r => Math.ceil(Math.max(0, tgtOf(r, T) * r.qc - r.s1) / cu - 1e-9)), off = items.map(r => T - tgtOf(r, T));
     const veh = pickVehicles(mn.reduce((a, b) => a + b, 0) * cu, caps, cp);
     const vu = veh.map(n => unitsCap(caps[n], cp)), capUnits = vu.reduce((a, b) => a + b, 0);
     const out = { need, veh, capUnits, capCtn: capUnits * cu, level: T, plan: veh.map(n => ({ kendaraan: n, items: {} })) };
     if (!veh.length || !items.length) return out;
     let x = mn.slice(), level = T;
     if (mode !== 'pas') {
-      const xs = lv => items.map((r, i) => Math.max(mn[i], (lv * r.qc - r.s1) / cu));
+      const xs = lv => items.map((r, i) => Math.max(mn[i], ((lv - off[i]) * r.qc - r.s1) / cu));   // item non-core diratakan di level (lv - GAP)
       const f = lv => xs(lv).reduce((a, b) => a + b, 0);
       let lo = T, hi = T + 1; while (f(hi) < capUnits && hi < 1e6) hi *= 2;
       for (let k = 0; k < 80; k++) { const mid = (lo + hi) / 2; if (f(mid) < capUnits) lo = mid; else hi = mid; }
@@ -115,7 +118,7 @@
     });
     const ctnOf = k => U.reduce((a, m) => a + Math.round((m[k] || 0) / UP * cp), 0);
     items.forEach(r => {
-      const reqC = Math.max(0, T * r.qc - r.s1); let g = 0;
+      const reqC = Math.max(0, tgtOf(r, T) * r.qc - r.s1); let g = 0;
       while (ctnOf(r.plu) < reqC - 1e-9 && g++ < 30) {
         const order = U.map((m, j) => j).sort((a, b) => ((U[b][r.plu] > 0) - (U[a][r.plu] > 0)) || (caps[veh[b]] - poTot(b)) - (caps[veh[a]] - poTot(a)));
         let ok = false;
@@ -189,7 +192,7 @@
 #vPoTakaki input.pt-p:hover{background:rgba(55,48,163,.07)}#vPoTakaki input.pt-p:focus{outline:2px solid #34b96f;background:#fff}
 #vPoTakaki input.pt-p::placeholder{color:#b8c2bd;font-weight:400}
 #vPoTakaki .pt-ton{display:inline-block;margin-top:8px;background:#fbe5d6;border:1px solid #efc9ae;border-radius:8px;padding:7px 12px;font-size:12px}
-#vPoTakaki .pt-ton table{border-collapse:collapse}#vPoTakaki .pt-ton td{padding:1px 6px 1px 0}
+#vPoTakaki .pt-ton table{border-collapse:collapse;width:auto;min-width:0}#vPoTakaki .pt-ton td{padding:1px 6px 1px 0}
 #vPoTakaki .pt-ton input{width:68px;text-align:right;font:inherit;font-weight:700;padding:1px 4px;border:1px solid #d9b394;border-radius:4px;background:#fff;color:#1f4fd8}
 #vPoTakaki .pt-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu);padding:6px 2px 0;align-items:center}
 #vPoTakaki .pt-sw{display:inline-block;width:14px;height:12px;border:1px solid rgba(0,0,0,.2);vertical-align:-2px;margin-right:4px;background:#e3f5e8}
@@ -279,7 +282,7 @@
   }
   function recoHtml() {
     const R = reco(), T = P.cfg.target, cp = P.cfg.cp, C = calc();
-    const below = C.rows.filter(x => x.r.qc > 0 && x.d2 != null && x.d2 < T - 1e-9).length;
+    const below = C.rows.filter(x => x.r.qc > 0 && x.d2 != null && x.d2 < tgtOf(x.r, T) - 1e-9).length;
     let h = '<div class="pt-card"><div class="pt-row"><div><label class="k">Target DSI (hari)</label><br><input class="in" id="ptTg" inputmode="decimal" style="width:70px;text-align:right" value="' + E(String(T).replace('.', ',')) + '"></div>'
       + '<div><label class="k">Cara isi otomatis</label><br><select class="in" id="ptMd"><option value="full"' + (P.mode === 'full' ? ' selected' : '') + '>Kendaraan diisi penuh (DSI diratakan)</option><option value="pas"' + (P.mode === 'pas' ? ' selected' : '') + '>Pas sampai target DSI</option></select></div>'
       + '<button class="b p" id="ptApply"' + (R.veh.length ? '' : ' disabled') + '>' + ic('spark') + ' Terapkan rekomendasi</button>'
@@ -288,12 +291,12 @@
       + (P.all.some(r => P.hid.has(r.plu)) ? '<div><label class="k">Item dihapus</label><br><select class="in" id="ptAddItem"><option value="">+ Tambah item…</option>' + P.all.filter(r => P.hid.has(r.plu)).map(r => '<option value="' + E(r.plu) + '">' + E(r.plu + ' · ' + r.desk) + '</option>').join('') + '</select></div>' : '') + '</div>'
       + '<div class="pt-reco" style="margin-top:7px">';
     if (!P.rows.some(r => r.qc > 0)) h += '<span class="pt-er">QPD belum terbaca - rekomendasi belum bisa dihitung.</span>';
-    else if (!R.veh.length) h += '<span class="pt-chip">Rekomendasi: 0 PO</span> Est. STOCK ' + E(dml(P.estDate)) + ' semua item sudah memenuhi DSI ' + E(String(T).replace('.', ',')) + ' hari.';
+    else if (!R.veh.length) h += '<span class="pt-chip">Rekomendasi: 0 PO</span> Est. STOCK ' + E(dml(P.estDate)) + ' semua item sudah memenuhi target (core ' + E(String(T).replace('.', ',')) + ' hari, lainnya ' + E(String(Math.max(0, T - GAP)).replace('.', ',')) + ' hari).';
     else {
       const cnt = {}; R.veh.forEach(v => { cnt[v] = (cnt[v] || 0) + 1; });
       h += '<span class="pt-chip k">Rekomendasi: ' + R.veh.length + ' PO</span> ' + Object.keys(cnt).map(v => '<b>' + cnt[v] + ' × ' + E(v) + '</b>').join(' + ')
-        + ' (muat maks. ' + n0(R.capCtn) + ' ctn = ' + fmtP1(R.capUnits / 10) + ' pallet). Kebutuhan agar semua item DSI ≥ ' + E(String(T).replace('.', ',')) + ' hari: <b>' + n0(R.need) + ' ctn</b> (' + fmtP1(R.need / cp) + ' pallet).'
-        + (P.mode === 'full' ? ' Bila diisi penuh, DSI merata ≈ <b>' + n0(R.level) + ' hari</b>.' : '');
+        + ' (muat maks. ' + n0(R.capCtn) + ' ctn = ' + fmtP1(R.capUnits / 10) + ' pallet). Kebutuhan agar item core DSI ≥ ' + E(String(T).replace('.', ',')) + ' hari dan item lain ≥ ' + E(String(Math.max(0, T - GAP)).replace('.', ',')) + ' hari: <b>' + n0(R.need) + ' ctn</b> (' + fmtP1(R.need / cp) + ' pallet).'
+        + (P.mode === 'full' ? ' Bila diisi penuh, DSI item core ≈ <b>' + n0(R.level) + ' hari</b>, item lain ≈ <b>' + n0(Math.max(0, R.level - GAP)) + ' hari</b>.' : '');
     }
     h += '<br><span class="pt-chip">Terisi sekarang: ' + P.pos.length + ' PO · ' + n0(C.T.tot) + ' ctn</span>'
       + (P.pos.length && P.rows.some(r => r.qc > 0) ? '<span class="pt-chip' + (below ? ' k' : '') + '">Item DSI &lt; target setelah PO: ' + below + '</span>' : '')
@@ -669,5 +672,5 @@
     if (!P.ready || P.err || Date.now() - (P.at || 0) > 60000) load(false);   // data lebih dari 1 menit: muat ulang
     else { try { P.all = mapRows(window.PBSTOKDCF.calcStok().rows); P.rows = P.all.filter(r => !P.hid.has(r.plu)); } catch (e) { /* pakai data sebelumnya */ } paint(); }
   }
-  window.PBPOTAKAKI = { open, downloadJpg, downloadXlsx, reload: () => load(true), _t: { recommend, pickVehicles, needCtn, unitsCap, toCtn, numIn } };
+  window.PBPOTAKAKI = { open, downloadJpg, downloadXlsx, reload: () => load(true), _t: { tgtOf, recommend, pickVehicles, needCtn, unitsCap, toCtn, numIn } };
 })();
