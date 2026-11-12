@@ -606,10 +606,10 @@
       + '<div style="font-style:italic;font-size:12px;color:#000;padding-bottom:6px">Tanggal PO : ' + E(tglPOText()) + '</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
       + '<tr>' + kc('', 'nb', 'colspan="5"') + (np ? kc('PO TAKAKI', 'hw', 'colspan="' + 3 * np + '"') : '') + kc('', 'nb', 'colspan="2"') + '</tr>'
-      + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="2"') + kc('DESCRIPTION', 'hw', 'rowspan="2"') + kc('FRC', 'hw', 'rowspan="2"') + kc('', 'nb') + kc('QPD<br>(CTN)', 'hb', 'rowspan="2"')
+      + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="2"') + kc('DESCRIPTION', 'hw', 'rowspan="2"') + kc('FRC', 'hw', 'rowspan="2"') + kc('EST. STOCK<br>AKHIR DCF<br>' + E(d1), 'h', 'rowspan="2"') + kc('QPD<br>(CTN)', 'hb', 'rowspan="2"')
       + pos.map((po, i) => kc(E(kirimLabel(po, i)) + (web ? '<br><input type="date" class="pt-dt" data-po="' + E(po.id) + '" value="' + E(po.tgl_kirim || '') + '" style="font-size:11px;width:118px" title="Tanggal kirim PO ini (sama dengan Hitung PO)">' : ''), 'h', 'colspan="3"')).join('')
       + kc('DSI DCF', 'h', 'colspan="2"') + '</tr>'
-      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF<br>' + E(d1), 'h') + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
+      + '<tr>' + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
     D.rows.forEach(r => {
       const ck = r.core ? 'core' : 'l';
       h += '<tr>' + kc(E(r.plu), ck) + kc(E(r.desk), ck) + kc(r.frc ? n0(r.frc) : '-', 'c') + kc(n0(r.s1), 'r') + kc(q1(r.qc), 'r')
@@ -651,7 +651,7 @@
     if (np) merge(4, 6, 4, 5 + 3 * np, 'PO TAKAKI', hw);
     merge(5, 1, 6, 1, 'PLU_DC', hw); merge(5, 2, 6, 2, 'DESCRIPTION', hw); merge(5, 3, 6, 3, 'FRC', hw);
     merge(5, 5, 6, 5, 'QPD (CTN)', hb);
-    put(6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
+    merge(5, 4, 6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
     pos.forEach((po, k) => { const pc = 6 + 3 * k; merge(5, pc, 5, pc + 2, kirimLabel(po, k), hy); put(6, pc, 'PALLET', hy); put(6, pc + 1, 'CTN', hy); put(6, pc + 2, 'PCS', hy); });
     merge(5, cd1, 5, cd2, 'DSI DCF', hy); put(6, cd1, 'AWAL', hy); put(6, cd2, 'AKHIR', hy);
     ws.getRow(6).height = 42;
