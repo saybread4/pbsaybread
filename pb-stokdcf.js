@@ -314,14 +314,39 @@
     });
     return rows;
   }
+  // format file STOCKM_SI05_yyyymmdd.xlsx (baris 1 = nama kolom): _PLU_CUST, _DESCRIPTION, SOH (stok), _TRANSC (inbound), _EXP_DATE;
+  // tanggal data = TGL_IMPORT (cadangan: yyyymmdd di nama file)
+  function parseStockM(ws, fname) {
+    const hdr = {}; let hr = 0;
+    ws.eachRow((row, rn) => { if (hr) return; const m = {}; row.eachCell((c, ci) => { const t = String(cv(c) == null ? '' : cv(c)).trim().toUpperCase().replace(/^_+/, ''); if (t) m[t] = ci; }); if (m.PLU_CUST && m.SOH) { hr = rn; Object.assign(hdr, m); } });
+    if (!hr) return null;
+    const rows = []; let tgl = null;
+    ws.eachRow((row, rn) => {
+      if (rn <= hr) return;
+      const g = k => hdr[k] ? cv(row.getCell(hdr[k])) : null;
+      const pc = String(g('PLU_CUST') || '').trim(); if (!pc) return;
+      if (!tgl && hdr.TGL_IMPORT) tgl = toISO(g('TGL_IMPORT'));
+      const stok = Number(g('SOH')) || 0, ds = String(g('DESCRIPTION') || '').trim();
+      if (!ds && !stok) return;
+      rows.push({ plu_cust: pc, deskripsi: ds, stok, tgl_inbound: toISO(g('TRANSC')), tgl_exp: toISO(g('EXP_DATE')) });
+    });
+    if (!tgl) { const m = String(fname || '').match(/(\d{4})(\d\d)(\d\d)(?=\D*$)/); if (m) tgl = m[1] + '-' + m[2] + '-' + m[3]; }
+    return { rows, tgl };
+  }
   async function pickFile(f) {
     const st = Q('#sdFs'); if (!f) return; st.textContent = 'Membaca file…'; X.file = null;
     try {
       const EJ = await loadEJ(), wb = new EJ.Workbook(); await wb.xlsx.load(await f.arrayBuffer());
-      const ws = wb.worksheets.find(w => /data\s*ed/i.test(w.name)); if (!ws) throw new Error('Sheet "data ED" tidak ditemukan di file ini.');
-      const rows = parseED(ws); if (!rows.length) throw new Error('Tidak ada baris data di sheet data ED.');
+      let rows, t, ws = wb.worksheets.find(w => /data\s*ed/i.test(w.name));
+      if (ws) { rows = parseED(ws); t = toISO(cv(ws.getCell('B2'))); }          // format lama: sheet "data ED"
+      else {
+        let r = null; for (const w of wb.worksheets) { r = parseStockM(w, f.name); if (r) break; }
+        if (!r) throw new Error('Kolom _PLU_CUST dan SOH tidak ditemukan di file ini.');
+        rows = r.rows; t = r.tgl;
+      }
+      if (!rows.length) throw new Error('Tidak ada baris data di file ini.');
       X.file = { name: f.name, rows };
-      const t = toISO(cv(ws.getCell('B2'))); if (t) Q('#sdTgl').value = t;
+      if (t) Q('#sdTgl').value = t;
       st.textContent = f.name + ' — ' + n0(rows.length) + ' baris, total ' + n0(rows.reduce((a, r) => a + r.stok, 0)) + ' ctn. Periksa tanggal lalu klik Simpan.';
       Q('#sdSave').disabled = false;
     } catch (e) { st.textContent = ''; Q('#sdSave').disabled = true; msg('Gagal: ' + e.message, true); }
@@ -346,7 +371,7 @@
       + '<button class="b p" id="sdSave" disabled>Simpan</button>'
       + (X.snap ? '<button class="b s" id="sdTglOnly" title="Ubah tanggal data yang sudah tersimpan tanpa unggah ulang">Ubah tanggal saja</button>' : '') + '</div>'
       + '<div id="sdFs" class="note" style="padding:5px 0 0"></div>'
-      + '<div class="note" style="padding:2px 0 0">Hanya sheet <b>data ED</b> di file yang dibaca (PLU_CUST kolom A, deskripsi B, stok C, inbound J, ED K). Tanggal terisi dari sel B2 dan bisa diubah. Data ED lama diganti.</div></div>');
+      + '<div class="note" style="padding:2px 0 0">File <b>STOCKM_SI05</b> dibaca menurut nama kolom: _PLU_CUST, _DESCRIPTION, SOH (stok), _TRANSC (inbound), _EXP_DATE. (Format lama sheet <b>data ED</b> tetap bisa.) Tanggal terisi dari TGL_IMPORT dan bisa diubah. Data ED lama diganti.</div></div>');
     if (X.ed.length) {
       const rows = X.ed.map((b, n) => {
         const pc = String(b.plu_cust).trim();
