@@ -116,6 +116,18 @@
       const cap = caps[veh[j]]; let g = 0;
       while (poTot(j) > cap && g++ < 500) { const k = Object.keys(m).filter(q => m[q] > 0).sort((a, b) => dsiAfter(b) - dsiAfter(a))[0]; if (!k) break; m[k]--; tu[k]--; }
     });
+    // mode 'full': sisa muatan (akibat pembulatan CTN per item) diisi tambahan 0,1 pallet yang membuat muatan paling dekat ke tonase
+    if (mode !== 'pas') U.forEach((m, j) => {
+      const cap = caps[veh[j]]; let g = 0;
+      while (g++ < 60) {
+        const cur = poTot(j); if (cur >= cap) break;
+        let bk = null, bt = cur;
+        items.forEach(r => { m[r.plu] = (m[r.plu] || 0) + 1; const t = poTot(j); m[r.plu]--; if (!m[r.plu]) delete m[r.plu];
+          if (t <= cap && (t > bt || (t === bt && bk && (r.s1 + t) / r.qc < (byP[bk].s1 + t) / byP[bk].qc))) { bt = t; bk = r.plu; } });
+        if (!bk || bt <= cur) break;
+        m[bk] = (m[bk] || 0) + 1; tu[bk] = (tu[bk] || 0) + 1;
+      }
+    });
     const ctnOf = k => U.reduce((a, m) => a + Math.round((m[k] || 0) / UP * cp), 0);
     items.forEach(r => {
       const reqC = Math.max(0, tgtOf(r, T) * r.qc - r.s1); let g = 0;
@@ -137,6 +149,8 @@
   const pk = (id, plu) => id + '|' + plu;
   const palOf = (id, plu) => P.pal.get(pk(id, plu)) || 0;
   const capOf = po => Number(P.cfg.kend[po.kendaraan]) || 0;
+  // daftar kendaraan urut tonase terkecil -> terbesar (TRONTON, JUMBO, BUILT-UP), tidak tergantung urutan data tersimpan
+  const kendKeys = () => Object.keys(P.cfg.kend).sort((a, b) => (Number(P.cfg.kend[a]) || 0) - (Number(P.cfg.kend[b]) || 0));
   const cpOf = po => Number(po.ctn_pallet) || P.cfg.cp || 77;
   const root = () => Q('#vPoTakaki');
 
@@ -262,8 +276,9 @@
   function muatText(po, used) {
     const cap = capOf(po); if (!cap) return po.kendaraan || '-';
     const left = cap - used;
-    if (left >= 0 && Math.round(used / cap * 100) >= 100) return po.kendaraan;
-    return po.kendaraan + ' · ' + (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' / ' + n0(cap) + ' (' + Math.round(used / cap * 100) + '%)';
+    if (left === 0) return po.kendaraan;
+    const pct = left > 0 ? Math.floor(used / cap * 100) : Math.round(used / cap * 100);   // tidak dibulatkan ke 100% bila belum penuh
+    return po.kendaraan + ' · ' + (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' / ' + n0(cap) + ' (' + pct + '%)';
   }
 
   // ---------------- tampilan ----------------
@@ -308,7 +323,7 @@
   }
   function tableHtml() {
     const pos = P.pos, np = pos.length, d1 = P.reqTo ? dmy(P.reqTo) : '', ds = P.reqTo ? dmm(P.reqTo).replace(' ', '-') : '';
-    const kopt = sel => Object.keys(P.cfg.kend).map(k => '<option' + (k === sel ? ' selected' : '') + '>' + E(k) + '</option>').join('');
+    const kopt = sel => kendKeys().map(k => '<option' + (k === sel ? ' selected' : '') + '>' + E(k) + '</option>').join('');
     const poh = pos.map((po, i) => '<th colspan="2" class="y"><div class="pt-poh1"><b>PO ' + (i + 1) + '</b><select class="pt-kd" data-po="' + po.id + '">' + kopt(po.kendaraan) + '</select><span class="pt-x" data-del="' + po.id + '" title="Hapus PO ini">×</span></div>'
       + '<div class="pt-poh2">Kirim <input type="date" class="pt-dt" data-po="' + po.id + '" value="' + E(po.tgl_kirim || '') + '"></div></th>').join('');
     let h = '<div class="pt-wrap"><table class="pt-tb"><thead>'
@@ -335,7 +350,7 @@
   }
   function tonHtml() {
     return '<div class="pt-leg"><span><i class="pt-sw"></i>Item core</span></div>'
-      + '<div class="pt-ton"><b>Tonase Kendaraan (ctn)</b><table>' + Object.keys(P.cfg.kend).map(k => '<tr><td><input class="pt-cap" data-k="' + E(k) + '" inputmode="numeric" value="' + n0(P.cfg.kend[k]) + '"></td><td>' + E(k) + '</td></tr>').join('') + '</table></div>'
+      + '<div class="pt-ton"><b>Tonase Kendaraan (ctn)</b><table>' + kendKeys().map(k => '<tr><td><input class="pt-cap" data-k="' + E(k) + '" inputmode="numeric" value="' + n0(P.cfg.kend[k]) + '"></td><td>' + E(k) + '</td></tr>').join('') + '</table></div>'
       + '<div class="pt-leg"><span>Rata-rata PB per minggu = ' + (P.nw ? 'rata-rata ' + P.nw + ' minggu terakhir yang tersedia' : 'belum ada data') + ' (arsip PB) · JML TOKO JUAL = jumlah toko yang punya item tersebut</span></div>';
   }
   function paint() {
@@ -431,7 +446,7 @@
     }
     h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + CORE + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
       + '<div style="display:inline-block;margin-top:6px;background-color:#fbe5d6;border:1px solid #efc9ae;padding:5px 12px;font-size:12px"><b>Tonase Kendaraan (ctn)</b>'
-      + Object.keys(P.cfg.kend).map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
+      + kendKeys().map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
     await htmlToJpg(h, fname('jpg'));
   }
 
@@ -537,7 +552,7 @@
       const lab = (r, t) => merge(r, 1, r, 4, t, { h: 'left', fill: PC, font: { bold: true, size: 10 } });
       lab(rr2, 'Muatan kendaraan'); lab(rr2 + 1, 'Kapasitas kendaraan (ctn)'); lab(rr2 + 2, 'Sisa kapasitas (ctn)');
       pos.forEach((po, k) => { const pc = 5 + 2 * k, cap = capOf(po), cc = L(pc) + (rr2 + 1), tc = L(pc + 1) + RG, kn = String(po.kendaraan).replace(/"/g, '""');
-        const fm = 'IF(AND(' + cc + '>0,' + cc + '-' + tc + '>=0,ROUND(' + tc + '/' + cc + ',2)>=1),"' + kn + '","' + kn + ' · "&IF(' + cc + '-' + tc + '<0,"Lebih ","Sisa ")&TEXT(ABS(' + cc + '-' + tc + '),"#,##0")&" / "&TEXT(' + cc + ',"#,##0")&" ("&TEXT(IF(' + cc + '>0,' + tc + '/' + cc + ',0),"0%")&")")';
+        const fm = 'IF(AND(' + cc + '>0,' + cc + '-' + tc + '=0),"' + kn + '","' + kn + ' · "&IF(' + cc + '-' + tc + '<0,"Lebih ","Sisa ")&TEXT(ABS(' + cc + '-' + tc + '),"#,##0")&" / "&TEXT(' + cc + ',"#,##0")&" ("&TEXT(IF(' + cc + '>0,IF(' + cc + '>' + tc + ',INT(' + tc + '/' + cc + '*100),ROUND(' + tc + '/' + cc + '*100,0)),0)/100,"0%")&")")';
         merge(rr2, pc, rr2, pc + 1, { formula: fm, result: muatText(po, T.ctn[k]) }, { h: 'center', fill: PC, font: { bold: true, size: 10 } });
         merge(rr2 + 1, pc, rr2 + 1, pc + 1, cap, { nf: NI, h: 'center', fill: PC, font: { bold: true, size: 10 } });
         merge(rr2 + 2, pc, rr2 + 2, pc + 1, { formula: cc + '-' + tc, result: cap - T.ctn[k] }, { nf: '#,##0;[Red]-#,##0', h: 'center', fill: PC, font: { bold: true, size: 10 } }); });
@@ -545,7 +560,7 @@
     }
     // Tonase kendaraan
     rr2 += 1; ws.getCell(rr2, 1).value = 'Tonase Kendaraan (ctn)'; ws.getCell(rr2, 1).font = { name: 'Calibri', size: 10, bold: true };
-    Object.keys(P.cfg.kend).forEach((k, i) => { const r = rr2 + 1 + i; put(r, 1, null, { fill: 'FFFBE5D6' }); put(r, 2, P.cfg.kend[k], { nf: NI, fill: 'FFFBE5D6', font: { bold: true } }); put(r, 3, k, { h: 'left', fill: 'FFFBE5D6' }); });
+    kendKeys().forEach((k, i) => { const r = rr2 + 1 + i; put(r, 1, null, { fill: 'FFFBE5D6' }); put(r, 2, P.cfg.kend[k], { nf: NI, fill: 'FFFBE5D6', font: { bold: true } }); put(r, 3, k, { h: 'left', fill: 'FFFBE5D6' }); });
     ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).value = 'Item core diberi warna hijau (sama dengan Stock DCF). Kolom CTN, STOCK, BUFFER, DSI memakai rumus sehingga ikut berubah bila PALLET / ctn per pallet diubah. ctn per pallet ada di baris 3 (disembunyikan; klik kanan nomor baris > Unhide untuk mengubah).';
     ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).font = { name: 'Calibri', size: 9, italic: true };
     // lebar kolom, bekukan header, nol = merah muda
@@ -593,7 +608,7 @@
       + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="2"') + kc('DESCRIPTION', 'hw', 'rowspan="2"') + kc('FRC', 'hw', 'rowspan="2"') + kc('ASUMSI SISA', 'hn') + kc('QPD<br>(CTN)', 'hb', 'rowspan="2"')
       + pos.map((po, i) => kc(E(kirimLabel(po, i)) + (web ? '<br><input type="date" class="pt-dt" data-po="' + E(po.id) + '" value="' + E(po.tgl_kirim || '') + '" style="font-size:11px;width:118px" title="Tanggal kirim PO ini (sama dengan Hitung PO)">' : ''), 'h', 'colspan="3"')).join('')
       + kc('DSI DCF', 'h', 'colspan="2"') + '</tr>'
-      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF ' + E(d1), 'h') + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
+      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF<br>' + E(d1), 'h') + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
     D.rows.forEach(r => {
       const ck = r.core ? 'core' : 'l';
       h += '<tr>' + kc(E(r.plu), ck) + kc(E(r.desk), ck) + kc(r.frc ? n0(r.frc) : '-', 'c') + kc(n0(r.s1), 'r') + kc(q1(r.qc), 'r')
