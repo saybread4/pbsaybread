@@ -228,7 +228,8 @@
       if (run !== P.run) return;
       const C = SD.calcStok();
       if (!C.to2) throw new Error('Belum ada data stock DCF - unggah dulu di Stock DCF > Data Exp Date');
-      P.estDate = addD(C.to2, 1); P.reqFrom = addD(C.to2, 2); P.reqTo = addD(C.to2, 7); P.periode = P.reqFrom;
+      const tL = C.toLast || C.to2;   // akhir minggu Est. PB terakhir di Stock DCF (termasuk minggu tambahan)
+      P.estDate = addD(tL, 1); P.reqFrom = addD(tL, 2); P.reqTo = addD(tL, 7); P.periode = P.reqFrom;
       P.all = mapRows(C.rows);
       const s = sbc();
       const [po, cf, inf] = await Promise.all([
@@ -604,11 +605,11 @@
     let h = '<div style="' + KFF + 'display:inline-block;background-color:#ffffff;padding:10px 12px"><div style="font-weight:bold;font-size:20px;color:#000">PO TAKAKI (U/ DCF SBY)</div>'
       + '<div style="font-style:italic;font-size:12px;color:#000;padding-bottom:6px">Tanggal PO : ' + E(tglPOText()) + '</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
-      + '<tr>' + kc('', 'nb', 'colspan="5"') + (np ? kc('PO TAKAKI', 'hw', 'colspan="' + 3 * np + '"') : '') + kc('', 'nb', 'colspan="2"') + '</tr>'
-      + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="2"') + kc('DESCRIPTION', 'hw', 'rowspan="2"') + kc('FRC', 'hw', 'rowspan="2"') + kc('ASUMSI SISA', 'hn') + kc('QPD<br>(CTN)', 'hb', 'rowspan="2"')
+      + '<tr>' + kc('PLU_DC', 'hw', 'rowspan="3"') + kc('DESCRIPTION', 'hw', 'rowspan="3"') + kc('FRC', 'hw', 'rowspan="3"') + kc('ASUMSI SISA', 'hw') + kc('QPD<br>(CTN)', 'hb', 'rowspan="3"') + (np ? kc('PO TAKAKI', 'hw', 'colspan="' + 3 * np + '"') : '') + kc('', 'nb', 'colspan="2"') + '</tr>'
+      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF<br>' + E(d1), 'h', 'rowspan="2"')
       + pos.map((po, i) => kc(E(kirimLabel(po, i)) + (web ? '<br><input type="date" class="pt-dt" data-po="' + E(po.id) + '" value="' + E(po.tgl_kirim || '') + '" style="font-size:11px;width:118px" title="Tanggal kirim PO ini (sama dengan Hitung PO)">' : ''), 'h', 'colspan="3"')).join('')
       + kc('DSI DCF', 'h', 'colspan="2"') + '</tr>'
-      + '<tr>' + kc('EST. STOCK<br>AKHIR DCF<br>' + E(d1), 'h') + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
+      + '<tr>' + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
     D.rows.forEach(r => {
       const ck = r.core ? 'core' : 'l';
       h += '<tr>' + kc(E(r.plu), ck) + kc(E(r.desk), ck) + kc(r.frc ? n0(r.frc) : '-', 'c') + kc(n0(r.s1), 'r') + kc(q1(r.qc), 'r')
@@ -648,9 +649,9 @@
     ws.getCell(2, 1).value = 'Tanggal PO : ' + tglPOText(); ws.getCell(2, 1).font = { name: 'Calibri', size: 10, italic: true };
     const hw = { font: { bold: true }, h: 'center', wrap: true, fill: 'FFFFFFFF' }, hy = { font: { bold: true }, h: 'center', wrap: true, fill: Y }, hb = { font: { bold: true }, h: 'center', wrap: true, fill: BL };
     if (np) merge(4, 6, 4, 5 + 3 * np, 'PO TAKAKI', hw);
-    merge(5, 1, 6, 1, 'PLU_DC', hw); merge(5, 2, 6, 2, 'DESCRIPTION', hw); merge(5, 3, 6, 3, 'FRC', hw);
-    put(5, 4, 'ASUMSI SISA', { nb: true, h: 'center' }); merge(5, 5, 6, 5, 'QPD (CTN)', hb);
-    put(6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
+    merge(4, 1, 6, 1, 'PLU_DC', hw); merge(4, 2, 6, 2, 'DESCRIPTION', hw); merge(4, 3, 6, 3, 'FRC', hw);
+    put(4, 4, 'ASUMSI SISA', hw); merge(4, 5, 6, 5, 'QPD (CTN)', hb);
+    merge(5, 4, 6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
     pos.forEach((po, k) => { const pc = 6 + 3 * k; merge(5, pc, 5, pc + 2, kirimLabel(po, k), hy); put(6, pc, 'PALLET', hy); put(6, pc + 1, 'CTN', hy); put(6, pc + 2, 'PCS', hy); });
     merge(5, cd1, 5, cd2, 'DSI DCF', hy); put(6, cd1, 'AWAL', hy); put(6, cd2, 'AKHIR', hy);
     ws.getRow(6).height = 42;
@@ -808,7 +809,8 @@
     if (!adm()) return;
     css(); bindBody();
     if (!P.ready || P.err || Date.now() - (P.at || 0) > 60000) load(false);   // data lebih dari 1 menit: muat ulang
-    else { try { P.all = mapRows(window.PBSTOKDCF.calcStok().rows); P.rows = P.all.filter(r => !P.hid.has(r.plu)); } catch (e) { /* pakai data sebelumnya */ } paint(); }
+    else { try { const C = window.PBSTOKDCF.calcStok(); if (C.to2 && addD(C.toLast || C.to2, 2) !== P.periode) { load(false); return; }   // jumlah minggu Est. PB tambahan berubah: periode PO ikut bergeser
+      P.all = mapRows(C.rows); P.rows = P.all.filter(r => !P.hid.has(r.plu)); } catch (e) { /* pakai data sebelumnya */ } paint(); }
   }
   window.PBPOTAKAKI = { open, downloadJpg, downloadXlsx, reload: () => load(true), _t: { tgtOf, recommend, pickVehicles, needCtn, unitsCap, toCtn, numIn } };
 })();
