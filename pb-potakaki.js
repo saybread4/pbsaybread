@@ -129,7 +129,7 @@
 
   // ---------------- status ----------------
   const P = { ready: false, loading: false, err: '', noTbl: false, run: 0, busy: false, mode: 'full',
-    periode: null, estDate: null, reqFrom: null, reqTo: null, rows: [], pos: [], pal: new Map(), info: {}, nw: 0,
+    periode: null, reqCustom: '', estDate: null, reqFrom: null, reqTo: null, rows: [], pos: [], pal: new Map(), info: {}, nw: 0,
     cfg: { target: 30, cp: 77, kend: Object.assign({}, KEND0) } };
   const pk = (id, plu) => id + '|' + plu;
   const palOf = (id, plu) => P.pal.get(pk(id, plu)) || 0;
@@ -147,6 +147,8 @@
 #vPoTakaki .pt-ico svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #vPoTakaki .pt-t{font-weight:800;font-size:15px;color:var(--br);line-height:1.2}
 #vPoTakaki .pt-s{font-size:11.5px;color:var(--mu)}
+#vPoTakaki input.pt-rq{font:inherit;font-size:11.5px;color:var(--mu);border:1px dashed transparent;background:transparent;border-radius:4px;padding:0 4px;margin:0 0 0 -4px;width:auto;min-width:0;max-width:100%;box-shadow:none}
+#vPoTakaki input.pt-rq:hover{border-color:#d8b84a;background:#fffdf0}#vPoTakaki input.pt-rq:focus{outline:2px solid #34b96f;border-color:transparent;background:#fff;color:#111}
 #vPoTakaki .pt-card{background:#fff;border:1px solid var(--bd);border-radius:10px;padding:9px 12px;margin-top:8px}
 #vPoTakaki .pt-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
 #vPoTakaki .pt-row .in,#vPoTakaki .pt-row select{width:auto;padding:3px 7px}
@@ -163,11 +165,13 @@
 #vPoTakaki .pt-tb th.bl{background:#d4f1f9}
 #vPoTakaki .pt-tb th.tn{background:#e9dfd6}
 #vPoTakaki .pt-tb th.pc{background:#fde9d9}
+#vPoTakaki .pt-tb th.cr{background:#e3f5e8}
+#vPoTakaki input.pt-ck{width:15px;height:15px;margin:0;cursor:pointer;accent-color:#2f9f61;vertical-align:middle}
 #vPoTakaki .pt-tb th.rs{vertical-align:middle}
 #vPoTakaki .pt-tb td{padding:1px 6px;border-right:1px solid #cfd6d3;border-bottom:1px solid #cfd6d3;white-space:nowrap;text-align:right;height:21px;background:#fff}
 #vPoTakaki .pt-tb td.l{text-align:left}#vPoTakaki .pt-tb td.c{text-align:center}
-#vPoTakaki .pt-tb td.core{background:#ffe600}
-#vPoTakaki .pt-tb td.jt{background:#fff9a6}
+#vPoTakaki .pt-tb td.core{background:#e3f5e8}
+#vPoTakaki .pt-tb td.pt-jt{background:#fff9a6}
 #vPoTakaki .pt-tb td.z{background:#fdd4d6!important;color:#9c0006;font-weight:700}
 #vPoTakaki .pt-tb td.bf{min-width:58px}
 #vPoTakaki .pt-tb td.pl{background:#fffdf0}
@@ -189,11 +193,14 @@
 #vPoTakaki .pt-ton table{border-collapse:collapse}#vPoTakaki .pt-ton td{padding:1px 6px 1px 0}
 #vPoTakaki .pt-ton input{width:68px;text-align:right;font:inherit;font-weight:700;padding:1px 4px;border:1px solid #d9b394;border-radius:4px;background:#fff;color:#1f4fd8}
 #vPoTakaki .pt-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu);padding:6px 2px 0;align-items:center}
-#vPoTakaki .pt-sw{display:inline-block;width:14px;height:12px;border:1px solid rgba(0,0,0,.2);vertical-align:-2px;margin-right:4px;background:#ffe600}
+#vPoTakaki .pt-sw{display:inline-block;width:14px;height:12px;border:1px solid rgba(0,0,0,.2);vertical-align:-2px;margin-right:4px;background:#e3f5e8}
 #vPoTakaki .pt-er{color:#b00020}
 `;
     document.head.appendChild(s);
   }
+
+  // baris item mengikuti urutan & penanda core halaman Stock DCF
+  const mapRows = rows => { const SD = window.PBSTOKDCF; return rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, raw: r.i.plu_dc, desk: r.i.deskripsi, core: !!r.i.core, s1: Number(r.est3) || 0, qc: Number(r.qc) || 0, frc: (SD.X.qpd[k] || {}).frc || 0 }; }); };
 
   // ---------------- data ----------------
   async function load(force) {
@@ -205,7 +212,7 @@
       const C = SD.calcStok();
       if (!C.to2) throw new Error('Belum ada data stock DCF - unggah dulu di Stock DCF > Data Exp Date');
       P.estDate = addD(C.to2, 1); P.reqFrom = addD(C.to2, 2); P.reqTo = addD(C.to2, 7); P.periode = P.reqFrom;
-      P.rows = C.rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, desk: r.i.deskripsi, core: !!r.i.core, s1: Number(r.est3) || 0, qc: Number(r.qc) || 0, frc: (SD.X.qpd[k] || {}).frc || 0 }; });
+      P.rows = mapRows(C.rows);
       const s = sbc();
       const [po, cf, inf] = await Promise.all([
         s.from('potakaki_po').select('*').eq('periode', P.periode).order('urut'),
@@ -217,8 +224,9 @@
       P.pos = must(po);
       P.pal = new Map();
       if (P.pos.length) must(await s.from('potakaki_po_item').select('po_id,plu_dc,pallet').in('po_id', P.pos.map(p => p.id))).forEach(r => P.pal.set(pk(r.po_id, String(r.plu_dc).trim()), Number(r.pallet) || 0));
-      P.cfg = { target: 30, cp: 77, kend: Object.assign({}, KEND0) };
+      P.cfg = { target: 30, cp: 77, kend: Object.assign({}, KEND0) }; P.reqCustom = '';
       must(cf).forEach(r => {
+        if (r.key === 'request_text|' + P.periode && typeof r.value === 'string') P.reqCustom = r.value.trim();
         if (r.key === 'target_dsi' && Number(r.value) > 0) P.cfg.target = Number(r.value);
         if (r.key === 'ctn_pallet' && Number(r.value) > 0) P.cfg.cp = Number(r.value);
         if (r.key === 'kendaraan' && r.value && typeof r.value === 'object') P.cfg.kend = r.value;
@@ -246,12 +254,25 @@
   }
   const reco = () => recommend(P.rows, P.cfg.target, P.cfg.kend, P.cfg.cp, P.mode);
 
+  // baris "Muatan kendaraan": 100% penuh -> hanya nama kendaraan (mis. TRONTON); selain itu + sisa / kapasitas
+  function muatText(po, used) {
+    const cap = capOf(po); if (!cap) return po.kendaraan || '-';
+    const left = cap - used;
+    if (left >= 0 && Math.round(used / cap * 100) >= 100) return po.kendaraan;
+    return po.kendaraan + ' · ' + (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' / ' + n0(cap) + ' (' + Math.round(used / cap * 100) + '%)';
+  }
+
   // ---------------- tampilan ----------------
+  // periode default "23 - 28 NOVEMBER 2026"
+  const reqPeriod = () => { const sm = pd(P.reqFrom).getUTCMonth() === pd(P.reqTo).getUTCMonth(); return (sm ? pd(P.reqFrom).getUTCDate() : dml(P.reqFrom).toUpperCase()) + ' - ' + dml(P.reqTo).toUpperCase() + ' ' + pd(P.reqTo).getUTCFullYear(); };
+  const defLine = () => 'REQUEST PENGIRIMAN : ' + reqPeriod();
+  // teks baris di bawah judul: bisa diubah administrator (tersimpan per periode), kosong = otomatis
+  const reqLine = () => P.reqCustom || defLine();
+  const rqSize = v => Math.max(24, Math.min(90, String(v).length + 2));
   function head() {
-    const sm = P.reqFrom && pd(P.reqFrom).getUTCMonth() === pd(P.reqTo).getUTCMonth();
-    const per = P.reqFrom ? (sm ? pd(P.reqFrom).getUTCDate() : dml(P.reqFrom).toUpperCase()) + ' - ' + dml(P.reqTo).toUpperCase() + ' ' + pd(P.reqTo).getUTCFullYear() : '';
+    const rq = P.reqFrom ? reqLine() : '';
     return '<div class="pt-head"><span class="pt-ico">' + ic('truck') + '</span><div><div class="pt-t">EST. PO TAKAKI JATIM</div><div class="pt-s">'
-      + (P.reqFrom ? 'REQUEST PENGIRIMAN : ' + E(per) + ' · satuan CTN · hanya administrator' : 'satuan CTN · hanya administrator') + '</div></div><span style="flex:1"></span>'
+      + (P.reqFrom ? '<input class="pt-rq" id="ptRq" size="' + rqSize(rq) + '" value="' + E(rq) + '" spellcheck="false" title="Klik untuk mengubah teks ini (ikut tampil di hasil download). Kosongkan lalu Enter untuk kembali otomatis."> · satuan CTN · hanya administrator' : 'satuan CTN · hanya administrator') + '</div></div><span style="flex:1"></span>'
       + '<button class="b s" id="ptRl">' + ic('refresh') + ' Muat ulang</button>'
       + (P.ready && !P.loading && !P.err ? '<div class="dmw" id="ptDm"><button class="b p" id="ptDl">' + ic('down') + ' Download ' + ic('chev') + '</button>'
         + '<div class="dmn"><a data-f="jpg">' + ic('image') + ' JPG</a><a data-f="xls">' + ic('sheet') + ' Excel (.xlsx)</a></div></div>' : '') + '</div>';
@@ -283,7 +304,7 @@
     const poh = pos.map((po, i) => '<th colspan="2" class="y"><div class="pt-poh1"><b>PO ' + (i + 1) + '</b><select class="pt-kd" data-po="' + po.id + '">' + kopt(po.kendaraan) + '</select><span class="pt-x" data-del="' + po.id + '" title="Hapus PO ini">×</span></div>'
       + '<div class="pt-poh2">Kirim <input type="date" class="pt-dt" data-po="' + po.id + '" value="' + E(po.tgl_kirim || '') + '"><input class="pt-cp" data-po="' + po.id + '" inputmode="decimal" value="' + E(String(cpOf(po)).replace('.', ',')) + '" title="CTN per pallet"> ctn/plt</div></th>').join('');
     let h = '<div class="pt-wrap"><table class="pt-tb"><thead>'
-      + '<tr class="h1"><th class="rs" rowspan="3">NO</th><th class="rs" rowspan="3">PLU DC</th><th class="rs" rowspan="3">DESCRIPTION</th><th class="rs" rowspan="3">FRC</th>'
+      + '<tr class="h1"><th class="rs" rowspan="3">NO</th><th class="rs" rowspan="3">PLU DC</th><th class="rs" rowspan="3">DESCRIPTION</th><th class="rs" rowspan="3">FRC</th><th class="rs cr" rowspan="3" title="Centang = item core. Sama dengan kolom CORE di Stock DCF">CORE</th>'
       + '<th class="y" colspan="' + (np ? np * 2 : 2) + '">PO TAKAKI</th><th class="y rs" rowspan="2">TOTAL<br>PO</th>'
       + '<th class="gr" colspan="4">EST. STOCK DCF ' + E(d1) + '</th><th class="bl" colspan="2">DSI DCF ' + E(d1) + '</th>'
       + '<th class="tn rs" rowspan="2">QPD<br>(Ctn)</th><th class="y rs" rowspan="2">JML TOKO<br>JUAL</th><th class="pc">AVERAGE</th></tr>'
@@ -293,14 +314,14 @@
       + '<th class="y">CTN</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="bl">' + E(ds) + '</th><th class="bl">' + E(ds) + '</th>'
       + '<th class="tn">per hari</th><th class="y">(toko)</th><th class="pc">PER WEEK</th></tr></thead><tbody>';
     P.rows.forEach((r, n) => {
-      h += '<tr data-p="' + E(r.plu) + '"><td class="c">' + (n + 1) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.plu) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.desk) + '</td><td class="c">' + (r.frc ? n0(r.frc) : '-') + '</td>'
+      h += '<tr data-p="' + E(r.plu) + '"><td class="c">' + (n + 1) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.plu) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.desk) + '</td><td class="c">' + (r.frc ? n0(r.frc) : '-') + '</td><td class="c"><input type="checkbox" class="pt-ck" data-core="' + E(r.raw) + '"' + (r.core ? ' checked' : '') + ' title="Item core (sama dengan kolom CORE di Stock DCF)"></td>'
         + (np ? pos.map(po => '<td class="pl"><input class="pt-p" inputmode="decimal" placeholder="-" data-po="' + po.id + '" data-p="' + E(r.plu) + '" value="' + fmtP(palOf(po.id, r.plu)) + '"></td><td data-k="c|' + po.id + '|' + E(r.plu) + '"></td>').join('') : '<td class="pl"></td><td></td>')
         + '<td class="tot" data-k="t|' + E(r.plu) + '"></td><td data-k="s1|' + E(r.plu) + '"></td><td class="bf" data-k="b1|' + E(r.plu) + '"></td><td data-k="s2|' + E(r.plu) + '"></td><td class="bf" data-k="b2|' + E(r.plu) + '"></td>'
-        + '<td data-k="d1|' + E(r.plu) + '"></td><td data-k="d2|' + E(r.plu) + '"></td><td>' + q1(r.qc) + '</td><td class="jt">' + ((P.info[r.plu] || {}).toko ? n0(P.info[r.plu].toko) : '-') + '</td><td>' + ((P.info[r.plu] || {}).avg ? n0(P.info[r.plu].avg) : '-') + '</td></tr>';
+        + '<td data-k="d1|' + E(r.plu) + '"></td><td data-k="d2|' + E(r.plu) + '"></td><td>' + q1(r.qc) + '</td><td class="pt-jt">' + ((P.info[r.plu] || {}).toko ? n0(P.info[r.plu].toko) : '-') + '</td><td>' + ((P.info[r.plu] || {}).avg ? n0(P.info[r.plu].avg) : '-') + '</td></tr>';
     });
-    h += '<tr class="gt"><td class="l" colspan="4">Grand Total</td>' + (np ? pos.map(po => '<td data-k="gp|' + po.id + '"></td><td data-k="gc|' + po.id + '"></td>').join('') : '<td></td><td></td>')
+    h += '<tr class="gt"><td class="l" colspan="5">Grand Total</td>' + (np ? pos.map(po => '<td data-k="gp|' + po.id + '"></td><td data-k="gc|' + po.id + '"></td>').join('') : '<td></td><td></td>')
       + '<td data-k="gt"></td><td data-k="gs1"></td><td data-k="gb1"></td><td data-k="gs2"></td><td data-k="gb2"></td><td data-k="gd1"></td><td data-k="gd2"></td><td data-k="gq"></td><td></td><td data-k="ga"></td></tr>'
-      + '<tr class="cp"><td class="l" colspan="4">Muatan kendaraan (sisa kapasitas)</td>' + (np ? pos.map(po => '<td colspan="2" data-k="cap|' + po.id + '"></td>').join('') : '<td colspan="2"></td>') + '<td colspan="10"></td></tr>'
+      + '<tr class="cp"><td class="l" colspan="5">Muatan kendaraan</td>' + (np ? pos.map(po => '<td colspan="2" data-k="cap|' + po.id + '"></td>').join('') : '<td colspan="2"></td>') + '<td colspan="10"></td></tr>'
       + '</tbody></table></div>';
     return h;
   }
@@ -350,7 +371,7 @@
     pos.forEach((po, k) => {
       setT('gp|' + po.id, fmtP1(T.pal[k])); setT('gc|' + po.id, T.ctn[k] ? n0(T.ctn[k]) : '-');
       const cap = capOf(po), left = cap - T.ctn[k], c = Q('#vPoTakaki [data-k="cap|' + po.id + '"]');
-      if (c) { c.textContent = cap ? (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' (' + Math.round(T.ctn[k] / cap * 100) + '%)' : '-'; c.title = 'Muatan ' + n0(T.ctn[k]) + ' dari ' + n0(cap) + ' ctn (' + po.kendaraan + ')'; c.classList.toggle('neg', left < 0); c.style.textAlign = 'center'; }
+      if (c) { c.textContent = muatText(po, T.ctn[k]); c.title = 'Muatan ' + n0(T.ctn[k]) + ' dari ' + n0(cap) + ' ctn (' + po.kendaraan + ')'; c.classList.toggle('neg', left < 0); c.style.textAlign = 'center'; }
     });
     setT('gt', T.tot ? n0(T.tot) : '-'); setT('gs1', n0(T.s1)); setT('gs2', n0(T.s2));
     const g1 = Q('#vPoTakaki [data-k="gb1"]'), g2 = Q('#vPoTakaki [data-k="gb2"]'); if (g1) g1.textContent = n0(bt(T.s1) * 100) + '%'; if (g2) g2.textContent = n0(bt(T.s2) * 100) + '%';
@@ -362,29 +383,28 @@
   const saveBlob = (blob, name) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000); };
   const fname = ext => 'PO TAKAKI ' + (P.reqFrom || '') + ' s.d. ' + (P.reqTo || '') + '.' + ext;
   const poLabel = (po, i) => 'PO ' + (i + 1) + ' (Kirim ' + (po.tgl_kirim ? dmm(po.tgl_kirim) : '?') + ')';
-  const reqText = () => { const sm = pd(P.reqFrom).getUTCMonth() === pd(P.reqTo).getUTCMonth(); return (sm ? pd(P.reqFrom).getUTCDate() : dml(P.reqFrom).toUpperCase()) + ' - ' + dml(P.reqTo).toUpperCase() + ' ' + pd(P.reqTo).getUTCFullYear(); };
 
   async function downloadJpg() {
     const C = calc(), pos = P.pos, np = pos.length, T = C.T;
     const FF = 'font-family:Calibri,Arial,sans-serif;', bd = 'border:1px solid #8b9490;', bdl = 'border:1px solid #cfd6d3;';
-    const Y = '#ffe600', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9';
+    const Y = '#ffe600', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9', CORE = '#e3f5e8';
     const th = (t, bg, at) => '<th ' + (at || '') + ' style="' + FF + bd + 'padding:3px 7px;background-color:' + bg + ';color:#111;font-size:11px;font-weight:bold;text-align:center;white-space:nowrap">' + t + '</th>';
     const td = (t, bg, st) => '<td style="' + FF + bdl + 'padding:2px 7px;background-color:' + bg + ';color:#111;font-size:12px;white-space:nowrap;text-align:right;' + (st || '') + '">' + t + '</td>';
     const bufTd = (v, st) => { const w = Math.min(100, v * 100 / 3); return td(n0(v * 100) + '%', '#ffffff', 'min-width:58px;' + (st <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : (w > 0 ? 'background-image:linear-gradient(90deg,#f6b26b ' + w + '%,#fff3e0 ' + w + '%);' : ''))); };
     const zc = v => v <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : '';
     const d1 = dmy(P.reqTo), ds = dmm(P.reqTo).replace(' ', '-');
     let h = '<div style="' + FF + 'display:inline-block;background-color:#ffffff;padding:10px"><div style="font-weight:bold;font-size:19px;color:#111">EST. PO TAKAKI JATIM</div>'
-      + '<div style="font-size:12px;color:#333;padding-bottom:5px">REQUEST PENGIRIMAN : ' + E(reqText()) + ' · satuan CTN</div>'
+      + '<div style="font-size:12px;color:#333;padding-bottom:5px">' + E(reqLine()) + ' · satuan CTN</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
       + '<tr>' + th('NO', '#fff', 'rowspan="3"') + th('PLU DC', '#fff', 'rowspan="3"') + th('DESCRIPTION', '#fff', 'rowspan="3"') + th('FRC', '#fff', 'rowspan="3"')
       + th('PO TAKAKI', Y, 'colspan="' + (np ? np * 2 : 2) + '"') + th('TOTAL<br>PO', Y, 'rowspan="2"') + th('EST. STOCK DCF ' + E(d1), G, 'colspan="4"') + th('DSI DCF ' + E(d1), B, 'colspan="2"')
       + th('QPD<br>(Ctn)', TN, 'rowspan="2"') + th('JML TOKO<br>JUAL', Y, 'rowspan="2"') + th('AVERAGE', PC) + '</tr>'
-      + '<tr>' + (np ? pos.map((po, i) => th(E(poLabel(po, i)) + '<br><span style="font-weight:normal">' + E(po.kendaraan) + ' · ' + E(String(cpOf(po)).replace('.', ',')) + ' ctn/plt</span>', Y, 'colspan="2"')).join('') : th('belum ada PO', Y, 'colspan="2"'))
+      + '<tr>' + (np ? pos.map((po, i) => th(E(poLabel(po, i)), Y, 'colspan="2"')).join('') : th('belum ada PO', Y, 'colspan="2"'))
       + th('JIKA TANPA<br>FORECAST', G, 'colspan="2"') + th('JIKA ADA<br>FORECAST', G, 'colspan="2"') + th('JIKA TANPA<br>FORECAST', B) + th('JIKA ADA<br>FORECAST', B) + th('OUTB (PB)', PC) + '</tr>'
       + '<tr>' + (np ? pos.map(() => th('PALLET', Y) + th('CTN', Y)).join('') : th('PALLET', Y) + th('CTN', Y)) + th('CTN', Y)
       + th('STOCK', G) + th('BUFFER %', G) + th('STOCK', G) + th('BUFFER %', G) + th(E(ds), B) + th(E(ds), B) + th('per hari', TN) + th('(toko)', Y) + th('PER WEEK', PC) + '</tr></thead><tbody>';
     C.rows.forEach((x, n) => {
-      const r = x.r, cb = r.core ? Y : '#ffffff';
+      const r = x.r, cb = r.core ? CORE : '#ffffff';
       h += '<tr>' + td(n + 1, '#fff', 'text-align:center') + td(E(r.plu), cb, 'text-align:left') + td(E(r.desk), cb, 'text-align:left') + td(r.frc ? n0(r.frc) : '-', '#fff', 'text-align:center')
         + (np ? pos.map((po, k) => td(fmtP(palOf(po.id, r.plu)) || '-', '#fffdf0', 'color:#1f4fd8;font-weight:bold') + td(x.ctn[k] ? n0(x.ctn[k]) : '-', '#fff')).join('') : td('-', '#fffdf0') + td('-', '#fff'))
         + td(x.tot ? n0(x.tot) : '-', '#fff', 'font-weight:bold') + td(n0(r.s1), '#fff', zc(r.s1)) + bufTd(x.b1, r.s1) + td(n0(x.s2), '#fff', zc(x.s2)) + bufTd(x.b2, x.s2)
@@ -397,18 +417,32 @@
       + td(T.qc > 0 ? n0(T.s1 / T.qc) : '-', G, tb) + td(T.qc > 0 ? n0(T.s2 / T.qc) : '-', G, tb) + td(q1(T.qc), G, tb) + td('', G, tb) + td(n0(T.avg), G, tb) + '</tr>';
     if (np) {
       h += '<tr>' + td('Muatan kendaraan', PC, 'text-align:left;font-weight:bold').replace('<td ', '<td colspan="4" ')
-        + pos.map((po, k) => { const cap = capOf(po), left = cap - T.ctn[k]; return td(cap ? (left < 0 ? 'Lebih ' + n0(-left) : 'Sisa ' + n0(left)) + ' / ' + n0(cap) + ' (' + Math.round(T.ctn[k] / cap * 100) + '%)' : '-', PC, 'text-align:center;font-weight:bold;' + (left < 0 ? 'color:#c00000;' : '')).replace('<td ', '<td colspan="2" '); }).join('')
+        + pos.map((po, k) => { const cap = capOf(po), left = cap - T.ctn[k]; return td(muatText(po, T.ctn[k]), PC, 'text-align:center;font-weight:bold;' + (left < 0 ? 'color:#c00000;' : '')).replace('<td ', '<td colspan="2" '); }).join('')
         + '<td colspan="10" style="background-color:' + PC + ';' + bdl + '"></td></tr>';
     }
-    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + Y + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
+    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + CORE + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
       + '<div style="display:inline-block;margin-top:6px;background-color:#fbe5d6;border:1px solid #efc9ae;padding:5px 12px;font-size:12px"><b>Tonase Kendaraan (ctn)</b>'
       + Object.keys(P.cfg.kend).map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
     const hold = document.createElement('div'); hold.style.cssText = 'position:fixed;left:-99999px;top:0'; hold.innerHTML = h; document.body.appendChild(hold);
     const el = hold.firstElementChild, w = Math.ceil(el.offsetWidth) + 2, ht = Math.ceil(el.offsetHeight) + 2; hold.remove();
-    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + ht + '"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">' + h.replace(/&nbsp;/g, '&#160;').replace(/<br>/g, '<br/>') + '</div></foreignObject></svg>';
+    // Ukuran ukur di halaman bisa lebih kecil dari hasil gambar (gaya halaman ikut mempengaruhi) -> kanvas dibuat longgar,
+    // lalu dipotong tepat pada isi tabel (piksel non-putih) supaya kolom paling kanan tidak terpotong.
+    const W = Math.ceil(w * 1.35) + 240, H = Math.ceil(ht * 1.2) + 120;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">' + h.replace(/&nbsp;/g, '&#160;').replace(/<br>/g, '<br/>') + '</div></foreignObject></svg>';
     const img = new Image(); await new Promise((ok, no) => { img.onload = ok; img.onerror = () => no(new Error('gagal merender gambar')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
-    const sc = Math.max(1, Math.min(3, Math.floor(14000 / Math.max(w, ht)))), c = document.createElement('canvas'); c.width = w * sc; c.height = ht * sc;
-    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.scale(sc, sc); g.drawImage(img, 0, 0);
+    let x0 = 0, y0 = 0, x1 = w, y1 = ht;
+    try {
+      const c0 = document.createElement('canvas'); c0.width = W; c0.height = H;
+      const g0 = c0.getContext('2d'); g0.fillStyle = '#fff'; g0.fillRect(0, 0, W, H); g0.drawImage(img, 0, 0);
+      const px = g0.getImageData(0, 0, W, H).data; let a = W, b = H, c1 = -1, d1 = -1;
+      for (let y = 0; y < H; y++) for (let x = 0, i = y * W * 4; x < W; x++, i += 4) {
+        if (px[i] < 245 || px[i + 1] < 245 || px[i + 2] < 245) { if (x < a) a = x; if (x > c1) c1 = x; if (y < b) b = y; if (y > d1) d1 = y; }
+      }
+      if (c1 >= 0) { x0 = a; y0 = b; x1 = c1 + 1; y1 = d1 + 1; }
+    } catch (e) { x1 = Math.min(W, Math.ceil(w * 1.15) + 40); y1 = Math.min(H, Math.ceil(ht * 1.05) + 20); }
+    const M = 12, cx = Math.max(0, x0 - M), cy = Math.max(0, y0 - M), cw = Math.min(W, x1 + M) - cx, ch = Math.min(H, y1 + M) - cy;
+    const sc = Math.max(1, Math.min(3, Math.floor(14000 / Math.max(cw, ch)))), c = document.createElement('canvas'); c.width = cw * sc; c.height = ch * sc;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.scale(sc, sc); g.translate(-cx, -cy); g.drawImage(img, 0, 0);
     const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .93)); if (!blob) throw new Error('gagal membuat JPG');
     saveBlob(blob, fname('jpg'));
   }
@@ -437,14 +471,14 @@
       if (o.fill) cell.fill = solid(o.fill); if (o.nf) cell.numFmt = o.nf; return cell; };
     const merge = (r1, c1_, r2, c2, v, o) => { for (let r = r1; r <= r2; r++) for (let c = c1_; c <= c2; c++) put(r, c, null, o); if (r1 !== r2 || c1_ !== c2) ws.mergeCells(r1, c1_, r2, c2); put(r1, c1_, v, o); };
     ws.getCell(1, 1).value = 'EST. PO TAKAKI JATIM'; ws.getCell(1, 1).font = { name: 'Calibri', size: 14, bold: true };
-    ws.getCell(2, 1).value = 'REQUEST PENGIRIMAN : ' + reqText() + ' (satuan CTN)'; ws.getCell(2, 1).font = { name: 'Calibri', size: 10 };
+    ws.getCell(2, 1).value = reqLine() + ' (satuan CTN)'; ws.getCell(2, 1).font = { name: 'Calibri', size: 10 };
     ws.getCell(3, 4).value = 'ctn/plt'; ws.getCell(3, 4).font = { name: 'Calibri', size: 9, italic: true }; ws.getCell(3, 4).alignment = { horizontal: 'right' };
     pos.forEach((po, k) => { const c = ws.getCell(3, 5 + 2 * k); c.value = cpOf(po); c.font = { name: 'Calibri', size: 10, bold: true, color: { argb: 'FF1F4FD8' } }; c.alignment = { horizontal: 'center' }; });
     const H = { font: { bold: true, size: 10 }, h: 'center', wrap: true };
     const hd = (bg) => Object.assign({}, H, { fill: bg });
     ['NO', 'PLU DC', 'DESCRIPTION', 'FRC'].forEach((t, i) => merge(4, i + 1, 6, i + 1, t, hd('FFFFFFFF')));
     if (np) merge(4, 5, 4, 4 + 2 * np, 'PO TAKAKI', hd(Y));
-    pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k) + ' ' + po.kendaraan, hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
+    pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k), hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
     merge(4, cT, 5, cT, 'TOTAL PO', hd(Y)); put(6, cT, 'CTN', hd(Y));
     merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(P.reqTo), hd(G));
     merge(5, c1, 5, cb1, 'JIKA TANPA FORECAST', hd(G)); merge(5, cs2, 5, cb2, 'JIKA ADA FORECAST', hd(G));
@@ -454,11 +488,11 @@
     merge(4, cq, 5, cq, 'QPD (Ctn)', hd(TN)); put(6, cq, 'per hari', hd(TN));
     merge(4, cj, 5, cj, 'JML TOKO JUAL', hd(Y)); put(6, cj, '(toko)', hd(Y));
     put(4, ca, 'AVERAGE', hd(PC)); put(5, ca, 'OUTB (PB)', hd(PC)); put(6, ca, 'PER WEEK', hd(PC));
-    ws.getRow(5).height = 28;
+    ws.getRow(5).height = 28; ws.getRow(3).hidden = true;   // ctn/plt dipakai rumus tetapi tidak ditampilkan
     const NI = '#,##0', NP = '0%', N1 = '#,##0.0', NPL = '#,##0.0#';
     C.rows.forEach((x, i) => {
       const r = R0 + i, rr = x.r, f = (fml, res) => ({ formula: fml, result: res });
-      put(r, 1, i + 1, { h: 'center' }); put(r, 2, rr.plu, { h: 'left', nf: '@', fill: rr.core ? Y : null }); put(r, 3, rr.desk, { h: 'left', fill: rr.core ? Y : null }); put(r, 4, rr.frc || null, { h: 'center', nf: NI });
+      put(r, 1, i + 1, { h: 'center' }); put(r, 2, rr.plu, { h: 'left', nf: '@', fill: rr.core ? 'FFE3F5E8' : null }); put(r, 3, rr.desk, { h: 'left', fill: rr.core ? 'FFE3F5E8' : null }); put(r, 4, rr.frc || null, { h: 'center', nf: NI });
       pos.forEach((po, k) => { const pc = 5 + 2 * k, pal = palOf(po.id, rr.plu);
         put(r, pc, pal || null, { nf: NPL, font: { color: { argb: 'FF1F4FD8' }, bold: true }, fill: 'FFFFFDF0' });
         put(r, pc + 1, f('ROUND(' + L(pc) + r + '*' + L(pc) + '$3,0)', x.ctn[k]), { nf: NI }); });
@@ -483,20 +517,22 @@
     put(RG, cd1, { formula: 'IF(' + L(cq) + RG + '>0,' + L(c1) + RG + '/' + L(cq) + RG + ',"")', result: T.qc > 0 ? T.s1 / T.qc : '' }, Object.assign({ nf: NI }, G0));
     put(RG, cd2, { formula: 'IF(' + L(cq) + RG + '>0,' + L(cs2) + RG + '/' + L(cq) + RG + ',"")', result: T.qc > 0 ? T.s2 / T.qc : '' }, Object.assign({ nf: NI }, G0));
     put(RG, cq, { formula: sum(cq), result: T.qc }, Object.assign({ nf: N1 }, G0)); put(RG, cj, null, G0); put(RG, ca, { formula: sum(ca), result: T.avg }, Object.assign({ nf: NI }, G0));
-    // Kapasitas kendaraan & sisa
+    // Muatan kendaraan (nama kendaraan; 100% = nama saja), lalu kapasitas & sisa
     let rr2 = RG + 1;
     if (np) {
-      merge(rr2, 1, rr2, 4, 'Kapasitas kendaraan (ctn)', { h: 'left', fill: PC, font: { bold: true, size: 10 } });
-      merge(rr2 + 1, 1, rr2 + 1, 4, 'Sisa kapasitas (ctn)', { h: 'left', fill: PC, font: { bold: true, size: 10 } });
-      pos.forEach((po, k) => { const pc = 5 + 2 * k, cap = capOf(po);
-        merge(rr2, pc, rr2, pc + 1, cap, { nf: NI, h: 'center', fill: PC, font: { bold: true, size: 10 } });
-        merge(rr2 + 1, pc, rr2 + 1, pc + 1, { formula: L(pc) + rr2 + '-' + L(pc + 1) + RG, result: cap - T.ctn[k] }, { nf: '#,##0;[Red]-#,##0', h: 'center', fill: PC, font: { bold: true, size: 10 } }); });
-      rr2 += 2;
+      const lab = (r, t) => merge(r, 1, r, 4, t, { h: 'left', fill: PC, font: { bold: true, size: 10 } });
+      lab(rr2, 'Muatan kendaraan'); lab(rr2 + 1, 'Kapasitas kendaraan (ctn)'); lab(rr2 + 2, 'Sisa kapasitas (ctn)');
+      pos.forEach((po, k) => { const pc = 5 + 2 * k, cap = capOf(po), cc = L(pc) + (rr2 + 1), tc = L(pc + 1) + RG, kn = String(po.kendaraan).replace(/"/g, '""');
+        const fm = 'IF(AND(' + cc + '>0,' + cc + '-' + tc + '>=0,ROUND(' + tc + '/' + cc + ',2)>=1),"' + kn + '","' + kn + ' · "&IF(' + cc + '-' + tc + '<0,"Lebih ","Sisa ")&TEXT(ABS(' + cc + '-' + tc + '),"#,##0")&" / "&TEXT(' + cc + ',"#,##0")&" ("&TEXT(IF(' + cc + '>0,' + tc + '/' + cc + ',0),"0%")&")")';
+        merge(rr2, pc, rr2, pc + 1, { formula: fm, result: muatText(po, T.ctn[k]) }, { h: 'center', fill: PC, font: { bold: true, size: 10 } });
+        merge(rr2 + 1, pc, rr2 + 1, pc + 1, cap, { nf: NI, h: 'center', fill: PC, font: { bold: true, size: 10 } });
+        merge(rr2 + 2, pc, rr2 + 2, pc + 1, { formula: cc + '-' + tc, result: cap - T.ctn[k] }, { nf: '#,##0;[Red]-#,##0', h: 'center', fill: PC, font: { bold: true, size: 10 } }); });
+      rr2 += 3;
     }
     // Tonase kendaraan
     rr2 += 1; ws.getCell(rr2, 1).value = 'Tonase Kendaraan (ctn)'; ws.getCell(rr2, 1).font = { name: 'Calibri', size: 10, bold: true };
     Object.keys(P.cfg.kend).forEach((k, i) => { const r = rr2 + 1 + i; put(r, 1, null, { fill: 'FFFBE5D6' }); put(r, 2, P.cfg.kend[k], { nf: NI, fill: 'FFFBE5D6', font: { bold: true } }); put(r, 3, k, { h: 'left', fill: 'FFFBE5D6' }); });
-    ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).value = 'Item core diberi warna kuning. Kolom CTN, STOCK, BUFFER, DSI memakai rumus sehingga ikut berubah bila PALLET / ctn per pallet diubah.';
+    ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).value = 'Item core diberi warna hijau (sama dengan Stock DCF). Kolom CTN, STOCK, BUFFER, DSI memakai rumus sehingga ikut berubah bila PALLET / ctn per pallet diubah. ctn per pallet ada di baris 3 (disembunyikan; klik kanan nomor baris > Unhide untuk mengubah).';
     ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).font = { name: 'Calibri', size: 9, italic: true };
     // lebar kolom, bekukan header, nol = merah muda
     const wd = { 1: 5, 2: 11, 3: 30, 4: 6 }; wd[cT] = 9; wd[c1] = 9; wd[cb1] = 10; wd[cs2] = 9; wd[cb2] = 10; wd[cd1] = 11; wd[cd2] = 11; wd[cq] = 9; wd[cj] = 10; wd[ca] = 11;
@@ -516,7 +552,9 @@
   }
 
   // ---------------- aksi ----------------
-  const bindHead = () => { const b = Q('#ptRl'); if (b) b.onclick = () => load(true); };
+  // lebar kolom teks REQUEST PENGIRIMAN mengikuti isinya
+  const fitRq = t => { if (!t) return; t.style.width = '0px'; t.style.width = Math.min(t.scrollWidth + 10, (t.parentNode ? t.parentNode.clientWidth : 9999)) + 'px'; };
+  const bindHead = () => { const b = Q('#ptRl'); if (b) b.onclick = () => load(true); fitRq(Q('#ptRq')); };
   async function addPO() {
     if (P.pos.length >= MAXPO) return;
     try {
@@ -559,6 +597,18 @@
     if (P.pos.length) ask('Ganti ' + P.pos.length + ' PO yang ada' + (has ? ' (termasuk isinya)' : '') + ' dengan rekomendasi ' + R.veh.length + ' PO?', go, 'Ganti');
     else go();
   }
+  // centang/lepas item core: sama dengan kolom CORE di Stock DCF (tabel stokdcf_item), urutan baris ikut Stock DCF
+  async function toggleCore(raw, v, t) {
+    const SD = window.PBSTOKDCF;
+    try {
+      must(await sbc().from('stokdcf_item').update({ core: v }).eq('plu_dc', raw));
+      const it = SD.X.items.find(i => String(i.plu_dc) === String(raw)); if (it) it.core = v;
+      const wr = Q('#vPoTakaki .pt-wrap'), st = wr ? wr.scrollTop : 0, sl = wr ? wr.scrollLeft : 0, sy = window.scrollY;
+      P.rows = mapRows(SD.calcStok().rows); paint();
+      const w2 = Q('#vPoTakaki .pt-wrap'); if (w2) { w2.scrollTop = st; w2.scrollLeft = sl; } window.scrollTo(window.scrollX, sy);
+      try { if (SD.paintStok && Q('#sdBody')) SD.paintStok(); } catch (e) { /* halaman Stock DCF diperbarui saat dibuka */ }
+    } catch (e) { msg('Gagal menyimpan item core: ' + e.message, true); t.checked = !v; }
+  }
   async function saveCfg(key, value) {
     const r = await sbc().from('potakaki_cfg').upsert({ key, value }, { onConflict: 'key' });
     if (r.error) throw new Error(r.error.message);
@@ -567,6 +617,8 @@
     const el = root(); if (!el || el.dataset.bound) return; el.dataset.bound = '1';
     document.addEventListener('click', () => { const w = Q('#ptDm'); if (w) w.classList.remove('open'); });
     el.addEventListener('focusin', e => { if (e.target.classList && (e.target.classList.contains('pt-p') || e.target.classList.contains('pt-cp'))) e.target.select(); });
+    el.addEventListener('input', e => { if (e.target.id === 'ptRq') { e.target.size = rqSize(e.target.value); fitRq(e.target); } });
+    el.addEventListener('keydown', e => { if (e.target.id === 'ptRq' && e.key === 'Enter') e.target.blur(); });
     el.addEventListener('click', e => {
       const x = e.target.closest('.pt-x'); if (x) { e.stopPropagation(); return delPO(x.dataset.del); }
       const dl = e.target.closest('#ptDl'); if (dl) { e.stopPropagation(); const w = dl.closest('.dmw'), o = w.classList.contains('open'); w.classList.toggle('open', !o); return; }
@@ -590,6 +642,11 @@
         } else if (c.contains('pt-cp') && po) {          // ctn per pallet
           const v = numIn(t.value); if (isNaN(v) || v <= 0) { msg('Angka tidak valid', true); t.value = String(cpOf(po)).replace('.', ','); return; }
           must(await sbc().from('potakaki_po').update({ ctn_pallet: v }).eq('id', po.id)); po.ctn_pallet = v; recalc();
+        } else if (t.id === 'ptRq') {                    // teks REQUEST PENGIRIMAN (kosong = otomatis)
+          const v = String(t.value).replace(/\s+/g, ' ').trim(), store = v && v !== defLine() ? v : '';
+          await saveCfg('request_text|' + P.periode, store); P.reqCustom = store; t.value = reqLine(); t.size = rqSize(t.value); fitRq(t);
+        } else if (c.contains('pt-ck')) {                // item core
+          await toggleCore(t.dataset.core, t.checked, t);
         } else if (t.id === 'ptTg') {                    // target DSI
           const v = numIn(t.value); if (isNaN(v) || v <= 0) { msg('Target DSI tidak valid', true); t.value = String(P.cfg.target).replace('.', ','); return; }
           await saveCfg('target_dsi', v); P.cfg.target = v; const rc = Q('#ptReco'); if (rc) rc.innerHTML = recoHtml();
