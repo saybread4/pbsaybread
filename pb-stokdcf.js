@@ -368,6 +368,22 @@
       X.file = null; msg(n0(rows.length) + ' baris data ED per ' + fd(tgl) + ' tersimpan'); await start();
     } catch (e) { msg('Gagal menyimpan: ' + e.message, true); b.disabled = false; b.textContent = 'Simpan'; }
   }
+  // tabel Data ED menurut filter deskripsi / inbound / exp date (hanya isi tabel yang digambar ulang)
+  function paintEdTable(A) {
+    const F = X.edF || {}, th = t => '<th>' + t + '</th>';
+    const rows = (X.edAll || []).filter(r => (!F.d || String(r.b.deskripsi || '').trim() === F.d) && (!F.i || r.b.tgl_inbound === F.i) && (!F.e || r.b.tgl_exp === F.e));
+    const tot = rows.reduce((t, r) => t + (Number(r.b.stok) || 0), 0), c = Q('#sdFc');
+    if (c) c.textContent = n0(rows.length) + ' dari ' + n0((X.edAll || []).length) + ' baris · total stok ' + n0(tot) + ' ctn';
+    Q('#sdEdT').innerHTML = '<div class="sd-wrap"><table class="sd-tb"><thead><tr>' + ['PLU_CUST', 'DESKRIPSI', 'STOK', 'INBOUND', 'EXP DATE', 'MASA SIMPAN', 'SISA HARI SIMPAN'].concat(A ? ['AKTIF'] : []).map(th).join('') + '</tr></thead><tbody>'
+      + (rows.length ? rows.map(r => {
+        const cls = r.sh != null && r.sh < 30 ? 'r' : (r.sh != null && r.sh < 40 ? 'y' : '');
+        return '<tr class="' + cls + '"><td class="l">' + E(r.pc) + '</td><td class="l">' + E(r.b.deskripsi) + '</td><td>' + n0(r.b.stok) + '</td>'
+          + '<td class="c">' + E(fd(r.b.tgl_inbound)) + '</td><td class="c">' + E(fd(r.b.tgl_exp)) + '</td>'
+          + '<td>' + (r.ms == null ? '' : r.ms + ' Hari') + '</td>'
+          + '<td' + (cls === 'r' ? ' class="rr"' : '') + '>' + (r.sh == null ? '' : r.sh + ' Hari') + '</td>'
+          + (A ? '<td class="c">' + (r.aktif ? 'AKTIF' : '') + '</td>' : '') + '</tr>';
+      }).join('') : '<tr><td colspan="' + (A ? 8 : 7) + '" class="c">Tidak ada data yang cocok dengan filter.</td></tr>') + '</tbody></table></div>';
+  }
   function paintED() {
     const known = new Set(X.items.filter(i => i.aktif).map(i => String(i.plu_cust).trim()));
     const th = t => '<th>' + t + '</th>';
@@ -380,22 +396,28 @@
       + '<div id="sdFs" class="note" style="padding:5px 0 0"></div>'
       + '<div class="note" style="padding:2px 0 0">File <b>STOCKM_SI05</b> dibaca menurut nama kolom: _PLU_CUST, _DESCRIPTION, SOH (stok), _TRANSC (inbound), _EXP_DATE. (Format lama sheet <b>data ED</b> tetap bisa.) Tanggal terisi dari TGL_IMPORT dan bisa diubah. Data ED lama diganti.</div></div>');
     if (X.ed.length) {
-      const rows = groupED(X.ed).map((b, n) => {
+      const all = groupED(X.ed).map((b, n) => {
         const pc = String(b.plu_cust).trim();
         return { b, n, pc, aktif: known.has(pc), ms: dayDiff(b.tgl_inbound, b.tgl_exp), sh: dayDiff(X.snap, b.tgl_exp) };
       }).sort((a, b) => (Number(b.aktif) - Number(a.aktif)) || (a.n - b.n));   // yang tidak AKTIF di paling bawah
-      h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr>' + ['PLU_CUST', 'DESKRIPSI', 'STOK', 'INBOUND', 'EXP DATE', 'MASA SIMPAN', 'SISA HARI SIMPAN'].concat(A ? ['AKTIF'] : []).map(th).join('') + '</tr></thead><tbody>'
-        + rows.map(r => {
-          const cls = r.sh != null && r.sh < 30 ? 'r' : (r.sh != null && r.sh < 40 ? 'y' : '');
-          return '<tr class="' + cls + '"><td class="l">' + E(r.pc) + '</td><td class="l">' + E(r.b.deskripsi) + '</td><td>' + n0(r.b.stok) + '</td>'
-            + '<td class="c">' + E(fd(r.b.tgl_inbound)) + '</td><td class="c">' + E(fd(r.b.tgl_exp)) + '</td>'
-            + '<td>' + (r.ms == null ? '' : r.ms + ' Hari') + '</td>'
-            + '<td' + (cls === 'r' ? ' class="rr"' : '') + '>' + (r.sh == null ? '' : r.sh + ' Hari') + '</td>'
-            + (A ? '<td class="c">' + (r.aktif ? 'AKTIF' : '') + '</td>' : '') + '</tr>';
-        }).join('') + '</tbody></table></div>'
+      X.edAll = all;
+      const F = X.edF || (X.edF = { d: '', i: '', e: '' });
+      const uniq = f => [...new Set(all.map(f).filter(Boolean))].sort();
+      const dOpt = uniq(r => String(r.b.deskripsi || '').trim()), iOpt = uniq(r => r.b.tgl_inbound), eOpt = uniq(r => r.b.tgl_exp);
+      if (F.d && !dOpt.includes(F.d)) F.d = ''; if (F.i && !iOpt.includes(F.i)) F.i = ''; if (F.e && !eOpt.includes(F.e)) F.e = '';
+      const sel = (id, lbl, opts, cur, fmt) => '<div><label class="k">' + lbl + '</label><br><select class="in" id="' + id + '" style="max-width:240px"><option value="">Semua</option>' + opts.map(v => '<option value="' + E(v) + '"' + (v === cur ? ' selected' : '') + '>' + E(fmt ? fmt(v) : v) + '</option>').join('') + '</select></div>';
+      h += '<div class="sd-card" style="margin-top:8px"><div class="sd-row">' + sel('sdFd', 'Deskripsi', dOpt, F.d) + sel('sdFi', 'Inbound', iOpt, F.i, fd) + sel('sdFe', 'Exp date', eOpt, F.e, fd)
+        + '<button class="b s" id="sdFx">Reset filter</button><span id="sdFc" class="note" style="padding:0 0 4px"></span></div></div><div id="sdEdT"></div>'
         + '<div class="sd-leg"><span><i class="sd-sw y"></i>Sisa hari simpan di bawah 40 hari</span><span><i class="sd-sw r"></i>Di bawah 30 hari</span>' + (A ? '<span>Baris tanpa keterangan AKTIF ada di paling bawah</span>' : '') + '</div>';
     }
     Q('#sdBody').innerHTML = h;
+    if (X.ed.length) {
+      Q('#sdEdT').innerHTML = '';
+      const F = X.edF, upd = () => paintEdTable(A);
+      [['sdFd', 'd'], ['sdFi', 'i'], ['sdFe', 'e']].forEach(([id, k]) => { Q('#' + id).onchange = e => { F[k] = e.target.value; upd(); }; });
+      Q('#sdFx').onclick = () => { F.d = F.i = F.e = ''; ['sdFd', 'sdFi', 'sdFe'].forEach(id => { Q('#' + id).value = ''; }); upd(); };
+      upd();
+    }
     if (!A) return;
     Q('#sdF').onchange = e => pickFile(e.target.files[0]);
     Q('#sdSave').onclick = saveED;
