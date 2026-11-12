@@ -228,8 +228,7 @@
       if (run !== P.run) return;
       const C = SD.calcStok();
       if (!C.to2) throw new Error('Belum ada data stock DCF - unggah dulu di Stock DCF > Data Exp Date');
-      const tL = C.toLast || C.to2;   // akhir minggu Est. PB terakhir di Stock DCF (termasuk minggu tambahan)
-      P.estDate = addD(tL, 1); P.reqFrom = addD(tL, 2); P.reqTo = addD(tL, 7); P.periode = P.reqFrom;
+      setDates(C);
       P.all = mapRows(C.rows);
       const s = sbc();
       const [po, cf, inf] = await Promise.all([
@@ -284,6 +283,14 @@
 
   // ---------------- tampilan ----------------
   // periode default "23 - 28 NOVEMBER 2026"
+  // periode request pengiriman tetap (minggu setelah Est. STOCK 22 Nov, mis. 23-28 Nov); minggu Est. PB tambahan di Stock DCF hanya menggeser
+  // tanggal Est. STOCK / DSI di judul kolom (mis. 29 Nov) karena stock yang dipakai adalah Est. STOCK terakhir
+  function setDates(C) {
+    const tL = C.toLast || C.to2;
+    P.estDate = addD(tL, 1); P.reqFrom = addD(C.to2, 2); P.reqTo = addD(C.to2, 7); P.periode = P.reqFrom;
+    P.hdrDate = tL !== C.to2 ? P.estDate : null;
+  }
+  const hdrD = () => P.hdrDate || P.reqTo;
   const reqPeriod = () => { const sm = pd(P.reqFrom).getUTCMonth() === pd(P.reqTo).getUTCMonth(); return (sm ? pd(P.reqFrom).getUTCDate() : dml(P.reqFrom).toUpperCase()) + ' - ' + dml(P.reqTo).toUpperCase() + ' ' + pd(P.reqTo).getUTCFullYear(); };
   const defLine = () => 'REQUEST PENGIRIMAN : ' + reqPeriod();
   // teks baris di bawah judul: bisa diubah administrator (tersimpan per periode), kosong = otomatis
@@ -323,7 +330,7 @@
     return h;
   }
   function tableHtml() {
-    const pos = P.pos, np = pos.length, d1 = P.reqTo ? dmy(P.reqTo) : '', ds = P.reqTo ? dmm(P.reqTo).replace(' ', '-') : '';
+    const pos = P.pos, np = pos.length, d1 = hdrD() ? dmy(hdrD()) : '', ds = P.reqTo ? dmm(hdrD()).replace(' ', '-') : '';
     const kopt = sel => kendKeys().map(k => '<option' + (k === sel ? ' selected' : '') + '>' + E(k) + '</option>').join('');
     const poh = pos.map((po, i) => '<th colspan="2" class="y"><div class="pt-poh1"><b>PO ' + (i + 1) + '</b><select class="pt-kd" data-po="' + po.id + '">' + kopt(po.kendaraan) + '</select><span class="pt-x" data-del="' + po.id + '" title="Hapus PO ini">×</span></div>'
       + '<div class="pt-poh2">Kirim <input type="date" class="pt-dt" data-po="' + po.id + '" value="' + E(po.tgl_kirim || '') + '"></div></th>').join('');
@@ -417,7 +424,7 @@
     const td = (t, bg, st) => '<td style="' + FF + bdl + 'padding:2px 7px;background-color:' + bg + ';color:#111;font-size:12px;white-space:nowrap;text-align:right;' + (st || '') + '">' + t + '</td>';
     const bufTd = (v, st) => { const w = Math.min(100, v * 100 / 3); return td(n0(v * 100) + '%', '#ffffff', 'min-width:58px;' + (st <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : (w > 0 ? 'background-image:linear-gradient(90deg,#f6b26b ' + w + '%,#fff3e0 ' + w + '%);' : ''))); };
     const zc = v => v <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : '';
-    const d1 = dmy(P.reqTo), ds = dmm(P.reqTo).replace(' ', '-');
+    const d1 = dmy(hdrD()), ds = dmm(hdrD()).replace(' ', '-');
     let h = '<div style="' + FF + 'display:inline-block;background-color:#ffffff;padding:10px"><div style="font-weight:bold;font-size:19px;color:#111">EST. PO TAKAKI JATIM</div>'
       + '<div style="font-size:12px;color:#333;padding-bottom:5px">' + E(reqLine()) + ' · satuan CTN</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
@@ -510,11 +517,11 @@
     if (np) merge(4, 5, 4, 4 + 2 * np, 'PO TAKAKI', hd(Y));
     pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k), hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
     merge(4, cT, 5, cT, 'TOTAL PO', hd(Y)); put(6, cT, 'CTN', hd(Y));
-    merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(P.reqTo), hd(G));
+    merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(hdrD()), hd(G));
     merge(5, c1, 5, cb1, 'JIKA TANPA FORECAST', hd(G)); merge(5, cs2, 5, cb2, 'JIKA ADA FORECAST', hd(G));
     put(6, c1, 'STOCK', hd(G)); put(6, cb1, 'BUFFER %', hd(G)); put(6, cs2, 'STOCK', hd(G)); put(6, cb2, 'BUFFER %', hd(G));
-    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(P.reqTo), hd(B)); put(5, cd1, 'JIKA TANPA FORECAST', hd(B)); put(5, cd2, 'JIKA ADA FORECAST', hd(B));
-    put(6, cd1, dmm(P.reqTo).replace(' ', '-'), hd(B)); put(6, cd2, dmm(P.reqTo).replace(' ', '-'), hd(B));
+    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(hdrD()), hd(B)); put(5, cd1, 'JIKA TANPA FORECAST', hd(B)); put(5, cd2, 'JIKA ADA FORECAST', hd(B));
+    put(6, cd1, dmm(hdrD()).replace(' ', '-'), hd(B)); put(6, cd2, dmm(hdrD()).replace(' ', '-'), hd(B));
     merge(4, cq, 5, cq, 'QPD (Ctn)', hd(TN)); put(6, cq, 'per hari', hd(TN));
     merge(4, cj, 5, cj, 'JML TOKO JUAL', hd(Y)); put(6, cj, '(toko)', hd(Y));
     put(4, ca, 'AVERAGE', hd(PC)); put(5, ca, 'OUTB (PB)', hd(PC)); put(6, ca, 'PER WEEK', hd(PC));
@@ -600,7 +607,7 @@
   const kc = (t, k, at) => '<td ' + (at || '') + ' style="' + KFF + 'padding:2px 7px;font-size:12px;color:#111;white-space:nowrap;vertical-align:middle;' + KS[k] + '">' + t + '</td>';
   // dokumen (judul + tabel) bergaya inline: sama untuk tampilan halaman dan JPG; web = true menambah isian tanggal kirim di header PO
   function kirimDoc(web) {
-    const D = kirimData(), pos = D.pos, np = pos.length, d1 = dmy(P.reqTo), T = D.T;
+    const D = kirimData(), pos = D.pos, np = pos.length, d1 = dmy(hdrD()), T = D.T;
     const pcsT = D.pcs.reduce((a, b) => a + b, 0), q = v => v == null ? '-' : n0(v);
     let h = '<div style="' + KFF + 'display:inline-block;background-color:#ffffff;padding:10px 12px"><div style="font-weight:bold;font-size:20px;color:#000">PO TAKAKI (U/ DCF SBY)</div>'
       + '<div style="font-style:italic;font-size:12px;color:#000;padding-bottom:6px">Tanggal PO : ' + E(tglPOText()) + '</div>'
@@ -651,7 +658,7 @@
     if (np) merge(4, 6, 4, 5 + 3 * np, 'PO TAKAKI', hw);
     merge(5, 1, 6, 1, 'PLU_DC', hw); merge(5, 2, 6, 2, 'DESCRIPTION', hw); merge(5, 3, 6, 3, 'FRC', hw);
     merge(5, 5, 6, 5, 'QPD (CTN)', hb);
-    merge(5, 4, 6, 4, 'EST. STOCK AKHIR DCF ' + dmy(P.reqTo), hy);
+    merge(5, 4, 6, 4, 'EST. STOCK AKHIR DCF ' + dmy(hdrD()), hy);
     pos.forEach((po, k) => { const pc = 6 + 3 * k; merge(5, pc, 5, pc + 2, kirimLabel(po, k), hy); put(6, pc, 'PALLET', hy); put(6, pc + 1, 'CTN', hy); put(6, pc + 2, 'PCS', hy); });
     merge(5, cd1, 5, cd2, 'DSI DCF', hy); put(6, cd1, 'AWAL', hy); put(6, cd2, 'AKHIR', hy);
     ws.getRow(6).height = 42;
@@ -809,7 +816,8 @@
     if (!adm()) return;
     css(); bindBody();
     if (!P.ready || P.err || Date.now() - (P.at || 0) > 60000) load(false);   // data lebih dari 1 menit: muat ulang
-    else { try { const C = window.PBSTOKDCF.calcStok(); if (C.to2 && addD(C.toLast || C.to2, 2) !== P.periode) { load(false); return; }   // jumlah minggu Est. PB tambahan berubah: periode PO ikut bergeser
+    else { try { const C = window.PBSTOKDCF.calcStok(); if (C.to2 && addD(C.to2, 2) !== P.periode) { load(false); return; }   // data Stock DCF berganti periode: muat ulang
+      setDates(C);   // jumlah minggu Est. PB tambahan bisa berubah: tanggal judul kolom ikut
       P.all = mapRows(C.rows); P.rows = P.all.filter(r => !P.hid.has(r.plu)); } catch (e) { /* pakai data sebelumnya */ } paint(); }
   }
   window.PBPOTAKAKI = { open, downloadJpg, downloadXlsx, reload: () => load(true), _t: { tgtOf, recommend, pickVehicles, needCtn, unitsCap, toCtn, numIn } };
