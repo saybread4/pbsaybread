@@ -1521,7 +1521,7 @@ function init(d,keep,lazy){
   if(lazy&&VIEW!=='lap')PRENDER=true;else render();
   if(VIEW==='add'){fillBas('#a_bas',curCab(),$('#a_bas').value);fillZona('#a_zn',$('#a_zn').value)}
   if(VIEW==='info'&&!INFO)loadInfo(false);
-  if(VIEW==='cab')loadCab(false);   // memuat ulang seluruh halaman Rekap Cabang (pivot, Stock-DC vs PB, daftar PB tidak sesuai, status) — bukan hanya status BAS
+  if(VIEW==='cab')loadCab(true);   // memuat ulang seluruh halaman Rekap Cabang (pivot, Stock-DC vs PB, daftar PB tidak sesuai, status) — bukan hanya status BAS
 }
 </script>
 <script>
@@ -2625,7 +2625,7 @@ function loadCabAdm(force){
   if(CABD&&!force){renderCab();return}
   if(CAB_BUSY)return;CAB_BUSY=true;
   $('#c_out').innerHTML='<div class="card empty" style="margin-top:10px"><span class="spin"></span><div>Memuat status cabang…</div></div>';
-  run('getRekapCab',[TOKEN],r=>{CAB_BUSY=false;CABD=r;renderCab()},e=>{CAB_BUSY=false;$('#c_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat:<br>'+esc((e&&e.message)||e)+'</div>';failH(e)});
+  run('getRekapCab',[TOKEN,!!force],r=>{CAB_BUSY=false;CABD=r;renderCab()},e=>{CAB_BUSY=false;$('#c_out').innerHTML='<div class="card empty" style="color:#b00020">Gagal memuat:<br>'+esc((e&&e.message)||e)+'</div>';failH(e)});
 }
 function renderCab(){
   const R=CABD;if(!R)return;
