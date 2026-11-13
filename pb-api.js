@@ -16,6 +16,26 @@
 
   const err = e => new Error((e && e.message) || 'Terjadi kesalahan');
   async function rpc(fn, args) { const { data, error } = await sb.rpc(fn, args || {}); if (error) throw err(error); return data; }
+  // Snapshot hasil hitungan berat (Rekap Cabang, Stock-DC vs PB, Simulasi Outbound) di tabel snapshot_web: dibaca langsung (cepat, tanpa timeout).
+  // pg_cron menghitung ulang tiap 3 menit, atau dalam <= 30 detik setelah "Muat ulang" (request_snapshot). Bila snapshot belum ada / gagal dibaca,
+  // dihitung langsung seperti sebelumnya (fallback).
+  async function snap(key, force, fallback) {
+    let cur = null;
+    try { cur = await rpc('get_snapshot', { p_key: key }); } catch (e) { cur = null; }
+    if (force) {
+      try {
+        await rpc('request_snapshot');
+        const t0 = (cur && cur.t) || 0, end = Date.now() + 60000;
+        while (Date.now() < end) {   // tunggu pg_cron memperbarui; bila belum selesai dalam 60 detik, data lama tetap dipakai
+          await new Promise(r => setTimeout(r, 2000));
+          const n = await rpc('get_snapshot', { p_key: key });
+          if (n && n.t > t0) { cur = n; break; }
+        }
+      } catch (e) { /* pakai data yang ada */ }
+    }
+    if (cur && cur.d) return cur.d;
+    return fallback();
+  }
   async function setSetting(k, v) {
     const { error } = await sb.from('settings').upsert({ key: k, value: v });
     if (error) throw new Error(/row-level security/i.test(error.message) ? 'Hanya administrator yang boleh mengubah pengaturan ini.' : error.message);
@@ -487,7 +507,7 @@
     async updateManualGroup(token, o) { await rpc('update_manual_group', { o: o }); return true; },
     async getItemAdmin() { return rpc('get_item_admin'); },
     async setManItems(token, list, news) { await rpc('set_man_items', { p_list: list || [], p_news: news || [] }); return true; },
-    async getRekapCab() { return rpc('get_rekap_cab'); },
+    async getRekapCab(token, force) { return snap('rekap_cab', !!force, () => rpc('get_rekap_cab')); },
     async getBadPB() { return rpc('get_bad_pb'); },
     async delCsvPB(token, cab) { await rpc('del_csv_pb', { p_cab: String(cab || '') }); return true; },
     async kosongkanPB(token) { return rpc('kosongkan_pb'); },
@@ -502,13 +522,13 @@
       return mergeJadwal(r[0], r[1], todayJkt());
     },
     async getPivotCab(token, force) {
-      const r = await rpc('get_pivot_cab', { p_force: !!force });
+      const r = await snap('pivot', !!force, () => rpc('get_pivot_cab', { p_force: !!force }));
       // item tidak aktif (tidak ada di master item = PLU kosong, dan total PB = 0) tidak ditampilkan; item aktif ber-PLU tetap tampil walau 0
       ['next', 'cur'].forEach(w => { if (r && r[w] && Array.isArray(r[w].items)) r[w].items = r[w].items.filter(it => keepPivotItem(it)); });
       return r;
     },
-    async getStockPlan(token, force) { return rpc('get_stock_plan', { p_force: !!force }); },
-    async getOutbound(token, force, w) { return rpc('get_outbound', { p_force: !!force, p_w: w === 'cur' ? 'cur' : 'next' }); },
+    async getStockPlan(token, force) { return snap('stock_plan', !!force, () => rpc('get_stock_plan', { p_force: !!force })); },
+    async getOutbound(token, force, w) { const cur = w === 'cur'; return snap(cur ? 'outbound_cur' : 'outbound_next', !!force, () => rpc('get_outbound', { p_force: !!force, p_w: cur ? 'cur' : 'next' })); },
     async exportMaster() {
       const d = await rpc('export_master'), today = todayJkt();
       let jw = null, who = 'Administrator \u00b7 SEMUA CAB';
