@@ -46,7 +46,7 @@
   const GAP = 5;
   const tgtOf = (r, T) => r.core ? T : Math.max(0, T - GAP);
   // kebutuhan CTN agar setiap item mencapai DSI target (core = T, lainnya = T - GAP; hanya item yang punya QPD)
-  const needCtn = (rows, T) => rows.reduce((t, r) => t + (r.qc > 0 ? Math.max(0, tgtOf(r, T) * r.qc - r.s1) : 0), 0);
+  const needCtn = (rows, T) => rows.reduce((t, r) => t + (r.qc > 0 && !r.disc ? Math.max(0, tgtOf(r, T) * r.qc - r.s1) : 0), 0);
   // jumlah PO paling sedikit, lalu kapasitas paling pas, dari kombinasi jenis kendaraan
   function pickVehicles(need, caps, cp) {
     if (!(need > 0)) return [];
@@ -74,7 +74,7 @@
   // mode 'full' = kendaraan diisi penuh, kelebihan kapasitas dibagi dengan DSI diratakan (water-filling); 'pas' = tepat sampai target DSI.
   // hasil: { need (ctn mentah), veh (daftar kendaraan), capUnits, capCtn, level (DSI rata-rata), plan: [{kendaraan, items:{plu: pallet}}] }
   function recommend(rows, T, caps, cp, mode) {
-    const items = rows.filter(r => r.qc > 0), cu = cp / UP;
+    const items = rows.filter(r => r.qc > 0 && !r.disc), cu = cp / UP;   // item discontinue tidak direkomendasikan
     const need = needCtn(rows, T);
     const mn = items.map(r => Math.ceil(Math.max(0, tgtOf(r, T) * r.qc - r.s1) / cu - 1e-9)), off = items.map(r => T - tgtOf(r, T));
     const veh = pickVehicles(mn.reduce((a, b) => a + b, 0) * cu, caps, cp);
@@ -147,7 +147,8 @@
     periode: null, tab: 'hitung', tglPO: '', reqCustom: '', all: [], hid: new Set(), estDate: null, reqFrom: null, reqTo: null, rows: [], pos: [], pal: new Map(), info: {}, nw: 0,
     cfg: { target: 30, cp: 77, kend: Object.assign({}, KEND0) } };
   const pk = (id, plu) => id + '|' + plu;
-  const palOf = (id, plu) => P.pal.get(pk(id, plu)) || 0;
+  const isDisc = plu => { const r = (P.all || []).find(x => x.plu === plu); return !!(r && r.disc); };
+  const palOf = (id, plu) => isDisc(plu) ? 0 : (P.pal.get(pk(id, plu)) || 0);   // item discontinue: pallet selalu 0
   const capOf = po => Number(P.cfg.kend[po.kendaraan]) || 0;
   // daftar kendaraan urut tonase terkecil -> terbesar (TRONTON, JUMBO, BUILT-UP), tidak tergantung urutan data tersimpan
   const kendKeys = () => Object.keys(P.cfg.kend).sort((a, b) => (Number(P.cfg.kend[a]) || 0) - (Number(P.cfg.kend[b]) || 0));
@@ -189,6 +190,9 @@
 #vPoTakaki .pt-tb td{padding:1px 6px;border-right:1px solid #cfd6d3;border-bottom:1px solid #cfd6d3;white-space:nowrap;text-align:right;height:21px;background:#fff}
 #vPoTakaki .pt-tb td.l{text-align:left}#vPoTakaki .pt-tb td.c{text-align:center}
 #vPoTakaki .pt-tb td.core{background:#e3f5e8}
+#vPoTakaki .pt-tb tr.disc td{background:#ffeef0}
+#vPoTakaki .pt-tb tr.disc td.pt-jt{background:#fff9a6}
+#vPoTakaki .pt-tb tr.disc td.pl{background:#fffdf0}
 #vPoTakaki .pt-tb td.pt-jt{background:#fff9a6}
 #vPoTakaki .pt-tb td.z{background:#fdd4d6!important;color:#9c0006;font-weight:700}
 #vPoTakaki .pt-tb td.bf{min-width:58px}
@@ -205,19 +209,21 @@
 #vPoTakaki .pt-x{cursor:pointer;opacity:.55;font-size:14px;line-height:1;padding:0 3px}#vPoTakaki .pt-x:hover{opacity:1;color:#c00000}
 #vPoTakaki input.pt-p{width:56px;border:0;border-radius:4px;background:transparent;text-align:right;font:inherit;padding:1px 3px;color:#1f4fd8;font-weight:600}
 #vPoTakaki input.pt-p:hover{background:rgba(55,48,163,.07)}#vPoTakaki input.pt-p:focus{outline:2px solid #34b96f;background:#fff}
+#vPoTakaki input.pt-p:disabled{cursor:not-allowed;opacity:.6}
 #vPoTakaki input.pt-p::placeholder{color:#b8c2bd;font-weight:400}
 #vPoTakaki .pt-ton{display:inline-block;margin-top:8px;background:#fbe5d6;border:1px solid #efc9ae;border-radius:8px;padding:7px 12px;font-size:12px}
 #vPoTakaki .pt-ton table{border-collapse:collapse;width:auto;min-width:0}#vPoTakaki .pt-ton td{padding:1px 6px 1px 0}
 #vPoTakaki .pt-ton input{width:68px;text-align:right;font:inherit;font-weight:700;padding:1px 4px;border:1px solid #d9b394;border-radius:4px;background:#fff;color:#1f4fd8}
 #vPoTakaki .pt-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu);padding:6px 2px 0;align-items:center}
 #vPoTakaki .pt-sw{display:inline-block;width:14px;height:12px;border:1px solid rgba(0,0,0,.2);vertical-align:-2px;margin-right:4px;background:#e3f5e8}
+#vPoTakaki .pt-sw.d{background:#ffeef0;border-color:#f3b9bf}
 #vPoTakaki .pt-er{color:#b00020}
 `;
     document.head.appendChild(s);
   }
 
   // baris item mengikuti urutan & penanda core halaman Stock DCF
-  const mapRows = rows => { const SD = window.PBSTOKDCF; return rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, raw: r.i.plu_dc, desk: r.i.deskripsi, core: !!r.i.core, s1: Number(r.estLast != null ? r.estLast : r.est3) || 0,   // Est. STOCK kolom terakhir di Stock DCF (termasuk minggu Est. PB tambahan)
+  const mapRows = rows => { const SD = window.PBSTOKDCF; return rows.map(r => { const k = String(r.i.plu_dc).trim(); return { plu: k, raw: r.i.plu_dc, desk: r.i.deskripsi, core: !!r.i.core, disc: !!r.i.discontinue, s1: Number(r.estLast != null ? r.estLast : r.est3) || 0,   // Est. STOCK kolom terakhir di Stock DCF (termasuk minggu Est. PB tambahan)
          qc: Number(r.qc) || 0, frc: (SD.X.qpd[k] || {}).frc || 0 }; }); };
 
   // ---------------- data ----------------
@@ -309,7 +315,7 @@
   }
   function recoHtml() {
     const R = reco(), T = P.cfg.target, cp = P.cfg.cp, C = calc();
-    const below = C.rows.filter(x => x.r.qc > 0 && x.d2 != null && x.d2 < tgtOf(x.r, T) - 1e-9).length;
+    const below = C.rows.filter(x => x.r.qc > 0 && !x.r.disc && x.d2 != null && x.d2 < tgtOf(x.r, T) - 1e-9).length;
     let h = '<div class="pt-card"><div class="pt-row"><div><label class="k">Target DSI (hari)</label><br><input class="in" id="ptTg" inputmode="decimal" style="width:70px;text-align:right" value="' + E(String(T).replace('.', ',')) + '"></div>'
       + '<div><label class="k">Cara isi otomatis</label><br><select class="in" id="ptMd"><option value="full"' + (P.mode === 'full' ? ' selected' : '') + '>Kendaraan diisi penuh (DSI diratakan)</option><option value="pas"' + (P.mode === 'pas' ? ' selected' : '') + '>Pas sampai target DSI</option></select></div>'
       + '<button class="b p" id="ptApply"' + (R.veh.length ? '' : ' disabled') + '>' + ic('spark') + ' Terapkan rekomendasi</button>'
@@ -326,7 +332,7 @@
         + (P.mode === 'full' ? ' Bila diisi penuh, DSI item core ≈ <b>' + n0(R.level) + ' hari</b>, item lain ≈ <b>' + n0(Math.max(0, R.level - GAP)) + ' hari</b>.' : '');
     }
     h += '<br><span class="pt-chip">Terisi sekarang: ' + P.pos.length + ' PO · ' + n0(C.T.tot) + ' ctn</span>'
-      + (P.pos.length && P.rows.some(r => r.qc > 0) ? '<span class="pt-chip' + (below ? ' k' : '') + '">Item DSI &lt; target setelah PO: ' + below + '</span>' : '')
+      + (P.pos.length && P.rows.some(r => r.qc > 0 && !r.disc) ? '<span class="pt-chip' + (below ? ' k' : '') + '">Item DSI &lt; target setelah PO: ' + below + '</span>' : '')
       + '</div></div>';
     return h;
   }
@@ -338,27 +344,27 @@
     let h = '<div class="pt-wrap"><table class="pt-tb"><thead>'
       + '<tr class="h1"><th class="rs" rowspan="3">NO</th><th class="rs" rowspan="3">PLU DC</th><th class="rs" rowspan="3">DESCRIPTION</th><th class="rs" rowspan="3">FRC</th><th class="rs" rowspan="3"></th>'
       + '<th class="y" colspan="' + (np ? np * 2 : 2) + '">PO TAKAKI</th><th class="tp rs" rowspan="2">TOTAL<br>PO</th>'
-      + '<th class="gr" colspan="4">EST. STOCK DCF ' + E(d1) + '</th><th class="bl" colspan="2">DSI DCF ' + E(d1) + '</th>'
+      + '<th class="gr" colspan="2">EST. STOCK DCF ' + E(d1) + '</th><th class="gr rs" rowspan="3">BUFFER %</th><th class="bl" colspan="2">DSI DCF ' + E(d1) + '</th>'
       + '<th class="tn rs" rowspan="2">QPD<br>(Ctn)</th><th class="y rs" rowspan="2">JML TOKO<br>JUAL</th><th class="pc">AVERAGE</th></tr>'
       + '<tr class="h2">' + (np ? poh : '<th colspan="2" class="y">belum ada PO</th>')
-      + '<th class="gr" colspan="2">AWAL</th><th class="gr" colspan="2">AKHIR</th><th class="bl">AWAL</th><th class="bl">AKHIR</th><th class="pc">OUTB (PB)</th></tr>'
+      + '<th class="gr rs" rowspan="2">AWAL</th><th class="gr rs" rowspan="2">AKHIR</th><th class="bl rs" rowspan="2">AWAL</th><th class="bl rs" rowspan="2">AKHIR</th><th class="pc">OUTB (PB)</th></tr>'
       + '<tr class="h3">' + (np ? pos.map(() => '<th class="y">PALLET</th><th class="y">CTN</th>').join('') : '<th class="y">PALLET</th><th class="y">CTN</th>')
-      + '<th class="tp">CTN</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="bl">' + E(ds) + '</th><th class="bl">' + E(ds) + '</th>'
+      + '<th class="tp">CTN</th>'
       + '<th class="tn">per hari</th><th class="y">(toko)</th><th class="pc">PER WEEK</th></tr></thead><tbody>';
     P.rows.forEach((r, n) => {
-      h += '<tr data-p="' + E(r.plu) + '"><td class="c">' + (n + 1) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.plu) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.desk) + '</td><td class="c">' + (r.frc ? n0(r.frc) : '-') + '</td><td class="rmc"><span class="pt-rm" data-rm="' + E(r.plu) + '" title="Hapus item ini dari tabel">×</span></td>'
-        + (np ? pos.map(po => '<td class="pl"><input class="pt-p" inputmode="decimal" placeholder="-" data-po="' + po.id + '" data-p="' + E(r.plu) + '" value="' + fmtP(palOf(po.id, r.plu)) + '"></td><td data-k="c|' + po.id + '|' + E(r.plu) + '"></td>').join('') : '<td class="pl"></td><td></td>')
-        + '<td class="tot" data-k="t|' + E(r.plu) + '"></td><td data-k="s1|' + E(r.plu) + '"></td><td class="bf" data-k="b1|' + E(r.plu) + '"></td><td data-k="s2|' + E(r.plu) + '"></td><td class="bf" data-k="b2|' + E(r.plu) + '"></td>'
+      h += '<tr data-p="' + E(r.plu) + '"' + (r.disc ? ' class="disc"' : '') + '><td class="c">' + (n + 1) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.plu) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.desk) + '</td><td class="c">' + (r.frc ? n0(r.frc) : '-') + '</td><td class="rmc"><span class="pt-rm" data-rm="' + E(r.plu) + '" title="Hapus item ini dari tabel">×</span></td>'
+        + (np ? pos.map(po => '<td class="pl"><input class="pt-p" inputmode="decimal" placeholder="-"' + (r.disc ? ' disabled title="Item discontinue - tidak bisa diisi"' : '') + ' data-po="' + po.id + '" data-p="' + E(r.plu) + '" value="' + fmtP(palOf(po.id, r.plu)) + '"></td><td data-k="c|' + po.id + '|' + E(r.plu) + '"></td>').join('') : '<td class="pl"></td><td></td>')
+        + '<td class="tot" data-k="t|' + E(r.plu) + '"></td><td data-k="s1|' + E(r.plu) + '"></td><td data-k="s2|' + E(r.plu) + '"></td><td class="bf" data-k="b2|' + E(r.plu) + '"></td>'
         + '<td data-k="d1|' + E(r.plu) + '"></td><td data-k="d2|' + E(r.plu) + '"></td><td>' + q1(r.qc) + '</td><td class="pt-jt">' + ((P.info[r.plu] || {}).toko ? n0(P.info[r.plu].toko) : '-') + '</td><td>' + ((P.info[r.plu] || {}).avg ? n0(P.info[r.plu].avg) : '-') + '</td></tr>';
     });
     h += '<tr class="gt"><td class="l" colspan="5">Grand Total</td>' + (np ? pos.map(po => '<td data-k="gp|' + po.id + '"></td><td data-k="gc|' + po.id + '"></td>').join('') : '<td></td><td></td>')
-      + '<td data-k="gt"></td><td data-k="gs1"></td><td data-k="gb1"></td><td data-k="gs2"></td><td data-k="gb2"></td><td data-k="gd1"></td><td data-k="gd2"></td><td data-k="gq"></td><td></td><td data-k="ga"></td></tr>'
-      + '<tr class="cp"><td class="l" colspan="5">Muatan kendaraan</td>' + (np ? pos.map(po => '<td colspan="2" data-k="cap|' + po.id + '"></td>').join('') : '<td colspan="2"></td>') + '<td colspan="10"></td></tr>'
+      + '<td data-k="gt"></td><td data-k="gs1"></td><td data-k="gs2"></td><td data-k="gb2"></td><td data-k="gd1"></td><td data-k="gd2"></td><td data-k="gq"></td><td></td><td data-k="ga"></td></tr>'
+      + '<tr class="cp"><td class="l" colspan="5">Muatan kendaraan</td>' + (np ? pos.map(po => '<td colspan="2" data-k="cap|' + po.id + '"></td>').join('') : '<td colspan="2"></td>') + '<td colspan="9"></td></tr>'
       + '</tbody></table></div>';
     return h;
   }
   function tonHtml() {
-    return '<div class="pt-leg"><span><i class="pt-sw"></i>Item core</span></div>'
+    return '<div class="pt-leg"><span><i class="pt-sw"></i>Item core</span><span><i class="pt-sw d"></i>Item discontinue</span></div>'
       + '<div class="pt-ton"><b>Tonase Kendaraan (ctn)</b><table>' + kendKeys().map(k => '<tr><td><input class="pt-cap" data-k="' + E(k) + '" inputmode="numeric" value="' + n0(P.cfg.kend[k]) + '"></td><td>' + E(k) + '</td></tr>').join('') + '</table></div>'
       + '<div class="pt-leg"><span>Rata-rata PB per minggu = ' + (P.nw ? 'rata-rata ' + P.nw + ' minggu terakhir yang tersedia' : 'belum ada data') + ' (arsip PB) · JML TOKO JUAL = jumlah toko yang punya item tersebut</span></div>';
   }
@@ -397,7 +403,7 @@
       setT('t|' + p, x.tot ? n0(x.tot) : '-');
       setT('s1|' + p, n0(x.r.s1)); const c1 = Q('#vPoTakaki [data-k="s1|' + p + '"]'); if (c1) c1.classList.toggle('z', x.r.s1 <= 0);
       setT('s2|' + p, n0(x.s2)); const c2 = Q('#vPoTakaki [data-k="s2|' + p + '"]'); if (c2) c2.classList.toggle('z', x.s2 <= 0);
-      setBuf('b1|' + p, x.b1, x.r.s1); setBuf('b2|' + p, x.b2, x.s2);
+      setBuf('b2|' + p, x.b2, x.s2);
       setT('d1|' + p, x.d1 == null ? '-' : n0(x.d1)); setT('d2|' + p, x.d2 == null ? '-' : n0(x.d2));
     });
     const T = C.T, bt = s => T.avg > 0 ? Math.max(0, (s - T.avg) / T.avg) : 0;
@@ -407,7 +413,7 @@
       if (c) { c.textContent = muatText(po, T.ctn[k]); c.title = 'Muatan ' + n0(T.ctn[k]) + ' dari ' + n0(cap) + ' ctn (' + po.kendaraan + ')'; c.classList.toggle('neg', left < 0); c.style.textAlign = 'center'; }
     });
     setT('gt', T.tot ? n0(T.tot) : '-'); setT('gs1', n0(T.s1)); setT('gs2', n0(T.s2));
-    const g1 = Q('#vPoTakaki [data-k="gb1"]'), g2 = Q('#vPoTakaki [data-k="gb2"]'); if (g1) g1.textContent = n0(bt(T.s1) * 100) + '%'; if (g2) g2.textContent = n0(bt(T.s2) * 100) + '%';
+    const g2 = Q('#vPoTakaki [data-k="gb2"]'); if (g2) g2.textContent = n0(bt(T.s2) * 100) + '%';
     setT('gd1', T.qc > 0 ? n0(T.s1 / T.qc) : '-'); setT('gd2', T.qc > 0 ? n0(T.s2 / T.qc) : '-'); setT('gq', q1(T.qc)); setT('ga', n0(T.avg));
     const rc = Q('#ptReco'); if (rc && !rc.contains(document.activeElement)) rc.innerHTML = recoHtml();
   }
@@ -420,7 +426,7 @@
   async function downloadJpg() {
     const C = calc(), pos = P.pos, np = pos.length, T = C.T;
     const FF = 'font-family:Calibri,Arial,sans-serif;', bd = 'border:1px solid #8b9490;', bdl = 'border:1px solid #cfd6d3;';
-    const Y = '#ffe600', TP = '#d6c6f2', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9', CORE = '#e3f5e8';
+    const DISC = '#ffeef0', Y = '#ffe600', TP = '#d6c6f2', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9', CORE = '#e3f5e8';
     const th = (t, bg, at) => '<th ' + (at || '') + ' style="' + FF + bd + 'padding:3px 7px;background-color:' + bg + ';color:#111;font-size:11px;font-weight:bold;text-align:center;white-space:nowrap">' + t + '</th>';
     const td = (t, bg, st) => '<td style="' + FF + bdl + 'padding:2px 7px;background-color:' + bg + ';color:#111;font-size:12px;white-space:nowrap;text-align:right;' + (st || '') + '">' + t + '</td>';
     const bufTd = (v, st) => { const w = Math.min(100, v * 100 / 3); return td(n0(v * 100) + '%', '#ffffff', 'min-width:58px;' + (st <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : (w > 0 ? 'background-image:linear-gradient(90deg,#f6b26b ' + w + '%,#fff3e0 ' + w + '%);' : ''))); };
@@ -430,30 +436,31 @@
       + '<div style="font-size:12px;color:#333;padding-bottom:5px">' + E(reqLine()) + ' · satuan CTN</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
       + '<tr>' + th('NO', '#fff', 'rowspan="3"') + th('PLU DC', '#fff', 'rowspan="3"') + th('DESCRIPTION', '#fff', 'rowspan="3"') + th('FRC', '#fff', 'rowspan="3"')
-      + th('PO TAKAKI', Y, 'colspan="' + (np ? np * 2 : 2) + '"') + th('TOTAL<br>PO', TP, 'rowspan="2"') + th('EST. STOCK DCF ' + E(d1), G, 'colspan="4"') + th('DSI DCF ' + E(d1), B, 'colspan="2"')
+      + th('PO TAKAKI', Y, 'colspan="' + (np ? np * 2 : 2) + '"') + th('TOTAL<br>PO', TP, 'rowspan="2"') + th('EST. STOCK DCF ' + E(d1), G, 'colspan="2"') + th('BUFFER %', G, 'rowspan="3"') + th('DSI DCF ' + E(d1), B, 'colspan="2"')
       + th('QPD<br>(Ctn)', TN, 'rowspan="2"') + th('JML TOKO<br>JUAL', Y, 'rowspan="2"') + th('AVERAGE', PC) + '</tr>'
       + '<tr>' + (np ? pos.map((po, i) => th(E(poLabel(po, i)), Y, 'colspan="2"')).join('') : th('belum ada PO', Y, 'colspan="2"'))
-      + th('AWAL', G, 'colspan="2"') + th('AKHIR', G, 'colspan="2"') + th('AWAL', B) + th('AKHIR', B) + th('OUTB (PB)', PC) + '</tr>'
+      + th('AWAL', G, 'rowspan="2"') + th('AKHIR', G, 'rowspan="2"') + th('AWAL', B, 'rowspan="2"') + th('AKHIR', B, 'rowspan="2"') + th('OUTB (PB)', PC) + '</tr>'
       + '<tr>' + (np ? pos.map(() => th('PALLET', Y) + th('CTN', Y)).join('') : th('PALLET', Y) + th('CTN', Y)) + th('CTN', TP)
-      + th('STOCK', G) + th('BUFFER %', G) + th('STOCK', G) + th('BUFFER %', G) + th(E(ds), B) + th(E(ds), B) + th('per hari', TN) + th('(toko)', Y) + th('PER WEEK', PC) + '</tr></thead><tbody>';
+      + th('per hari', TN) + th('(toko)', Y) + th('PER WEEK', PC) + '</tr></thead><tbody>';
     C.rows.forEach((x, n) => {
-      const r = x.r, cb = r.core ? CORE : '#ffffff';
-      h += '<tr>' + td(n + 1, '#fff', 'text-align:center') + td(E(r.plu), cb, 'text-align:left') + td(E(r.desk), cb, 'text-align:left') + td(r.frc ? n0(r.frc) : '-', '#fff', 'text-align:center')
-        + (np ? pos.map((po, k) => td(fmtP(palOf(po.id, r.plu)) || '-', '#fffdf0', 'color:#1f4fd8;font-weight:bold') + td(x.ctn[k] ? n0(x.ctn[k]) : '-', '#fff')).join('') : td('-', '#fffdf0') + td('-', '#fff'))
-        + td(x.tot ? n0(x.tot) : '-', '#fff', 'font-weight:bold') + td(n0(r.s1), '#fff', zc(r.s1)) + bufTd(x.b1, r.s1) + td(n0(x.s2), '#fff', zc(x.s2)) + bufTd(x.b2, x.s2)
-        + td(x.d1 == null ? '-' : n0(x.d1), '#fff') + td(x.d2 == null ? '-' : n0(x.d2), '#fff') + td(q1(r.qc), '#fff') + td(x.inf.toko ? n0(x.inf.toko) : '-', '#fff9a6') + td(x.inf.avg ? n0(x.inf.avg) : '-', '#fff') + '</tr>';
+      const r = x.r, wb = r.disc ? DISC : '#fff', cb = r.core ? CORE : (r.disc ? DISC : '#ffffff');
+      const bufTdW = (v, st) => bufTd(v, st).replace('background-color:#ffffff;', 'background-color:' + wb + ';');
+      h += '<tr>' + td(n + 1, wb, 'text-align:center') + td(E(r.plu), cb, 'text-align:left') + td(E(r.desk), cb, 'text-align:left') + td(r.frc ? n0(r.frc) : '-', wb, 'text-align:center')
+        + (np ? pos.map((po, k) => td(fmtP(palOf(po.id, r.plu)) || '-', '#fffdf0', 'color:#1f4fd8;font-weight:bold') + td(x.ctn[k] ? n0(x.ctn[k]) : '-', wb)).join('') : td('-', '#fffdf0') + td('-', wb))
+        + td(x.tot ? n0(x.tot) : '-', wb, 'font-weight:bold') + td(n0(r.s1), wb, zc(r.s1)) + td(n0(x.s2), wb, zc(x.s2)) + bufTdW(x.b2, x.s2)
+        + td(x.d1 == null ? '-' : n0(x.d1), wb) + td(x.d2 == null ? '-' : n0(x.d2), wb) + td(q1(r.qc), wb) + td(x.inf.toko ? n0(x.inf.toko) : '-', '#fff9a6') + td(x.inf.avg ? n0(x.inf.avg) : '-', wb) + '</tr>';
     });
     const gb = s => T.avg > 0 ? Math.max(0, (s - T.avg) / T.avg) : 0, tb = 'font-weight:bold;border-top:2px solid #6f7c76;';
     h += '<tr>' + td('Grand Total', G, 'text-align:left;' + tb).replace('<td ', '<td colspan="4" ')
       + (np ? pos.map((po, k) => td(fmtP1(T.pal[k]), G, tb) + td(T.ctn[k] ? n0(T.ctn[k]) : '-', G, tb)).join('') : td('', G, tb) + td('', G, tb))
-      + td(T.tot ? n0(T.tot) : '-', G, tb) + td(n0(T.s1), G, tb) + td(n0(gb(T.s1) * 100) + '%', G, tb) + td(n0(T.s2), G, tb) + td(n0(gb(T.s2) * 100) + '%', G, tb)
+      + td(T.tot ? n0(T.tot) : '-', G, tb) + td(n0(T.s1), G, tb) + td(n0(T.s2), G, tb) + td(n0(gb(T.s2) * 100) + '%', G, tb)
       + td(T.qc > 0 ? n0(T.s1 / T.qc) : '-', G, tb) + td(T.qc > 0 ? n0(T.s2 / T.qc) : '-', G, tb) + td(q1(T.qc), G, tb) + td('', G, tb) + td(n0(T.avg), G, tb) + '</tr>';
     if (np) {
       h += '<tr>' + td('Muatan kendaraan', PC, 'text-align:left;font-weight:bold').replace('<td ', '<td colspan="4" ')
         + pos.map((po, k) => { const cap = capOf(po), left = cap - T.ctn[k]; return td(muatText(po, T.ctn[k]), PC, 'text-align:center;font-weight:bold;' + (left < 0 ? 'color:#c00000;' : '')).replace('<td ', '<td colspan="2" '); }).join('')
-        + '<td colspan="10" style="background-color:' + PC + ';' + bdl + '"></td></tr>';
+        + '<td colspan="9" style="background-color:' + PC + ';' + bdl + '"></td></tr>';
     }
-    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + CORE + ';border:1px solid #999;vertical-align:-1px"></span> item core</div>'
+    h += '</tbody></table><div style="font-size:11px;color:#333;padding-top:6px"><span style="display:inline-block;width:14px;height:11px;background-color:' + CORE + ';border:1px solid #999;vertical-align:-1px"></span> item core &#160;&#160; <span style="display:inline-block;width:14px;height:11px;background-color:' + DISC + ';border:1px solid #999;vertical-align:-1px"></span> item discontinue</div>'
       + '<div style="display:inline-block;margin-top:6px;background-color:#fbe5d6;border:1px solid #efc9ae;padding:5px 12px;font-size:12px"><b>Tonase Kendaraan (ctn)</b>'
       + kendKeys().map(k => '<div><b style="display:inline-block;width:46px;text-align:right">' + n0(P.cfg.kend[k]) + '</b> ' + E(k) + '</div>').join('') + '</div></div>';
     await htmlToJpg(h, fname('jpg'));
@@ -501,8 +508,8 @@
     const L = c => { let t = ''; while (c > 0) { const m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; };
     const solid = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } });
     const bx = { top: { style: 'thin', color: { argb: 'FF8B9490' } }, left: { style: 'thin', color: { argb: 'FF8B9490' } }, bottom: { style: 'thin', color: { argb: 'FF8B9490' } }, right: { style: 'thin', color: { argb: 'FF8B9490' } } };
-    const Y = 'FFFFE600', TP = 'FFD6C6F2', G = 'FFD9F0E2', B = 'FFD4F1F9', TN = 'FFE9DFD6', PC = 'FFFDE9D9', PL = 'FFFFF9A6', GT = 'FFD9F0E2';
-    const cT = 5 + 2 * np, c1 = cT + 1, cb1 = cT + 2, cs2 = cT + 3, cb2 = cT + 4, cd1 = cT + 5, cd2 = cT + 6, cq = cT + 7, cj = cT + 8, ca = cT + 9, NC = ca;
+    const Y = 'FFFFE600', DS = 'FFFFEEF0', TP = 'FFD6C6F2', G = 'FFD9F0E2', B = 'FFD4F1F9', TN = 'FFE9DFD6', PC = 'FFFDE9D9', PL = 'FFFFF9A6', GT = 'FFD9F0E2';
+    const cT = 5 + 2 * np, c1 = cT + 1, cs2 = cT + 2, cb2 = cT + 3, cd1 = cT + 4, cd2 = cT + 5, cq = cT + 6, cj = cT + 7, ca = cT + 8, NC = ca;
     const R0 = 7, RG = R0 + n;
     const put = (r, c, v, o) => { const cell = ws.getCell(r, c); if (v !== undefined && v !== null) cell.value = v; o = o || {};
       cell.font = Object.assign({ name: 'Calibri', size: 10 }, o.font || {}); cell.alignment = Object.assign({ vertical: 'middle', horizontal: o.h || 'right', wrapText: !!o.wrap }, {}); cell.border = bx;
@@ -518,11 +525,11 @@
     if (np) merge(4, 5, 4, 4 + 2 * np, 'PO TAKAKI', hd(Y));
     pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k), hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
     merge(4, cT, 5, cT, 'TOTAL PO', hd(TP)); put(6, cT, 'CTN', hd(TP));
-    merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(hdrD()), hd(G));
-    merge(5, c1, 5, cb1, 'AWAL', hd(G)); merge(5, cs2, 5, cb2, 'AKHIR', hd(G));
-    put(6, c1, 'STOCK', hd(G)); put(6, cb1, 'BUFFER %', hd(G)); put(6, cs2, 'STOCK', hd(G)); put(6, cb2, 'BUFFER %', hd(G));
-    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(hdrD()), hd(B)); put(5, cd1, 'AWAL', hd(B)); put(5, cd2, 'AKHIR', hd(B));
-    put(6, cd1, dmm(hdrD()).replace(' ', '-'), hd(B)); put(6, cd2, dmm(hdrD()).replace(' ', '-'), hd(B));
+    merge(4, c1, 4, cs2, 'EST. STOCK DCF ' + dmy(hdrD()), hd(G));
+    merge(5, c1, 6, c1, 'AWAL', hd(G)); merge(5, cs2, 6, cs2, 'AKHIR', hd(G));
+    merge(4, cb2, 6, cb2, 'BUFFER %', hd(G));
+    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(hdrD()), hd(B));
+    merge(5, cd1, 6, cd1, 'AWAL', hd(B)); merge(5, cd2, 6, cd2, 'AKHIR', hd(B));
     merge(4, cq, 5, cq, 'QPD (Ctn)', hd(TN)); put(6, cq, 'per hari', hd(TN));
     merge(4, cj, 5, cj, 'JML TOKO JUAL', hd(Y)); put(6, cj, '(toko)', hd(Y));
     put(4, ca, 'AVERAGE', hd(PC)); put(5, ca, 'OUTB (PB)', hd(PC)); put(6, ca, 'PER WEEK', hd(PC));
@@ -536,12 +543,12 @@
         put(r, pc + 1, f('ROUND(' + L(pc) + r + '*' + L(pc) + '$3,0)', x.ctn[k]), { nf: NI }); });
       put(r, cT, np ? f('SUM(' + pos.map((po, k) => L(6 + 2 * k) + r).join(',') + ')', x.tot) : 0, { nf: NI, font: { bold: true } });
       put(r, c1, rr.s1, { nf: NI });
-      put(r, cb1, f('IF(' + L(ca) + r + '>0,MAX(0,(' + L(c1) + r + '-' + L(ca) + r + ')/' + L(ca) + r + '),0)', x.b1), { nf: NP });
       put(r, cs2, f(L(c1) + r + '+' + L(cT) + r, x.s2), { nf: NI });
       put(r, cb2, f('IF(' + L(ca) + r + '>0,MAX(0,(' + L(cs2) + r + '-' + L(ca) + r + ')/' + L(ca) + r + '),0)', x.b2), { nf: NP });
       put(r, cd1, f('IF(' + L(cq) + r + '>0,' + L(c1) + r + '/' + L(cq) + r + ',"")', x.d1 == null ? '' : x.d1), { nf: NI });
       put(r, cd2, f('IF(' + L(cq) + r + '>0,' + L(cs2) + r + '/' + L(cq) + r + ',"")', x.d2 == null ? '' : x.d2), { nf: NI });
       put(r, cq, rr.qc, { nf: N1 }); put(r, cj, x.inf.toko || null, { nf: NI, fill: PL }); put(r, ca, x.inf.avg, { nf: NI });
+      if (rr.disc) for (let c = 1; c <= NC; c++) { const ce = ws.getCell(r, c); if (!ce.fill || !ce.fill.fgColor) ce.fill = solid(DS); }
     });
     // Grand Total
     const G0 = { fill: GT, font: { bold: true, size: 10 } }, sum = (c) => 'SUM(' + L(c) + R0 + ':' + L(c) + (RG - 1) + ')';
@@ -549,7 +556,6 @@
     pos.forEach((po, k) => { put(RG, 5 + 2 * k, { formula: sum(5 + 2 * k), result: T.pal[k] }, Object.assign({ nf: NPL }, G0)); put(RG, 6 + 2 * k, { formula: sum(6 + 2 * k), result: T.ctn[k] }, Object.assign({ nf: NI }, G0)); });
     const bt = s => T.avg > 0 ? Math.max(0, (s - T.avg) / T.avg) : 0;
     put(RG, cT, { formula: sum(cT), result: T.tot }, Object.assign({ nf: NI }, G0)); put(RG, c1, { formula: sum(c1), result: T.s1 }, Object.assign({ nf: NI }, G0));
-    put(RG, cb1, { formula: 'IF(' + L(ca) + RG + '>0,MAX(0,(' + L(c1) + RG + '-' + L(ca) + RG + ')/' + L(ca) + RG + '),0)', result: bt(T.s1) }, Object.assign({ nf: NP }, G0));
     put(RG, cs2, { formula: sum(cs2), result: T.s2 }, Object.assign({ nf: NI }, G0));
     put(RG, cb2, { formula: 'IF(' + L(ca) + RG + '>0,MAX(0,(' + L(cs2) + RG + '-' + L(ca) + RG + ')/' + L(ca) + RG + '),0)', result: bt(T.s2) }, Object.assign({ nf: NP }, G0));
     put(RG, cd1, { formula: 'IF(' + L(cq) + RG + '>0,' + L(c1) + RG + '/' + L(cq) + RG + ',"")', result: T.qc > 0 ? T.s1 / T.qc : '' }, Object.assign({ nf: NI }, G0));
@@ -570,14 +576,14 @@
     // Tonase kendaraan
     rr2 += 1; ws.getCell(rr2, 1).value = 'Tonase Kendaraan (ctn)'; ws.getCell(rr2, 1).font = { name: 'Calibri', size: 10, bold: true };
     kendKeys().forEach((k, i) => { const r = rr2 + 1 + i; put(r, 1, null, { fill: 'FFFBE5D6' }); put(r, 2, P.cfg.kend[k], { nf: NI, fill: 'FFFBE5D6', font: { bold: true } }); put(r, 3, k, { h: 'left', fill: 'FFFBE5D6' }); });
-    ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).value = 'Item core diberi warna hijau (sama dengan Stock DCF). Kolom CTN, STOCK, BUFFER, DSI memakai rumus sehingga ikut berubah bila PALLET / ctn per pallet diubah. ctn per pallet ada di baris 3 (disembunyikan; klik kanan nomor baris > Unhide untuk mengubah).';
+    ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).value = 'Item core diberi warna hijau dan item discontinue merah muda (sama dengan Stock DCF). Kolom CTN, STOCK, BUFFER, DSI memakai rumus sehingga ikut berubah bila PALLET / ctn per pallet diubah. ctn per pallet ada di baris 3 (disembunyikan; klik kanan nomor baris > Unhide untuk mengubah).';
     ws.getCell(rr2 + Object.keys(P.cfg.kend).length + 2, 1).font = { name: 'Calibri', size: 9, italic: true };
     // lebar kolom, bekukan header, nol = merah muda
-    const wd = { 1: 5, 2: 11, 3: 30, 4: 6 }; wd[cT] = 9; wd[c1] = 9; wd[cb1] = 10; wd[cs2] = 9; wd[cb2] = 10; wd[cd1] = 11; wd[cd2] = 11; wd[cq] = 9; wd[cj] = 10; wd[ca] = 11;
+    const wd = { 1: 5, 2: 11, 3: 30, 4: 6 }; wd[cT] = 9; wd[c1] = 9; wd[cs2] = 9; wd[cb2] = 10; wd[cd1] = 11; wd[cd2] = 11; wd[cq] = 9; wd[cj] = 10; wd[ca] = 11;
     for (let c = 1; c <= NC; c++) ws.getColumn(c).width = wd[c] || (c >= 5 && c < cT ? ((c - 5) % 2 === 0 ? 9 : 8) : 9);
     ws.views = [{ state: 'frozen', xSplit: 3, ySplit: 6, showGridLines: false }];
     try {
-      [c1, cb1, cs2, cb2].forEach(c => ws.addConditionalFormatting({ ref: L(c) + R0 + ':' + L(c) + (RG - 1), rules: [{ type: 'cellIs', operator: 'equal', formulae: [0], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFDD4D6' } }, font: { color: { argb: 'FF9C0006' } } } }] }));
+      [c1, cs2, cb2].forEach(c => ws.addConditionalFormatting({ ref: L(c) + R0 + ':' + L(c) + (RG - 1), rules: [{ type: 'cellIs', operator: 'equal', formulae: [0], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFFDD4D6' } }, font: { color: { argb: 'FF9C0006' } } } }] }));
     } catch (e) { /* format bersyarat opsional */ }
     const buf = await wb.xlsx.writeBuffer();
     saveBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), fname('xlsx'));
@@ -593,7 +599,7 @@
   const kirimFname = ext => 'PO TAKAKI ' + tglPO() + '.' + ext;
   function kirimData() {
     const C = calc(), pos = P.pos, T = C.T;
-    const rows = C.rows.map(x => ({ plu: x.r.plu, desk: x.r.desk, core: x.r.core, frc: x.r.frc, s1: x.r.s1, qc: x.r.qc, pal: pos.map(po => palOf(po.id, x.r.plu)), ctn: x.ctn, pcs: x.ctn.map(c => c * (x.r.frc || 0)), d1: x.d1, d2: x.d2 }));
+    const rows = C.rows.map(x => ({ plu: x.r.plu, desk: x.r.desk, core: x.r.core, disc: x.r.disc, frc: x.r.frc, s1: x.r.s1, qc: x.r.qc, pal: pos.map(po => palOf(po.id, x.r.plu)), ctn: x.ctn, pcs: x.ctn.map(c => c * (x.r.frc || 0)), d1: x.d1, d2: x.d2 }));
     const pcs = pos.map((po, k) => rows.reduce((a, r) => a + r.pcs[k], 0));
     return { rows, pos, T, pcs, d1: T.qc > 0 ? T.s1 / T.qc : null, d2: T.qc > 0 ? T.s2 / T.qc : null, avg: rows.length ? T.s1 / rows.length : 0 };
   }
@@ -601,7 +607,7 @@
   const KS = {
     h: KB + 'background-color:#ffe600;font-weight:bold;text-align:center;', hb: KB + 'background-color:#cfe8f7;font-weight:bold;text-align:center;',
     hw: KB + 'background-color:#ffffff;font-weight:bold;text-align:center;', hn: 'border:0;background-color:#ffffff;text-align:center;', nb: 'border:0;background-color:#ffffff;',
-    l: KB + 'text-align:left;', c: KB + 'text-align:center;', r: KB + 'text-align:right;', core: KB + 'background-color:#e3f5e8;text-align:left;',
+    l: KB + 'text-align:left;', c: KB + 'text-align:center;', r: KB + 'text-align:right;', core: KB + 'background-color:#e3f5e8;text-align:left;', disc: KB + 'background-color:#ffeef0;text-align:left;',
     tl: KB + 'background-color:#ffe600;font-weight:bold;text-align:left;', ty: KB + 'background-color:#ffe600;font-weight:bold;text-align:right;', tr: KB + 'font-weight:bold;text-align:right;',
     tc: KB + 'font-weight:bold;text-align:center;', av: 'border:0;background-color:#ffffff;font-weight:bold;text-align:center;'
   };
@@ -619,7 +625,7 @@
       + kc('DSI DCF', 'h', 'colspan="2"') + '</tr>'
       + '<tr>' + pos.map(() => kc('PALLET', 'h') + kc('CTN', 'h') + kc('PCS', 'h')).join('') + kc('AWAL', 'h') + kc('AKHIR', 'h') + '</tr></thead><tbody>';
     D.rows.forEach(r => {
-      const ck = r.core ? 'core' : 'l';
+      const ck = r.core ? 'core' : (r.disc ? 'disc' : 'l');
       h += '<tr>' + kc(E(r.plu), ck) + kc(E(r.desk), ck) + kc(r.frc ? n0(r.frc) : '-', 'c') + kc(n0(r.s1), 'r') + kc(q1(r.qc), 'r')
         + pos.map((po, k) => kc(fmtP1(r.pal[k]), 'c') + kc(r.ctn[k] ? n0(r.ctn[k]) : '-', 'c') + kc(r.pcs[k] ? n0(r.pcs[k]) : '-', 'c')).join('')
         + kc(q(r.d1), 'c') + kc(q(r.d2), 'c') + '</tr>';
@@ -664,7 +670,7 @@
     merge(5, cd1, 5, cd2, 'DSI DCF', hy); put(6, cd1, 'AWAL', hy); put(6, cd2, 'AKHIR', hy);
     ws.getRow(6).height = 42;
     D.rows.forEach((r, i) => {
-      const x = R0 + i, f = r.core ? CORE : null, ctns = pos.map((po, k) => L(8 + 3 * k - 1) + x);   // kolom CTN tiap PO
+      const x = R0 + i, f = r.core ? CORE : (r.disc ? 'FFFFEEF0' : null), ctns = pos.map((po, k) => L(8 + 3 * k - 1) + x);   // kolom CTN tiap PO
       put(x, 1, r.plu, { h: 'left', nf: '@', fill: f }); put(x, 2, r.desc || r.desk, { h: 'left', fill: f }); put(x, 3, r.frc || '-', { h: 'center' });
       put(x, 4, r.s1, { nf: NI }); put(x, 5, r.qc, { nf: NQ });
       pos.forEach((po, k) => { const pc = 6 + 3 * k;
