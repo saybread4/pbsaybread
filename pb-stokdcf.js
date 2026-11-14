@@ -1,6 +1,6 @@
 /* PB SAY BREAD - menu "Stock DCF" (semua user login; edit hanya administrator) + tombol menu PO TAKAKI (isi halaman: pb-potakaki.js).  Semua satuan CTN.
    Sub halaman (kiri ke kanan): Data ED, Stock, Rekap PO.
-   Tabel Supabase: stokdcf_item (kolom core), stokdcf_ed, stokdcf_po; fungsi stokdcf_sales() (lihat migrasi-stok-dcf.sql).
+   Tabel Supabase: stokdcf_item (kolom core, discontinue), stokdcf_ed, stokdcf_po; fungsi stokdcf_sales() (lihat migrasi-stok-dcf.sql).
    Kolom PB di Stock diambil dari fungsi get_outbound (PB per tanggal kirim). Semua user login boleh melihat; unggah/edit/kolom core hanya admin (dijaga RLS di database). */
 (function () {
   'use strict';
@@ -49,7 +49,7 @@
 #vStokDcf table.sd-tb{border-collapse:separate;border-spacing:0;font-size:11.5px;line-height:1.25}
 #vStokDcf .sd-tb th{background:var(--br);color:#fff;padding:3px 7px;font-size:10.5px;font-weight:700;white-space:nowrap;text-align:center;height:21px;border-right:1px solid rgba(255,255,255,.18);letter-spacing:.02em}
 #vStokDcf .sd-tb th.sp,#vStokDcf .sd-tb th.sp[rowspan="2"],#vStokDcf .sd-tb td.sp{width:8px;min-width:0;max-width:8px;padding:0;background:#fff!important;border-right:0;border-bottom-color:transparent}
-#vStokDcf .sd-tb tbody tr:nth-child(even) td.sp,#vStokDcf .sd-tb tbody tr.core td.sp{background:#fff!important}
+#vStokDcf .sd-tb tbody tr:nth-child(even) td.sp,#vStokDcf .sd-tb tbody tr.core td.sp,#vStokDcf .sd-tb tbody tr.disc td.sp{background:#fff!important}
 #vStokDcf .sd-tb th.g{background:#2f9f61}
 #vStokDcf .sd-tb th.x{background:#7c4dcc}
 #vStokDcf .sd-tb td.xv{color:#6d28d9;font-style:italic}
@@ -58,6 +58,7 @@
 #vStokDcf .sd-tb td.l{text-align:left}#vStokDcf .sd-tb td.c{text-align:center}
 #vStokDcf .sd-tb tbody tr:nth-child(even) td{background:#fafcfb}
 #vStokDcf .sd-tb tbody tr.core td{background:#e3f5e8}
+#vStokDcf .sd-tb tbody tr.disc td,#vStokDcf .sd-tb tbody tr.disc:nth-child(even) td{background:#ffeef0}
 #vStokDcf .sd-tb tbody tr.y td{background:#fff8cc}
 #vStokDcf .sd-tb tbody tr.r td{background:#fde4e6}
 #vStokDcf .sd-tb td.z{background:#fde4e6!important;color:#9c0006;font-weight:700}
@@ -65,7 +66,7 @@
 #vStokDcf .sd-tb tr.tot td{background:#d9f0e2;font-weight:800;color:var(--br);border-top:1px solid #b9dcc6}
 #vStokDcf .sd-leg{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--mu);padding:6px 2px 0;align-items:center}
 #vStokDcf .sd-sw{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15);vertical-align:-2px;margin-right:4px}
-#vStokDcf .sd-sw.g{background:#e3f5e8}#vStokDcf .sd-sw.y{background:#fff8cc}#vStokDcf .sd-sw.r{background:#fde4e6}
+#vStokDcf .sd-sw.d{background:#ffeef0;border-color:#f3b9bf}#vStokDcf .sd-sw.g{background:#e3f5e8}#vStokDcf .sd-sw.y{background:#fff8cc}#vStokDcf .sd-sw.r{background:#fde4e6}
 #vStokDcf input.sd-c{width:58px;border:0;border-radius:4px;background:transparent;text-align:right;font:inherit;padding:1px 3px}
 #vStokDcf input.sd-c:hover{background:rgba(55,48,163,.07)}#vStokDcf input.sd-c:focus{outline:2px solid #34b96f;background:#fff}
 #vStokDcf input.sd-c::placeholder{color:#9aa8a0}
@@ -211,12 +212,12 @@
         + '<div style="font-size:12px;color:#475569;padding-bottom:4px">Stok DCF ' + E(X.snap ? fdl(X.snap) : '-') + ' · satuan CTN</div>'
         + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead><tr>' + ['NO', 'PLU', 'DESKRIPSI', 'STOCK', 'QPD (Ctn)', 'DSI'].map(th).join('') + '</tr></thead><tbody>';
       C.rows.forEach((r, n) => {
-        const bg = r.i.core ? '#e3f5e8' : (n % 2 ? '#fafcfb' : '#ffffff'); tq += r.qty; tc += r.qc;
+        const bg = r.i.core ? '#e3f5e8' : (r.i.discontinue ? '#ffeef0' : (n % 2 ? '#fafcfb' : '#ffffff')); tq += r.qty; tc += r.qc;
         h += '<tr>' + td(n + 1, bg, 'text-align:center') + td(E(r.i.plu_dc), bg) + td(E(r.i.deskripsi), bg) + td(n0(r.qty), bg, 'text-align:right') + td(q1(r.qc), bg, 'text-align:right') + td(r.dsi == null ? '-' : n0(r.dsi), bg, 'text-align:right') + '</tr>';
       });
       const TB = '#d9f0e2', ts = 'text-align:right;font-weight:bold;';
       h += '<tr>' + td('Grand Total', TB, 'font-weight:bold').replace('<td ', '<td colspan="3" ') + td(n0(tq), TB, ts) + td(q1(tc), TB, ts) + td(tc > 0 ? n0(tq / tc) : '-', TB, ts) + '</tr></tbody></table>'
-        + '<div style="font-size:10px;color:#64748b;padding-top:3px">QPD (Ctn) = sales per hari ÷ FRC · DSI = STOCK ÷ QPD (Ctn) · baris hijau = item core</div></div>';
+        + '<div style="font-size:10px;color:#64748b;padding-top:3px">QPD (Ctn) = sales per hari ÷ FRC · DSI = STOCK ÷ QPD (Ctn) · baris hijau = item core · baris merah tipis = item discontinue</div></div>';
       const hold = document.createElement('div'); hold.style.cssText = 'position:fixed;left:-99999px;top:0'; hold.innerHTML = h; document.body.appendChild(hold);
       const el = hold.firstElementChild, w = Math.ceil(el.offsetWidth) + 2, ht = Math.ceil(el.offsetHeight) + 2; hold.remove();
       const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + ht + '"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">' + h.replace(/&nbsp;/g, '&#160;') + '</div></foreignObject></svg>';
@@ -245,9 +246,9 @@
       + '<th rowspan="2">Est. STOCK<br>' + E(e2) + '</th>'
       + '<th>PB</th><th class="g">PO ON GOING</th><th rowspan="2">Est. STOCK<br>' + E(e3) + '</th>'
       + wks.map((w, k) => '<th class="x" title="Est. PB = rata-rata PB per minggu">Est. PB' + (A && k === wks.length - 1 ? '<b class="sd-x" data-xdel="1" title="Hapus minggu ini">×</b>' : '') + '</th><th rowspan="2" class="x">Est. STOCK<br>' + E(dmm(w.estDate)) + '</th>').join('')
-      + (A ? '<th rowspan="2" title="Centang untuk menjadikan item core">CORE</th>' : '') + '</tr>'
+      + (A ? '<th rowspan="2" title="Centang untuk menjadikan item core">CORE</th><th rowspan="2" title="Centang untuk menandai Item Discontinue (baris merah tipis)">DISC</th>' : '') + '</tr>'
       + '<tr><th>' + E(X.pbLabel) + '</th>' + pcols.map(d => '<th class="g">' + E(dm(d)) + '</th>').join('') + '<th>' + E(X.pbLabel2) + '</th><th class="g">' + E(po2lab) + '</th>' + wks.map(w => '<th class="x">' + E(lab(w.from, w.to)) + '</th>').join('') + '</tr></thead><tbody>'
-      + rows.map((r, n) => '<tr class="' + (r.i.core ? 'core' : '') + '"><td class="c">' + (n + 1) + '</td><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
+      + rows.map((r, n) => '<tr class="' + (r.i.core ? 'core' : (r.i.discontinue ? 'disc' : '')) + '"><td class="c">' + (n + 1) + '</td><td class="l">' + E(r.i.plu_dc) + '</td><td class="l">' + E(r.i.deskripsi) + '</td>'
         + '<td>' + n0(r.qty) + '</td><td>' + q1(r.qc) + '</td><td>' + (r.dsi == null ? '-' : n0(r.dsi)) + '</td><td class="sp"></td>'
         + '<td>' + L(r.pb) + '</td>'
         + '<td class="' + (!load && r.sisa === 0 ? 'z' : '') + '">' + L(r.sisa) + '</td>'
@@ -256,13 +257,14 @@
         + '<td>' + L(r.pb2) + '</td><td>' + dash(r.po2) + '</td>'
         + '<td class="' + (!load && r.sisa2 === 0 && r.po2 === 0 ? 'z' : '') + '" style="font-weight:700">' + L(r.est3) + '</td>'
         + r.ex.map(x => '<td class="xv">' + L(x.pb) + '</td><td class="' + (!load && x.est === 0 ? 'z' : '') + '" style="font-weight:700">' + L(x.est) + '</td>').join('')
-        + (A ? '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td>' : '') + '</tr>').join('')
+        + (A ? '<td class="c"><input type="checkbox" class="sd-ck" data-core="' + E(r.i.plu_dc) + '"' + (r.i.core ? ' checked' : '') + '></td>'
+          + '<td class="c"><input type="checkbox" class="sd-ck" data-disc="' + E(r.i.plu_dc) + '"' + (r.i.discontinue ? ' checked' : '') + '></td>' : '') + '</tr>').join('')
       + '<tr class="tot"><td class="l" colspan="3">Grand Total</td><td>' + n0(T.qty) + '</td><td>' + q1(T.qc) + '</td><td>' + (T.qc > 0 ? n0(T.qty / T.qc) : '-') + '</td><td class="sp"></td>'
       + '<td>' + L(T.pb) + '</td><td>' + L(T.sisa) + '</td>'
       + T.pov.map(v => '<td>' + dash(v) + '</td>').join('') + '<td>' + L(T.est2) + '</td>'
-      + '<td>' + L(T.pb2) + '</td><td>' + dash(T.po2) + '</td><td>' + L(T.est3) + '</td>' + T.ex.map(x => '<td class="xv">' + L(x.pb) + '</td><td>' + L(x.est) + '</td>').join('') + (A ? '<td></td>' : '') + '</tr>'
+      + '<td>' + L(T.pb2) + '</td><td>' + dash(T.po2) + '</td><td>' + L(T.est3) + '</td>' + T.ex.map(x => '<td class="xv">' + L(x.pb) + '</td><td>' + L(x.est) + '</td>').join('') + (A ? '<td></td><td></td>' : '') + '</tr>'
       + '</tbody></table></div>'
-      + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span>'
+      + '<div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span><span><i class="sd-sw d"></i>Item discontinue</span>'
       + (wks.length ? '<span><i class="sd-sw" style="background:#7c4dcc"></i>Est. PB tambahan = rata-rata PB per minggu' + (X.avgN ? ' (' + X.avgN + ' minggu terakhir)' : '') + '; Est. STOCK = Est. STOCK sebelumnya - Est. PB (min. 0). Dipakai sebagai stock di Hitung PO.</span>' : '')
       + (A && X.avgErr ? '<span class="sd-er">Rata-rata PB per minggu tidak terbaca (' + E(X.avgErr) + ').</span>' : '')
       + (X.pbState === 'err' ? '<span class="sd-er">PB belum bisa dimuat (' + E(X.pbErr) + ') — klik Muat ulang.</span>' : '')
@@ -277,11 +279,19 @@
       Q('#sdBody').onclick = e => { if (e.target.closest('[data-xdel]')) setExtra(X.extra - 1); };
     }
     if (A) Q('#sdBody').onchange = async e => {
-      const t = e.target; if (!t.hasAttribute('data-core')) return;
-      const p = t.dataset.core, v = t.checked;
-      const r = await sbc().from('stokdcf_item').update({ core: v }).eq('plu_dc', p);
-      if (r.error) { msg('Gagal menyimpan: ' + r.error.message, true); t.checked = !v; return; }
-      const it = X.items.find(i => String(i.plu_dc) === p); if (it) it.core = v;
+      const t = e.target, isCore = t.hasAttribute('data-core'), isDisc = t.hasAttribute('data-disc'); if (!isCore && !isDisc) return;
+      const p = isCore ? t.dataset.core : t.dataset.disc, v = t.checked;
+      const it = X.items.find(i => String(i.plu_dc) === p);
+      // core dan discontinue saling meniadakan: item discontinue tidak bisa sekaligus core
+      const upd = isCore ? { core: v } : { discontinue: v };
+      if (v && isCore && it && it.discontinue) upd.discontinue = false;
+      if (v && isDisc && it && it.core) upd.core = false;
+      const r = await sbc().from('stokdcf_item').update(upd).eq('plu_dc', p);
+      if (r.error) {
+        msg(/discontinue/i.test(r.error.message) ? 'Kolom discontinue belum ada di database. Jalankan migrasi-item-discontinue.sql di Supabase (SQL Editor), lalu coba lagi.' : 'Gagal menyimpan: ' + r.error.message, true);
+        t.checked = !v; return;
+      }
+      if (it) Object.assign(it, upd);
       paintStok();
     };
   }
@@ -550,11 +560,11 @@
     else {
       h += '<div class="sd-wrap"><table class="sd-tb"><thead><tr><th rowspan="2">PLU</th><th rowspan="2">DESKRIPSI</th><th colspan="' + cols.length + '">PO ON GOING</th><th rowspan="2" class="g">TOTAL</th></tr><tr>'
         + cols.map(d => A ? '<th class="sd-dt" data-d="' + d + '" title="Klik untuk mengganti tanggal"><span class="sd-dl">' + dm(d) + '</span><b class="sd-x" data-del="' + d + '" title="Hapus kolom ini">×</b></th>' : '<th>' + dm(d) + '</th>').join('') + '</tr></thead><tbody>'
-        + act.map(i => '<tr class="' + (i.core ? 'core' : '') + '"><td class="l">' + E(i.plu_dc) + '</td><td class="l">' + E(i.deskripsi) + '</td>'
+        + act.map(i => '<tr class="' + (i.core ? 'core' : (i.discontinue ? 'disc' : '')) + '"><td class="l">' + E(i.plu_dc) + '</td><td class="l">' + E(i.deskripsi) + '</td>'
           + cols.map(d => { const v = poQ(d, i.plu_dc); return A ? '<td><input class="sd-c" inputmode="numeric" placeholder="-" data-p="' + E(i.plu_dc) + '" data-d="' + d + '" value="' + (v ? v : '') + '"></td>' : '<td>' + (v ? n0(v) : '-') + '</td>'; }).join('')
           + '<td class="sd-rt" data-p="' + E(i.plu_dc) + '" style="font-weight:700"></td></tr>').join('')
         + '<tr class="tot"><td class="l" colspan="2">Grand Total</td>' + cols.map(d => '<td class="sd-ct" data-d="' + d + '"></td>').join('') + '<td id="sdGT"></td></tr>'
-        + '</tbody></table></div><div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span></div>';
+        + '</tbody></table></div><div class="sd-leg"><span><i class="sd-sw g"></i>Item core</span><span><i class="sd-sw d"></i>Item discontinue</span></div>';
     }
     Q('#sdBody').innerHTML = h; if (hasD) fillTotals();
     if (!A) return;

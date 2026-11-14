@@ -178,6 +178,7 @@
 #vPoTakaki .pt-tb th,#vPoTakaki .pt-tb td{width:auto}
 #vPoTakaki .pt-tb th{position:sticky;top:0;z-index:2;background:#fff;color:#111;border-right:1px solid #8b9490;border-bottom:1px solid #8b9490;padding:3px 7px;font-size:10.5px;font-weight:700;text-align:center;white-space:nowrap}
 #vPoTakaki .pt-tb th.y{background:#ffe600}
+#vPoTakaki .pt-tb th.tp{background:#d6c6f2}
 #vPoTakaki .pt-tb th.gr{background:#d9f0e2}
 #vPoTakaki .pt-tb th.bl{background:#d4f1f9}
 #vPoTakaki .pt-tb th.tn{background:#e9dfd6}
@@ -336,13 +337,13 @@
       + '<div class="pt-poh2">Kirim <input type="date" class="pt-dt" data-po="' + po.id + '" value="' + E(po.tgl_kirim || '') + '"></div></th>').join('');
     let h = '<div class="pt-wrap"><table class="pt-tb"><thead>'
       + '<tr class="h1"><th class="rs" rowspan="3">NO</th><th class="rs" rowspan="3">PLU DC</th><th class="rs" rowspan="3">DESCRIPTION</th><th class="rs" rowspan="3">FRC</th><th class="rs" rowspan="3"></th>'
-      + '<th class="y" colspan="' + (np ? np * 2 : 2) + '">PO TAKAKI</th><th class="y rs" rowspan="2">TOTAL<br>PO</th>'
+      + '<th class="y" colspan="' + (np ? np * 2 : 2) + '">PO TAKAKI</th><th class="tp rs" rowspan="2">TOTAL<br>PO</th>'
       + '<th class="gr" colspan="4">EST. STOCK DCF ' + E(d1) + '</th><th class="bl" colspan="2">DSI DCF ' + E(d1) + '</th>'
       + '<th class="tn rs" rowspan="2">QPD<br>(Ctn)</th><th class="y rs" rowspan="2">JML TOKO<br>JUAL</th><th class="pc">AVERAGE</th></tr>'
       + '<tr class="h2">' + (np ? poh : '<th colspan="2" class="y">belum ada PO</th>')
-      + '<th class="gr" colspan="2">JIKA TANPA<br>FORECAST</th><th class="gr" colspan="2">JIKA ADA<br>FORECAST</th><th class="bl">JIKA TANPA<br>FORECAST</th><th class="bl">JIKA ADA<br>FORECAST</th><th class="pc">OUTB (PB)</th></tr>'
+      + '<th class="gr" colspan="2">AWAL</th><th class="gr" colspan="2">AKHIR</th><th class="bl">AWAL</th><th class="bl">AKHIR</th><th class="pc">OUTB (PB)</th></tr>'
       + '<tr class="h3">' + (np ? pos.map(() => '<th class="y">PALLET</th><th class="y">CTN</th>').join('') : '<th class="y">PALLET</th><th class="y">CTN</th>')
-      + '<th class="y">CTN</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="bl">' + E(ds) + '</th><th class="bl">' + E(ds) + '</th>'
+      + '<th class="tp">CTN</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="gr">STOCK</th><th class="gr">BUFFER %</th><th class="bl">' + E(ds) + '</th><th class="bl">' + E(ds) + '</th>'
       + '<th class="tn">per hari</th><th class="y">(toko)</th><th class="pc">PER WEEK</th></tr></thead><tbody>';
     P.rows.forEach((r, n) => {
       h += '<tr data-p="' + E(r.plu) + '"><td class="c">' + (n + 1) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.plu) + '</td><td class="l' + (r.core ? ' core' : '') + '">' + E(r.desk) + '</td><td class="c">' + (r.frc ? n0(r.frc) : '-') + '</td><td class="rmc"><span class="pt-rm" data-rm="' + E(r.plu) + '" title="Hapus item ini dari tabel">×</span></td>'
@@ -419,7 +420,7 @@
   async function downloadJpg() {
     const C = calc(), pos = P.pos, np = pos.length, T = C.T;
     const FF = 'font-family:Calibri,Arial,sans-serif;', bd = 'border:1px solid #8b9490;', bdl = 'border:1px solid #cfd6d3;';
-    const Y = '#ffe600', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9', CORE = '#e3f5e8';
+    const Y = '#ffe600', TP = '#d6c6f2', G = '#d9f0e2', B = '#d4f1f9', TN = '#e9dfd6', PC = '#fde9d9', CORE = '#e3f5e8';
     const th = (t, bg, at) => '<th ' + (at || '') + ' style="' + FF + bd + 'padding:3px 7px;background-color:' + bg + ';color:#111;font-size:11px;font-weight:bold;text-align:center;white-space:nowrap">' + t + '</th>';
     const td = (t, bg, st) => '<td style="' + FF + bdl + 'padding:2px 7px;background-color:' + bg + ';color:#111;font-size:12px;white-space:nowrap;text-align:right;' + (st || '') + '">' + t + '</td>';
     const bufTd = (v, st) => { const w = Math.min(100, v * 100 / 3); return td(n0(v * 100) + '%', '#ffffff', 'min-width:58px;' + (st <= 0 ? 'background-color:#fdd4d6;color:#9c0006;font-weight:bold;' : (w > 0 ? 'background-image:linear-gradient(90deg,#f6b26b ' + w + '%,#fff3e0 ' + w + '%);' : ''))); };
@@ -429,11 +430,11 @@
       + '<div style="font-size:12px;color:#333;padding-bottom:5px">' + E(reqLine()) + ' · satuan CTN</div>'
       + '<table cellspacing="0" cellpadding="0" style="border-collapse:collapse"><thead>'
       + '<tr>' + th('NO', '#fff', 'rowspan="3"') + th('PLU DC', '#fff', 'rowspan="3"') + th('DESCRIPTION', '#fff', 'rowspan="3"') + th('FRC', '#fff', 'rowspan="3"')
-      + th('PO TAKAKI', Y, 'colspan="' + (np ? np * 2 : 2) + '"') + th('TOTAL<br>PO', Y, 'rowspan="2"') + th('EST. STOCK DCF ' + E(d1), G, 'colspan="4"') + th('DSI DCF ' + E(d1), B, 'colspan="2"')
+      + th('PO TAKAKI', Y, 'colspan="' + (np ? np * 2 : 2) + '"') + th('TOTAL<br>PO', TP, 'rowspan="2"') + th('EST. STOCK DCF ' + E(d1), G, 'colspan="4"') + th('DSI DCF ' + E(d1), B, 'colspan="2"')
       + th('QPD<br>(Ctn)', TN, 'rowspan="2"') + th('JML TOKO<br>JUAL', Y, 'rowspan="2"') + th('AVERAGE', PC) + '</tr>'
       + '<tr>' + (np ? pos.map((po, i) => th(E(poLabel(po, i)), Y, 'colspan="2"')).join('') : th('belum ada PO', Y, 'colspan="2"'))
-      + th('JIKA TANPA<br>FORECAST', G, 'colspan="2"') + th('JIKA ADA<br>FORECAST', G, 'colspan="2"') + th('JIKA TANPA<br>FORECAST', B) + th('JIKA ADA<br>FORECAST', B) + th('OUTB (PB)', PC) + '</tr>'
-      + '<tr>' + (np ? pos.map(() => th('PALLET', Y) + th('CTN', Y)).join('') : th('PALLET', Y) + th('CTN', Y)) + th('CTN', Y)
+      + th('AWAL', G, 'colspan="2"') + th('AKHIR', G, 'colspan="2"') + th('AWAL', B) + th('AKHIR', B) + th('OUTB (PB)', PC) + '</tr>'
+      + '<tr>' + (np ? pos.map(() => th('PALLET', Y) + th('CTN', Y)).join('') : th('PALLET', Y) + th('CTN', Y)) + th('CTN', TP)
       + th('STOCK', G) + th('BUFFER %', G) + th('STOCK', G) + th('BUFFER %', G) + th(E(ds), B) + th(E(ds), B) + th('per hari', TN) + th('(toko)', Y) + th('PER WEEK', PC) + '</tr></thead><tbody>';
     C.rows.forEach((x, n) => {
       const r = x.r, cb = r.core ? CORE : '#ffffff';
@@ -500,7 +501,7 @@
     const L = c => { let t = ''; while (c > 0) { const m = (c - 1) % 26; t = String.fromCharCode(65 + m) + t; c = Math.floor((c - 1) / 26); } return t; };
     const solid = a => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: a } });
     const bx = { top: { style: 'thin', color: { argb: 'FF8B9490' } }, left: { style: 'thin', color: { argb: 'FF8B9490' } }, bottom: { style: 'thin', color: { argb: 'FF8B9490' } }, right: { style: 'thin', color: { argb: 'FF8B9490' } } };
-    const Y = 'FFFFE600', G = 'FFD9F0E2', B = 'FFD4F1F9', TN = 'FFE9DFD6', PC = 'FFFDE9D9', PL = 'FFFFF9A6', GT = 'FFD9F0E2';
+    const Y = 'FFFFE600', TP = 'FFD6C6F2', G = 'FFD9F0E2', B = 'FFD4F1F9', TN = 'FFE9DFD6', PC = 'FFFDE9D9', PL = 'FFFFF9A6', GT = 'FFD9F0E2';
     const cT = 5 + 2 * np, c1 = cT + 1, cb1 = cT + 2, cs2 = cT + 3, cb2 = cT + 4, cd1 = cT + 5, cd2 = cT + 6, cq = cT + 7, cj = cT + 8, ca = cT + 9, NC = ca;
     const R0 = 7, RG = R0 + n;
     const put = (r, c, v, o) => { const cell = ws.getCell(r, c); if (v !== undefined && v !== null) cell.value = v; o = o || {};
@@ -516,11 +517,11 @@
     ['NO', 'PLU DC', 'DESCRIPTION', 'FRC'].forEach((t, i) => merge(4, i + 1, 6, i + 1, t, hd('FFFFFFFF')));
     if (np) merge(4, 5, 4, 4 + 2 * np, 'PO TAKAKI', hd(Y));
     pos.forEach((po, k) => { const pc = 5 + 2 * k; merge(5, pc, 5, pc + 1, poLabel(po, k), hd(Y)); put(6, pc, 'PALLET', hd(Y)); put(6, pc + 1, 'CTN', hd(Y)); });
-    merge(4, cT, 5, cT, 'TOTAL PO', hd(Y)); put(6, cT, 'CTN', hd(Y));
+    merge(4, cT, 5, cT, 'TOTAL PO', hd(TP)); put(6, cT, 'CTN', hd(TP));
     merge(4, c1, 4, cb2, 'EST. STOCK DCF ' + dmy(hdrD()), hd(G));
-    merge(5, c1, 5, cb1, 'JIKA TANPA FORECAST', hd(G)); merge(5, cs2, 5, cb2, 'JIKA ADA FORECAST', hd(G));
+    merge(5, c1, 5, cb1, 'AWAL', hd(G)); merge(5, cs2, 5, cb2, 'AKHIR', hd(G));
     put(6, c1, 'STOCK', hd(G)); put(6, cb1, 'BUFFER %', hd(G)); put(6, cs2, 'STOCK', hd(G)); put(6, cb2, 'BUFFER %', hd(G));
-    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(hdrD()), hd(B)); put(5, cd1, 'JIKA TANPA FORECAST', hd(B)); put(5, cd2, 'JIKA ADA FORECAST', hd(B));
+    merge(4, cd1, 4, cd2, 'DSI DCF ' + dmy(hdrD()), hd(B)); put(5, cd1, 'AWAL', hd(B)); put(5, cd2, 'AKHIR', hd(B));
     put(6, cd1, dmm(hdrD()).replace(' ', '-'), hd(B)); put(6, cd2, dmm(hdrD()).replace(' ', '-'), hd(B));
     merge(4, cq, 5, cq, 'QPD (Ctn)', hd(TN)); put(6, cq, 'per hari', hd(TN));
     merge(4, cj, 5, cj, 'JML TOKO JUAL', hd(Y)); put(6, cj, '(toko)', hd(Y));
