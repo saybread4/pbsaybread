@@ -86,15 +86,19 @@
   // ---------------- data ----------------
   // Item baru (menu Unggah Data > ITEM) otomatis dibuat di stokdcf_item agar muncul di Stock DCF, Rekap PO dan PO TAKAKI.
   // Hanya administrator (RLS). PLU Cust diisi sama dengan PLU; ubah di database bila kode di Takaki berbeda.
+  // "ROTI DURIAN" -> "Roti Durian" (hanya bila seluruhnya huruf kapital, supaya sama dengan item lain)
+  const rapi = d => { d = String(d == null ? '' : d); return (d === d.toUpperCase() && d !== d.toLowerCase()) ? d.toLowerCase().replace(/(^|[\s(\-\/])([a-z])/g, (m, a, b) => a + b.toUpperCase()) : d; };
   async function syncItemBaru() {
-    if (!adm()) return;
+    if (!adm()) { X.items.forEach(i => { i.deskripsi = rapi(i.deskripsi); }); return; }
     try {
       const s = sbc(), r = await s.from('item').select('plu,deskripsi,aktif');
       if (r.error || !r.data) return;
       const ada = new Set(X.items.map(i => String(i.plu_dc).trim()));
       let urut = X.items.reduce((m, i) => Math.max(m, Number(i.urut) || 0), 0);
       const baru = r.data.filter(o => o.aktif !== false && o.plu && !ada.has(String(o.plu).trim()) && !ada.has(String(Number(o.plu))))
-        .map(o => ({ plu_dc: String(o.plu).trim(), plu_cust: String(o.plu).trim(), deskripsi: o.deskripsi, core: false, discontinue: false, urut: ++urut }));
+        .map(o => ({ plu_dc: String(o.plu).trim(), plu_cust: String(o.plu).trim(), deskripsi: rapi(o.deskripsi), core: false, discontinue: false, urut: ++urut }));
+      // rapikan item lama yang deskripsinya masih huruf kapital semua (mis. ROTI DURIAN yang sudah terlanjur masuk)
+      for (const i of X.items) { const n = rapi(i.deskripsi); if (n !== i.deskripsi) { const u = await s.from('stokdcf_item').update({ deskripsi: n }).eq('plu_dc', i.plu_dc); if (!u.error) i.deskripsi = n; } }
       if (!baru.length) return;
       const ins = await s.from('stokdcf_item').insert(baru);
       if (ins.error) { console.warn('sync item baru gagal:', ins.error.message); X.syncErr = ins.error.message; return; }
