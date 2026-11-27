@@ -84,6 +84,24 @@
   }
 
   // ---------------- data ----------------
+  // Item baru (menu Unggah Data > ITEM) otomatis dibuat di stokdcf_item agar muncul di Stock DCF, Rekap PO dan PO TAKAKI.
+  // Hanya administrator (RLS). PLU Cust diisi sama dengan PLU; ubah di database bila kode di Takaki berbeda.
+  async function syncItemBaru() {
+    if (!adm()) return;
+    try {
+      const s = sbc(), r = await s.from('item').select('plu,deskripsi,aktif');
+      if (r.error || !r.data) return;
+      const ada = new Set(X.items.map(i => String(i.plu_dc).trim()));
+      let urut = X.items.reduce((m, i) => Math.max(m, Number(i.urut) || 0), 0);
+      const baru = r.data.filter(o => o.aktif !== false && o.plu && !ada.has(String(o.plu).trim()) && !ada.has(String(Number(o.plu))))
+        .map(o => ({ plu_dc: String(o.plu).trim(), plu_cust: String(o.plu).trim(), deskripsi: o.deskripsi, core: false, discontinue: false, urut: ++urut }));
+      if (!baru.length) return;
+      const ins = await s.from('stokdcf_item').insert(baru);
+      if (ins.error) { console.warn('sync item baru gagal:', ins.error.message); X.syncErr = ins.error.message; return; }
+      X.items = must(await s.from('stokdcf_item').select('*').order('urut'));
+      X.syncBaru = baru.map(b => b.deskripsi);
+    } catch (e) { console.warn('sync item baru:', e); }
+  }
   async function loadAll() {
     const s = sbc();
     const [it, ed, po, sl, qp] = await Promise.all([
@@ -92,6 +110,7 @@
       s.from('stokdcf_po').select('tgl,plu_dc,qty').limit(20000),
       s.rpc('stokdcf_sales'), s.rpc('stokdcf_qpd')]);
     X.items = must(it); X.ed = must(ed);
+    await syncItemBaru();   // item baru di menu Data > ITEM otomatis ikut masuk daftar Stock DCF (& PO TAKAKI)
     X.poM = new Map(); must(po).forEach(r => X.poM.set(r.tgl + '|' + r.plu_dc, Number(r.qty) || 0));
     X.sales = {}; X.salesErr = sl.error ? sl.error.message : null;
     if (!sl.error) (sl.data || []).forEach(r => { X.sales[String(r.plu).trim()] = Number(r.qty) || 0; });
