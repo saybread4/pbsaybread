@@ -2524,14 +2524,13 @@ function stkPage(R,xls){
 const PAL=['#635bff','#0ea5e9','#22c55e','#f59e0b','#ef4444','#a855f7','#14b8a6','#64748b'];
 function loadCab(force){
   const adm=!!(D&&D.user&&D.user.admin);
-  $('#c_adm').style.display=adm?'':'none';
+  $('#c_adm').style.display='none';   /* bagian "Status & Download" (khusus admin) disembunyikan */
   /* tiap bagian dimuat terpisah: bila satu bagian error, bagian lain tetap tampil dan pesan error ditulis di tempatnya */
   const T=(box,f)=>{try{f()}catch(e){const el=$(box);if(el)el.innerHTML='<div class="card empty" style="color:#b00020;margin-top:10px">Gagal menampilkan bagian ini:<br>'+esc((e&&e.message)||e)+'</div>';try{console.error(e)}catch(_){}}};
   T('#pv_out',()=>loadPivot(force));
   T('#stk_out',()=>loadStk(force));
   T('#c_bad2',()=>loadBad());
   T('#r_out',()=>renderRekap());
-  if(adm)T('#c_out',()=>loadCabAdm(force));
 }
 function loadPivot(force){
   if(PVD&&!force){renderPivot();return}
