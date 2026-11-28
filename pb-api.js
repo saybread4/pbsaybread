@@ -384,7 +384,7 @@
     for (let i = 0; i < slots.length; i++) arr.push(slots[i] ? { k: slots[i].k, z: slots[i].z, n: slots[i].n, np: slots[i].np, pb: slots[i].pb } : null);
     return arr;
   }
-  function mergeJadwal(live, arc, today) {
+  function mergeJadwal(live, arc, today, atur) {
     const curMon = monIso(today);
     const A = { cells: {}, zset: {}, pbs: {} };
     (arc.rows || []).forEach(r => {
@@ -426,7 +426,57 @@
       if (!zset[zk] && !A.zset[zk] && (t[1] > 0 || t[2] > 0)) un.push(t);
     });
     un.sort((a, b) => String(a[0]).localeCompare(String(b[0]), 'id', { numeric: true }));
-    return { today: today, updated: live.updated, sel: live.sel, days: days, pbs: A.pbs, zst: live.zst, zpbd: live.zpbd, unsched: un };
+    return applyAtur({ today: today, updated: live.updated, sel: live.sel, days: days, pbs: A.pbs, zst: live.zst, zpbd: live.zpbd, unsched: un }, atur);
+  }
+
+  // ---------- Atur jadwal dari halaman Jadwal Kirim: tanggal libur + geser zona ke hari lain ----------
+  // Disimpan di tabel settings, key 'jadwal_atur' (hanya administrator yang boleh menulis, dijaga RLS).
+  // Bentuk: { libur: [{d:'2026-11-28', ket:'...'}], geser: [{k:'S', z:'S', from:'2026-11-23', to:'2026-11-25', car:0, ket:''}] }
+  // Jadwal dasar (hasil database) tidak diubah; pengaturan ini dipasang di atasnya setiap kali jadwal dimuat.
+  const isoOk = d => /^\d{4}-\d{2}-\d{2}$/.test(String(d || ''));
+  function normAtur(v) {
+    const o = { libur: [], geser: [] };
+    if (!v || typeof v !== 'object') return o;
+    (Array.isArray(v.libur) ? v.libur : []).forEach(l => { if (l && isoOk(l.d)) o.libur.push({ d: l.d, ket: String(l.ket || '').slice(0, 60) }); });
+    (Array.isArray(v.geser) ? v.geser : []).forEach(g => {
+      if (g && g.k && isoOk(g.from) && isoOk(g.to)) o.geser.push({ k: String(g.k), z: String(g.z || g.k), from: g.from, to: g.to, car: Math.max(0, Math.round(Number(g.car) || 0)), ket: String(g.ket || '').slice(0, 60) });
+    });
+    return o;
+  }
+  async function readAtur() {
+    try {
+      const { data } = await sb.from('settings').select('value').eq('key', 'jadwal_atur').maybeSingle();
+      return normAtur(data && data.value);
+    } catch (e) { return normAtur(null); }
+  }
+  function applyAtur(res, atur) {
+    atur = normAtur(atur);
+    res.atur = atur; res.libur = {}; res.moved = {}; res.orphans = [];
+    atur.libur.forEach(l => { res.libur[l.d] = l.ket || ''; });
+    if (!atur.geser.length) return res;
+    const dm = {};
+    res.days.forEach(x => { dm[x.d] = (x.c || []).slice(); });
+    atur.geser.forEach(g => {
+      const from = dm[g.from], i = from ? from.findIndex(c => c && c.k === g.k) : -1;
+      if (i < 0) { res.orphans.push(g); return; }   // jadwal dasar sudah berubah: pengaturan ini tidak dipakai
+      const cell = from[i]; from[i] = null;
+      const to = (dm[g.to] = dm[g.to] || []);
+      let sl = (g.car > 0 && !to[g.car - 1]) ? g.car - 1 : 0;
+      if (!(g.car > 0 && !to[g.car - 1])) while (to[sl]) sl++;
+      for (let j = 0; j < sl; j++) if (to[j] === undefined) to[j] = null;
+      to[sl] = cell;
+      res.moved[g.to + '|' + g.k] = { from: g.from, ket: g.ket || '' };
+      if (res.zpbd && res.zpbd[g.k] === g.from) res.zpbd[g.k] = g.to;
+      const pk = g.from + '|' + g.k;
+      if (res.pbs && res.pbs[pk]) res.pbs[g.to + '|' + g.k] = res.pbs[pk];
+    });
+    res.days = Object.keys(dm).sort().map(d => {
+      const a = dm[d], out = [];
+      for (let i = 0; i < a.length; i++) out.push(a[i] || null);
+      while (out.length && !out[out.length - 1]) out.pop();
+      return { d: d, c: out };
+    });
+    return res;
   }
 
   const belum = nama => () => Promise.reject(new Error('Fitur "' + nama + '" sedang dipindahkan ke Supabase dan belum aktif.'));
@@ -518,8 +568,8 @@
     },
     async getJadwal(token, force) {
       if (force) { try { await rpc('snap_jadwal', { p_force: true }); } catch (e) { /* hanya admin yang mengarsipkan */ } }
-      const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]);
-      return mergeJadwal(r[0], r[1], todayJkt());
+      const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read'), readAtur()]);
+      return mergeJadwal(r[0], r[1], todayJkt(), r[2]);
     },
     async getPivotCab(token, force) {
       const r = await snap('pivot', !!force, () => rpc('get_pivot_cab', { p_force: !!force }));
@@ -532,7 +582,7 @@
     async exportMaster() {
       const d = await rpc('export_master'), today = todayJkt();
       let jw = null, who = 'Administrator \u00b7 SEMUA CAB';
-      try { const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read')]); jw = mergeJadwal(r[0], r[1], today); } catch (e) { jw = null; }   // sheet JADWAL dilewati bila gagal dimuat
+      try { const r = await Promise.all([rpc('jadwal_live'), rpc('arsip_read'), readAtur()]); jw = mergeJadwal(r[0], r[1], today, r[2]); } catch (e) { jw = null; }   // sheet JADWAL dilewati bila gagal dimuat
       try { const u = await me(); who = u.name + ' \u00b7 ' + (u.admin ? 'SEMUA CAB' : u.cabs.join(', ')); } catch (e) { /* pakai teks bawaan */ }
       try { if (d.stock && d.stock.items && window.stkUseEst) await window.stkUseEst(d.stock, false); } catch (e) { /* tetap pakai stok bawaan */ }   // stok = Est. STOCK Stock DCF
       try { if (d.outbound && d.outbound.items && window.simUseEst) await window.simUseEst(d.outbound, 'next', false); } catch (e) { /* tetap pakai stok bawaan */ }   // STOCK AKHIR simulasi = Est. STOCK
@@ -542,6 +592,12 @@
     async getInfo() { return rpc('get_info'); },
     async daftarBas(token, items) { return rpc('daftar_bas', { p_items: items || [] }); },   // daftarkan BAS untuk toko baru (admin: semua; user: cabang sendiri)
     async getJadwalSheet() { return rpc('get_jadwal_sheet'); },
+    async saveJadwalAtur(token, atur) {
+      const a = normAtur(atur), lim = new Date(); lim.setDate(lim.getDate() - 45);
+      const cut = lim.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' });
+      a.libur = a.libur.filter(l => l.d >= cut); a.geser = a.geser.filter(g => g.to >= cut || g.from >= cut);   // buang yang sudah lama lewat
+      await setSetting('jadwal_atur', a); return true;
+    },
     async saveJadwalDates(token, edits) { await rpc('save_jadwal_dates', { p_edits: edits || [] }); return true; },
     async snapNow() { try { await rpc('snap_jadwal', { p_force: false }); } catch (e) { /* abaikan */ } return true; }   // tidak diperlukan lagi: data dihitung langsung di database
   };
